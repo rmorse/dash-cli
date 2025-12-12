@@ -69,9 +69,8 @@ function collectNestedGitProjects(project: Project, basePath: string): Project[]
 export function App({ projects, recentEntries, onSelect }: AppProps) {
   const { exit } = useApp();
 
-  // Search state
+  // Search state - just the term, no focus state
   const [searchTerm, setSearchTerm] = useState("");
-  const [isSearchFocused, setIsSearchFocused] = useState(true); // Start focused on search
 
   // Cache for flattened nested projects
   const [nestedCache] = useState<Map<string, Project[]>>(() => new Map());
@@ -156,33 +155,27 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
     const lowerSearch = searchTerm.toLowerCase();
     const filtered: ListItem[] = [];
     let currentHeader: ListItem | null = null;
-    let headerHasItems = false;
+    let headerAdded = false;
     let backItem: ListItem | null = null;
 
     for (const item of unfilteredItems) {
       if (item.type === "header") {
-        // Add previous header if it had items
-        if (currentHeader && headerHasItems) {
-          filtered.push(currentHeader);
-        }
         currentHeader = item;
-        headerHasItems = false;
+        headerAdded = false;
       } else if (item.type === "back") {
-        // Save back option to add at end
         backItem = item;
       } else {
-        // Filter projects by search term
         if (item.label.toLowerCase().includes(lowerSearch)) {
-          if (currentHeader && !headerHasItems) {
+          // Add header before first matching item in this section
+          if (currentHeader && !headerAdded) {
             filtered.push(currentHeader);
-            headerHasItems = true;
+            headerAdded = true;
           }
           filtered.push(item);
         }
       }
     }
 
-    // Add back option at end
     if (backItem) {
       filtered.push(backItem);
     }
@@ -201,13 +194,13 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
   const [selectedIndex, setSelectedIndex] = useState(selectableIndices[0] ?? 0);
   const [scrollOffset, setScrollOffset] = useState(0);
 
-  // When search changes, reset selection to first item
+  // When search changes, reset to first item and scroll to top
   useEffect(() => {
-    if (searchTerm && selectableIndices.length > 0) {
+    if (selectableIndices.length > 0) {
       setSelectedIndex(selectableIndices[0]);
       setScrollOffset(0);
     }
-  }, [searchTerm]);
+  }, [searchTerm, selectableIndices.length]);
 
   // When nav stack changes, restore selection or reset
   useEffect(() => {
@@ -216,7 +209,6 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
       const itemIndex = items.findIndex(item => item.path === restoredPath);
       if (itemIndex !== -1) {
         setSelectedIndex(itemIndex);
-        setIsSearchFocused(false);
         if (itemIndex < scrollOffset) {
           setScrollOffset(itemIndex);
         } else if (itemIndex >= scrollOffset + VISIBLE_COUNT) {
@@ -225,9 +217,11 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
         return;
       }
     }
-    // Reset to search focused
+    // Reset
     setSearchTerm("");
-    setIsSearchFocused(true);
+    if (selectableIndices.length > 0) {
+      setSelectedIndex(selectableIndices[0]);
+    }
     setScrollOffset(0);
   }, [navStack.length]);
 
@@ -270,37 +264,28 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
   };
 
   useInput((input, key) => {
-    // Escape key
+    // Escape - clear search or go back or exit
     if (key.escape) {
-      if (isSearchFocused) {
-        if (searchTerm) {
-          // Clear search
-          setSearchTerm("");
-        } else if (!isAtRoot) {
-          // Go back if search empty
-          goBack();
-        } else {
-          exit();
-        }
-      } else {
-        // On list - go back to top and clear
+      if (searchTerm) {
         setSearchTerm("");
-        setIsSearchFocused(true);
-        setScrollOffset(0);
+      } else if (!isAtRoot) {
+        goBack();
+      } else {
+        exit();
       }
       return;
     }
 
-    if (input === "q" && !isSearchFocused) {
+    // Quit
+    if (input === "q" && !searchTerm) {
       exit();
       return;
     }
 
-    // Backspace - remove from search
+    // Backspace - remove from search or go back
     if (key.backspace || key.delete) {
       if (searchTerm.length > 0) {
         setSearchTerm(searchTerm.slice(0, -1));
-        setIsSearchFocused(true);
       } else if (!isAtRoot) {
         goBack();
       }
@@ -310,15 +295,8 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
     const currentItem = items[selectedIndex];
     const currentPos = selectableIndices.indexOf(selectedIndex);
 
-    // Enter key
+    // Enter key - select current item
     if (key.return) {
-      if (isSearchFocused && selectableIndices.length > 0) {
-        // Move to first item
-        setIsSearchFocused(false);
-        setSelectedIndex(selectableIndices[0]);
-        return;
-      }
-
       if (currentItem?.type === "back") {
         goBack();
         return;
@@ -343,67 +321,57 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
     }
 
     // Right arrow - drill down
-    if (key.rightArrow && !isSearchFocused) {
+    if (key.rightArrow) {
       if (currentItem?.type === "project" && currentItem.project?.hasNestedProjects) {
         drillDown(currentItem.project, currentItem.path);
       }
       return;
     }
 
-    // Left arrow - go back (also when search focused and empty)
+    // Left arrow - go back
     if (key.leftArrow) {
-      if (isSearchFocused && !searchTerm && !isAtRoot) {
-        goBack();
-        return;
-      }
-      if (!isSearchFocused) {
+      if (!isAtRoot) {
         goBack();
       }
       return;
     }
 
-    // Up arrow
+    // Up arrow (with looping)
     if (key.upArrow) {
-      if (isSearchFocused) {
-        // Loop to bottom
-        if (selectableIndices.length > 0) {
-          const lastIndex = selectableIndices[selectableIndices.length - 1];
-          setSelectedIndex(lastIndex);
-          setIsSearchFocused(false);
-          adjustScroll(lastIndex);
-        }
-        return;
-      }
+      if (selectableIndices.length === 0) return;
 
+      let newPos: number;
       if (currentPos <= 0) {
-        // Go back to search
-        setIsSearchFocused(true);
+        // Loop to bottom
+        newPos = selectableIndices.length - 1;
+        const newIndex = selectableIndices[newPos];
+        setSelectedIndex(newIndex);
+        // Scroll to show the item (near bottom)
+        setScrollOffset(Math.max(0, items.length - VISIBLE_COUNT));
       } else {
-        const newIndex = selectableIndices[currentPos - 1];
+        newPos = currentPos - 1;
+        const newIndex = selectableIndices[newPos];
         setSelectedIndex(newIndex);
         adjustScroll(newIndex);
       }
       return;
     }
 
-    // Down arrow
+    // Down arrow (with looping)
     if (key.downArrow) {
-      if (isSearchFocused) {
-        // Move to first item
-        if (selectableIndices.length > 0) {
-          setSelectedIndex(selectableIndices[0]);
-          setIsSearchFocused(false);
-          adjustScroll(selectableIndices[0]);
-        }
-        return;
-      }
+      if (selectableIndices.length === 0) return;
 
+      let newPos: number;
       if (currentPos >= selectableIndices.length - 1) {
-        // Loop to search
-        setIsSearchFocused(true);
+        // Loop to top
+        newPos = 0;
+        const newIndex = selectableIndices[newPos];
+        setSelectedIndex(newIndex);
+        // Scroll to top to show headers
         setScrollOffset(0);
       } else {
-        const newIndex = selectableIndices[currentPos + 1];
+        newPos = currentPos + 1;
+        const newIndex = selectableIndices[newPos];
         setSelectedIndex(newIndex);
         adjustScroll(newIndex);
       }
@@ -412,7 +380,7 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
 
     // Page Up
     if (key.pageUp) {
-      if (isSearchFocused) return;
+      if (selectableIndices.length === 0) return;
       const newPos = Math.max(0, currentPos - PAGE_SIZE);
       const newIndex = selectableIndices[newPos];
       setSelectedIndex(newIndex);
@@ -422,7 +390,7 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
 
     // Page Down
     if (key.pageDown) {
-      if (isSearchFocused) return;
+      if (selectableIndices.length === 0) return;
       const newPos = Math.min(selectableIndices.length - 1, currentPos + PAGE_SIZE);
       const newIndex = selectableIndices[newPos];
       setSelectedIndex(newIndex);
@@ -432,10 +400,8 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
 
     // Regular character input - add to search
     if (input && input.length === 1 && !key.ctrl && !key.meta) {
-      // Only allow printable characters
       if (input.charCodeAt(0) >= 32) {
         setSearchTerm(prev => prev + input);
-        setIsSearchFocused(true);
       }
     }
   });
@@ -447,17 +413,16 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
 
   return (
     <Box flexDirection="column">
-      {/* Search input */}
+      {/* Search input - outside scroll area */}
       <Box marginBottom={1}>
-        <Text color={isSearchFocused ? "#FFD700" : "gray"} bold={isSearchFocused}>
-          {isSearchFocused ? "> " : "  "}
+        <Text color="gray">{"  "}</Text>
+        <Text color={searchTerm ? "#FFD700" : "gray"}>
+          {searchTerm || "Type to search..."}
         </Text>
-        <Text color={isSearchFocused ? "#FFD700" : "white"}>
-          {searchTerm || (isSearchFocused ? "" : "Type to search...")}
-        </Text>
-        {isSearchFocused && <Text color="#FFD700">▌</Text>}
+        {searchTerm && <Text color="#FFD700">▌</Text>}
       </Box>
 
+      {/* Scrollable list area */}
       {hasMoreAbove && (
         <Box>
           <Text dimColor>  ↑ {scrollOffset} more</Text>
@@ -483,7 +448,7 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
           );
         }
 
-        const isSelected = !isSearchFocused && actualIdx === selectedIndex;
+        const isSelected = actualIdx === selectedIndex;
 
         if (item.type === "back") {
           return (
@@ -527,7 +492,7 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
 
       <Box marginTop={1}>
         <Text dimColor>
-          type to search • ↑↓ navigate • enter select • →← drill/back • esc clear • q quit
+          type to filter • ↑↓ navigate • enter select • →← drill/back • esc clear • q quit
         </Text>
       </Box>
     </Box>
