@@ -1,9 +1,13 @@
-# projects - Navigate to a project directory
-# Add to $PROFILE: . /path/to/projects.ps1
+# projects-cli: Navigate to projects
+# This file is auto-generated. Use 'projects-cli --setup powershell' for automatic setup.
 
 function projects {
-    $selected = projects-cli
-    if ($selected -and (Test-Path $selected)) {
-        Set-Location $selected
+    projects-cli
+    $selectionFile = "$env:USERPROFILE\.projects-cli\last-selection"
+    if (Test-Path $selectionFile) {
+        $selected = Get-Content $selectionFile -Raw
+        if ($selected -and (Test-Path $selected.Trim())) {
+            Set-Location $selected.Trim()
+        }
     }
 }

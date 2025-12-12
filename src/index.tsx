@@ -2,20 +2,23 @@ import React from "react";
 import { render } from "ink";
 import { App } from "./components/App.js";
 import { scanProjects } from "./scanner.js";
-import { getRecent, addRecent } from "./history.js";
+import { getRecent, addRecent, writeLastSelection, getConfigDir } from "./history.js";
+import { runSetup } from "./setup.js";
 
 async function main() {
-  console.error("[debug] Starting...");
+  const args = process.argv.slice(2);
+
+  // Handle --setup command
+  if (args[0] === "--setup") {
+    await runSetup(args[1]);
+    return;
+  }
 
   const projects = scanProjects();
-  console.error(`[debug] Found ${projects.length} projects`);
-
   const recentEntries = getRecent(5);
-  console.error(`[debug] Found ${recentEntries.length} recent entries`);
 
   let selectedPath: string | null = null;
 
-  console.error("[debug] Rendering...");
   const { waitUntilExit, unmount } = render(
     <App
       projects={projects}
@@ -27,19 +30,14 @@ async function main() {
     />,
     {
       exitOnCtrlC: true,
-      stdout: process.stderr,
     }
   );
 
-  console.error("[debug] Waiting for exit...");
-
   await waitUntilExit();
-
-  console.error("[debug] Exited");
 
   if (selectedPath) {
     addRecent(selectedPath);
-    console.log(selectedPath);
+    writeLastSelection(selectedPath);
   }
 }
 

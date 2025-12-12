@@ -5,7 +5,12 @@ import type { HistoryData, HistoryEntry } from "./types.js";
 
 const CONFIG_DIR = join(homedir(), ".projects-cli");
 const HISTORY_FILE = join(CONFIG_DIR, "history.json");
+const SELECTION_FILE = join(CONFIG_DIR, "last-selection");
 const MAX_HISTORY = 20;
+
+export function getConfigDir(): string {
+  return CONFIG_DIR;
+}
 
 function ensureConfigDir(): void {
   if (!existsSync(CONFIG_DIR)) {
@@ -56,4 +61,13 @@ export function addRecent(path: string): void {
   data.recent = data.recent.slice(0, MAX_HISTORY);
 
   saveHistory(data);
+}
+
+export function writeLastSelection(path: string): void {
+  ensureConfigDir();
+  writeFileSync(SELECTION_FILE, path);
+}
+
+export function getSelectionFile(): string {
+  return SELECTION_FILE;
 }

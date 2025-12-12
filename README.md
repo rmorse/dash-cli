@@ -7,66 +7,87 @@ Interactive CLI to quickly navigate to projects in `D:\projects`.
 - Lists all projects in `D:\projects`
 - Shows recently used projects at the top (last 5)
 - Arrow key navigation with Enter to select
+- Color-coded: recent projects in blue, selected in gold
 - Works with Bash and PowerShell
 
-## Prerequisites
+## Quick Start
+
+```bash
+# Install globally
+npm install -g .
+
+# Setup your shell (auto-detects bash or powershell)
+projects-cli --setup
+
+# Restart your terminal, then:
+projects
+```
+
+## Installation
+
+### Prerequisites
 
 - Node.js 18+
 - npm
 
-## Installation
+### Install
 
 ```bash
-# Clone/navigate to the project
 cd D:\projects\cli-explorer
-
-# Install dependencies
 npm install
-
-# Build
 npm run build
-
-# Link globally (makes `projects-cli` available everywhere)
 npm link
 ```
 
-## Shell Setup
+### Shell Setup
 
-The CLI outputs a path to stdout. To actually `cd` into the selected directory, you need a shell wrapper.
-
-### Git Bash
-
-Add to `~/.bashrc`:
+Run the setup command to automatically configure your shell:
 
 ```bash
-source D:/projects/cli-explorer/shell/projects.sh
+# Auto-detect shell
+projects-cli --setup
+
+# Or specify explicitly
+projects-cli --setup bash
+projects-cli --setup powershell
 ```
 
-Then reload:
+Then restart your terminal or reload your shell config.
 
+### Manual Setup
+
+If you prefer manual setup:
+
+**Git Bash** - Add to `~/.bashrc`:
 ```bash
-source ~/.bashrc
+projects() {
+    projects-cli
+    local selected
+    selected=$(cat ~/.projects-cli/last-selection 2>/dev/null)
+    if [ -n "$selected" ] && [ -d "$selected" ]; then
+        cd "$selected" || return 1
+    fi
+}
 ```
 
-### PowerShell
-
+**PowerShell** - Add to `$PROFILE`:
 ```powershell
-# Create profile if it doesn't exist, then add the wrapper
-if (!(Test-Path $PROFILE)) { New-Item $PROFILE -Force }
-Add-Content $PROFILE "`n. D:\projects\cli-explorer\shell\projects.ps1"
-
-# Reload
-. $PROFILE
+function projects {
+    projects-cli
+    $selectionFile = "$env:USERPROFILE\.projects-cli\last-selection"
+    if (Test-Path $selectionFile) {
+        $selected = Get-Content $selectionFile -Raw
+        if ($selected -and (Test-Path $selected.Trim())) {
+            Set-Location $selected.Trim()
+        }
+    }
+}
 ```
 
 ## Usage
 
 ```bash
-# After shell setup, just run:
 projects
-
-# Or run the CLI directly (outputs path, doesn't cd):
-projects-cli
 ```
 
 ### Controls
@@ -86,7 +107,7 @@ npm run dev
 # Manual build
 npm run build
 
-# Run directly without global link
+# Run directly
 node dist/index.js
 ```
 
@@ -97,13 +118,14 @@ cli-explorer/
 ├── src/
 │   ├── index.tsx         # Entry point
 │   ├── scanner.ts        # Scans D:\projects for folders
-│   ├── history.ts        # Manages recent projects (~/.projects-cli/history.json)
+│   ├── history.ts        # Recent projects + selection file
+│   ├── setup.ts          # Shell setup command
 │   ├── types.ts          # TypeScript types
 │   └── components/
 │       └── App.tsx       # ink (React) UI component
 ├── shell/
-│   ├── projects.sh       # Bash wrapper
-│   └── projects.ps1      # PowerShell wrapper
+│   ├── projects.sh       # Bash wrapper (reference)
+│   └── projects.ps1      # PowerShell wrapper (reference)
 ├── dist/                 # Compiled output
 ├── package.json
 ├── tsconfig.json
@@ -114,9 +136,11 @@ cli-explorer/
 
 1. `projects-cli` scans `D:\projects` for directories
 2. Displays an interactive list with recent projects first
-3. On selection, saves to history and prints the path to stdout
-4. The shell wrapper captures the output and runs `cd`
+3. On selection, writes path to `~/.projects-cli/last-selection`
+4. The shell wrapper reads this file and runs `cd`
 
 ## Configuration
 
-History is stored at `~/.projects-cli/history.json`. Delete this file to reset recent projects.
+Data stored in `~/.projects-cli/`:
+- `history.json` - Recent projects list
+- `last-selection` - Last selected path (for shell wrapper)
