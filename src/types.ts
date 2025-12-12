@@ -2,6 +2,8 @@ export interface Project {
   name: string;
   path: string;
   isGitRepo: boolean;
+  hasNestedProjects?: boolean;
+  nestedProjects?: Project[];
 }
 
 export interface HistoryEntry {
