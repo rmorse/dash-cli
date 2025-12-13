@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Box, Text, useInput, useApp } from "ink";
 import Spinner from "ink-spinner";
 import type { Project, HistoryEntry, FavoriteEntry, Settings } from "../types.js";
-import { basename } from "node:path";
+import { basename, relative } from "node:path";
 import { SettingsScreen } from "./Settings.js";
 import { scanProjectsAsync, ScanAbortSignal } from "../scanner.js";
 import { loadCacheAsync, saveCache } from "../cache.js";
@@ -39,10 +39,9 @@ interface NavLevel {
 
 // Get display name for a path (relative to projects dir)
 function getDisplayName(path: string, projectsDir: string): string {
-  if (path.startsWith(projectsDir)) {
-    return path.slice(projectsDir.length + 1).replace(/\\/g, "/");
-  }
-  return basename(path);
+  const rel = relative(projectsDir, path);
+  // Convert backslashes to forward slashes for consistent display
+  return rel.replace(/\\/g, "/") || basename(path);
 }
 
 // Collect all nested git projects (flattened) from a project tree
@@ -385,10 +384,11 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
       setFavoriteEntries(prev => prev.filter(f => f.path !== currentItem.path));
     } else {
       // Add to favorites (append to end so first added stays #1)
-      addFavorite(currentItem.path, currentItem.label);
+      const displayName = getDisplayName(currentItem.path!, settings.projectsDir);
+      addFavorite(currentItem.path, displayName);
       setFavoriteEntries(prev => [
         ...prev,
-        { path: currentItem.path!, displayName: currentItem.label, addedAt: Date.now() },
+        { path: currentItem.path!, displayName, addedAt: Date.now() },
       ]);
     }
   };
@@ -512,7 +512,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
         if (project.isGitRepo) {
           // Abort any pending scan to exit immediately
           scanAbortSignal.current.aborted = true;
-          onSelect(project.path, currentItem.label);
+          onSelect(project.path, getDisplayName(project.path, settings.projectsDir));
           return;
         }
 
@@ -523,7 +523,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
 
         // Abort any pending scan to exit immediately
         scanAbortSignal.current.aborted = true;
-        onSelect(project.path, currentItem.label);
+        onSelect(project.path, getDisplayName(project.path, settings.projectsDir));
       }
       return;
     }

@@ -143,10 +143,10 @@ export function scanProjects(settings?: Settings): Project[] {
   }
 
   try {
-    // Find all .git directories
+    // Find all .git directories AND files (worktrees use .git files)
     const gitDirs = fg.sync("**/.git", {
       cwd: projectsDir,
-      onlyDirectories: true,
+      onlyFiles: false,  // Find both files and directories
       deep: maxDepth + 1,  // +1 because .git is inside the project
       ignore: ignorePatterns,
       followSymbolicLinks: false,
@@ -180,11 +180,11 @@ export async function scanProjectsAsync(settings?: Settings, signal?: ScanAbortS
   }
 
   try {
-    // Find all .git directories with fast-glob
+    // Find all .git directories AND files (worktrees use .git files)
     log(`scanProjectsAsync: running fast-glob for **/.git`);
     const gitDirs = await fg("**/.git", {
       cwd: projectsDir,
-      onlyDirectories: true,
+      onlyFiles: false,  // Find both files and directories
       deep: maxDepth + 1,  // +1 because .git is inside the project
       ignore: ignorePatterns,
       followSymbolicLinks: false,
