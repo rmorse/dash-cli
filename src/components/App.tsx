@@ -26,6 +26,7 @@ interface ListItem {
   project?: Project;
   isFavorite?: boolean;
   isRecent?: boolean;
+  favoriteNumber?: number;
 }
 
 interface NavLevel {
@@ -181,8 +182,9 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
         const project = allProjectsMap.get(entry.path);
         validFavoriteItems.push({
           type: "project",
-          label: `${entry.displayName} #${i + 1}`,
+          label: entry.displayName,
           path: entry.path,
+          favoriteNumber: i + 1,
           project: project ?? {
             name: basename(entry.path),
             path: entry.path,
@@ -678,6 +680,9 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
               {isSelected ? "> " : "  "}
               {item.label}
             </Text>
+            {item.favoriteNumber && (
+              <Text dimColor> #{item.favoriteNumber}</Text>
+            )}
             {hasNested && (
               <Text color="gray" dimColor> ▶</Text>
             )}
