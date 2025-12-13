@@ -2022,14 +2022,14 @@ var require_react_development = __commonJS({
               var thenableResult = result;
               var wasAwaited = false;
               var thenable = {
-                then: function(resolve2, reject) {
+                then: function(resolve3, reject) {
                   wasAwaited = true;
                   thenableResult.then(function(returnValue2) {
                     popActScope(prevActScopeDepth);
                     if (actScopeDepth === 0) {
-                      recursivelyFlushAsyncActWork(returnValue2, resolve2, reject);
+                      recursivelyFlushAsyncActWork(returnValue2, resolve3, reject);
                     } else {
-                      resolve2(returnValue2);
+                      resolve3(returnValue2);
                     }
                   }, function(error2) {
                     popActScope(prevActScopeDepth);
@@ -2059,20 +2059,20 @@ var require_react_development = __commonJS({
                   ReactCurrentActQueue.current = null;
                 }
                 var _thenable = {
-                  then: function(resolve2, reject) {
+                  then: function(resolve3, reject) {
                     if (ReactCurrentActQueue.current === null) {
                       ReactCurrentActQueue.current = [];
-                      recursivelyFlushAsyncActWork(returnValue, resolve2, reject);
+                      recursivelyFlushAsyncActWork(returnValue, resolve3, reject);
                     } else {
-                      resolve2(returnValue);
+                      resolve3(returnValue);
                     }
                   }
                 };
                 return _thenable;
               } else {
                 var _thenable2 = {
-                  then: function(resolve2, reject) {
-                    resolve2(returnValue);
+                  then: function(resolve3, reject) {
+                    resolve3(returnValue);
                   }
                 };
                 return _thenable2;
@@ -2088,7 +2088,7 @@ var require_react_development = __commonJS({
             actScopeDepth = prevActScopeDepth;
           }
         }
-        function recursivelyFlushAsyncActWork(returnValue, resolve2, reject) {
+        function recursivelyFlushAsyncActWork(returnValue, resolve3, reject) {
           {
             var queue = ReactCurrentActQueue.current;
             if (queue !== null) {
@@ -2097,16 +2097,16 @@ var require_react_development = __commonJS({
                 enqueueTask(function() {
                   if (queue.length === 0) {
                     ReactCurrentActQueue.current = null;
-                    resolve2(returnValue);
+                    resolve3(returnValue);
                   } else {
-                    recursivelyFlushAsyncActWork(returnValue, resolve2, reject);
+                    recursivelyFlushAsyncActWork(returnValue, resolve3, reject);
                   }
                 });
               } catch (error2) {
                 reject(error2);
               }
             } else {
-              resolve2(returnValue);
+              resolve3(returnValue);
             }
           }
         }
@@ -47003,41 +47003,41 @@ var require_queue = __commonJS({
       queue.drained = drained;
       return queue;
       function push(value) {
-        var p = new Promise(function(resolve2, reject) {
+        var p = new Promise(function(resolve3, reject) {
           pushCb(value, function(err, result) {
             if (err) {
               reject(err);
               return;
             }
-            resolve2(result);
+            resolve3(result);
           });
         });
         p.catch(noop2);
         return p;
       }
       function unshift(value) {
-        var p = new Promise(function(resolve2, reject) {
+        var p = new Promise(function(resolve3, reject) {
           unshiftCb(value, function(err, result) {
             if (err) {
               reject(err);
               return;
             }
-            resolve2(result);
+            resolve3(result);
           });
         });
         p.catch(noop2);
         return p;
       }
       function drained() {
-        var p = new Promise(function(resolve2) {
+        var p = new Promise(function(resolve3) {
           process.nextTick(function() {
             if (queue.idle()) {
-              resolve2();
+              resolve3();
             } else {
               var previousDrain = queue.drain;
               queue.drain = function() {
                 if (typeof previousDrain === "function") previousDrain();
-                resolve2();
+                resolve3();
                 queue.drain = previousDrain;
               };
             }
@@ -47523,9 +47523,9 @@ var require_stream4 = __commonJS({
         });
       }
       _getStat(filepath) {
-        return new Promise((resolve2, reject) => {
+        return new Promise((resolve3, reject) => {
           this._stat(filepath, this._fsStatSettings, (error, stats) => {
-            return error === null ? resolve2(stats) : reject(error);
+            return error === null ? resolve3(stats) : reject(error);
           });
         });
       }
@@ -47549,10 +47549,10 @@ var require_async5 = __commonJS({
         this._readerStream = new stream_1.default(this._settings);
       }
       dynamic(root, options) {
-        return new Promise((resolve2, reject) => {
+        return new Promise((resolve3, reject) => {
           this._walkAsync(root, options, (error, entries) => {
             if (error === null) {
-              resolve2(entries);
+              resolve3(entries);
             } else {
               reject(error);
             }
@@ -47562,10 +47562,10 @@ var require_async5 = __commonJS({
       async static(patterns, options) {
         const entries = [];
         const stream = this._readerStream.static(patterns, options);
-        return new Promise((resolve2, reject) => {
+        return new Promise((resolve3, reject) => {
           stream.once("error", reject);
           stream.on("data", (entry) => entries.push(entry));
-          stream.once("end", () => resolve2(entries));
+          stream.once("end", () => resolve3(entries));
         });
       }
     };
@@ -53424,8 +53424,8 @@ var Ink = class {
     }
   }
   async waitUntilExit() {
-    this.exitPromise ||= new Promise((resolve2, reject) => {
-      this.resolveExitPromise = resolve2;
+    this.exitPromise ||= new Promise((resolve3, reject) => {
+      this.resolveExitPromise = resolve3;
       this.rejectExitPromise = reject;
     });
     return this.exitPromise;
@@ -54308,19 +54308,19 @@ var baseOpen = async (options) => {
   }
   const subprocess = childProcess3.spawn(command, cliArguments, childProcessOptions);
   if (options.wait) {
-    return new Promise((resolve2, reject) => {
+    return new Promise((resolve3, reject) => {
       subprocess.once("error", reject);
       subprocess.once("close", (exitCode) => {
         if (!options.allowNonzeroExitCode && exitCode !== 0) {
           reject(new Error(`Exited with code ${exitCode}`));
           return;
         }
-        resolve2(subprocess);
+        resolve3(subprocess);
       });
     });
   }
   if (isFallbackAttempt) {
-    return new Promise((resolve2, reject) => {
+    return new Promise((resolve3, reject) => {
       subprocess.once("error", reject);
       subprocess.once("spawn", () => {
         subprocess.once("close", (exitCode) => {
@@ -54330,17 +54330,17 @@ var baseOpen = async (options) => {
             return;
           }
           subprocess.unref();
-          resolve2(subprocess);
+          resolve3(subprocess);
         });
       });
     });
   }
   subprocess.unref();
-  return new Promise((resolve2, reject) => {
+  return new Promise((resolve3, reject) => {
     subprocess.once("error", reject);
     subprocess.once("spawn", () => {
       subprocess.off("error", reject);
-      resolve2(subprocess);
+      resolve3(subprocess);
     });
   });
 };
@@ -54510,6 +54510,19 @@ var SETTING_FIELDS = [
 function ensureConfigDir() {
   if (!existsSync2(CONFIG_DIR)) {
     mkdirSync(CONFIG_DIR, { recursive: true });
+  }
+}
+function loadSettings() {
+  ensureConfigDir();
+  if (!existsSync2(SETTINGS_FILE)) {
+    return { ...DEFAULT_SETTINGS };
+  }
+  try {
+    const content = readFileSync2(SETTINGS_FILE, "utf-8");
+    const loaded = JSON.parse(content);
+    return { ...DEFAULT_SETTINGS, ...loaded };
+  } catch {
+    return { ...DEFAULT_SETTINGS };
   }
 }
 function saveSettings(settings) {
@@ -55716,8 +55729,9 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
 
 // src/setup.ts
 import { existsSync as existsSync7, readFileSync as readFileSync6, writeFileSync as writeFileSync5, appendFileSync as appendFileSync2, mkdirSync as mkdirSync4, copyFileSync } from "fs";
-import { join as join7, dirname as dirname2 } from "path";
+import { join as join7, dirname as dirname2, resolve as resolve2 } from "path";
 import { homedir as homedir6 } from "os";
+import { createInterface } from "readline";
 var SELECTION_FILE2 = getSelectionFile();
 var toBashPath = (p) => p.replace(/^([a-zA-Z]):/, (_, drive) => `/${drive.toLowerCase()}`).replace(/\\/g, "/");
 function backupFile(filePath) {
@@ -55732,6 +55746,33 @@ function backupFile(filePath) {
   }
   copyFileSync(filePath, backupPath);
   return backupPath;
+}
+function formatPathForDisplay(p) {
+  return resolve2(p);
+}
+async function promptForPath(rl, defaultPath) {
+  const question = (prompt) => {
+    return new Promise((res) => rl.question(prompt, res));
+  };
+  console.log("Enter your projects directory:");
+  console.log(`(Leave empty to use the current folder: ${formatPathForDisplay(defaultPath)})`);
+  while (true) {
+    const answer = await question("> ");
+    const path2 = resolve2(answer.trim() || defaultPath);
+    if (existsSync7(path2)) {
+      return path2;
+    }
+    console.log(`Path does not exist: ${path2}`);
+    console.log("Please enter a valid directory path:");
+  }
+}
+async function promptYesNo(rl, prompt, defaultYes = true) {
+  const question = (q) => new Promise((res) => rl.question(q, res));
+  const hint = defaultYes ? "[Y/n]" : "[y/N]";
+  const answer = await question(`${prompt} ${hint} `);
+  const trimmed = answer.trim().toLowerCase();
+  if (trimmed === "") return defaultYes;
+  return trimmed === "y" || trimmed === "yes";
 }
 function getBashWrapper(withAlias) {
   let wrapper = `
@@ -55906,8 +55947,25 @@ function setupPowerShell(withAlias) {
 }
 async function runSetup(shellArg, aliasArg) {
   console.log("Setting up Dash CLI...\n");
-  const withAlias = shellArg === "--alias" || aliasArg === "--alias";
+  const aliasProvided = shellArg === "--alias" || aliasArg === "--alias";
   const actualShellArg = shellArg === "--alias" ? void 0 : shellArg;
+  const rl = createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+  const projectsDir = await promptForPath(rl, process.cwd());
+  const settings = loadSettings();
+  settings.projectsDir = projectsDir;
+  saveSettings(settings);
+  console.log(`
+\u2713 Projects directory set to: ${formatPathForDisplay(projectsDir)}
+`);
+  let withAlias = aliasProvided;
+  if (!aliasProvided) {
+    withAlias = await promptYesNo(rl, "Add 'd' as a shortcut alias?");
+    console.log();
+  }
+  rl.close();
   let shell;
   if (actualShellArg === "bash") {
     shell = "bash";

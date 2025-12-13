@@ -1,7 +1,9 @@
 import { existsSync, readFileSync, writeFileSync, appendFileSync, mkdirSync, copyFileSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { join, dirname, resolve } from "node:path";
 import { homedir } from "node:os";
+import { createInterface, Interface as ReadlineInterface } from "node:readline";
 import { getSelectionFile } from "./history.js";
+import { loadSettings, saveSettings } from "./settings.js";
 
 const SELECTION_FILE = getSelectionFile();
 
@@ -29,6 +31,51 @@ function backupFile(filePath: string): string | null {
 
   copyFileSync(filePath, backupPath);
   return backupPath;
+}
+
+/**
+ * Format path for display (normalized for the current platform)
+ */
+function formatPathForDisplay(p: string): string {
+  return resolve(p);
+}
+
+/**
+ * Prompt user for projects directory with validation loop
+ */
+async function promptForPath(rl: ReadlineInterface, defaultPath: string): Promise<string> {
+  const question = (prompt: string): Promise<string> => {
+    return new Promise((res) => rl.question(prompt, res));
+  };
+
+  console.log("Enter your projects directory:");
+  console.log(`(Leave empty to use the current folder: ${formatPathForDisplay(defaultPath)})`);
+
+  while (true) {
+    const answer = await question("> ");
+    const path = resolve(answer.trim() || defaultPath);
+
+    if (existsSync(path)) {
+      return path;
+    }
+
+    console.log(`Path does not exist: ${path}`);
+    console.log("Please enter a valid directory path:");
+  }
+}
+
+/**
+ * Prompt user for yes/no answer
+ */
+async function promptYesNo(rl: ReadlineInterface, prompt: string, defaultYes = true): Promise<boolean> {
+  const question = (q: string): Promise<string> => new Promise((res) => rl.question(q, res));
+  const hint = defaultYes ? "[Y/n]" : "[y/N]";
+
+  const answer = await question(`${prompt} ${hint} `);
+  const trimmed = answer.trim().toLowerCase();
+
+  if (trimmed === "") return defaultYes;
+  return trimmed === "y" || trimmed === "yes";
 }
 
 // Shell wrapper scripts
@@ -259,9 +306,34 @@ export async function runSetup(shellArg?: string, aliasArg?: string): Promise<vo
   console.log("Setting up Dash CLI...\n");
 
   // Check for --alias flag
-  const withAlias = shellArg === "--alias" || aliasArg === "--alias";
+  const aliasProvided = shellArg === "--alias" || aliasArg === "--alias";
   const actualShellArg = shellArg === "--alias" ? undefined : shellArg;
 
+  // Create readline interface for interactive prompts
+  const rl = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  // Prompt for projects directory
+  const projectsDir = await promptForPath(rl, process.cwd());
+
+  // Save settings
+  const settings = loadSettings();
+  settings.projectsDir = projectsDir;
+  saveSettings(settings);
+  console.log(`\n✓ Projects directory set to: ${formatPathForDisplay(projectsDir)}\n`);
+
+  // Prompt for alias if not already specified via flag
+  let withAlias = aliasProvided;
+  if (!aliasProvided) {
+    withAlias = await promptYesNo(rl, "Add 'd' as a shortcut alias?");
+    console.log();
+  }
+
+  rl.close();
+
+  // Determine shell
   let shell: Shell;
 
   if (actualShellArg === "bash") {
