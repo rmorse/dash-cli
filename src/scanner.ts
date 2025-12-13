@@ -1,6 +1,6 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import fg from "fast-glob";
-import { join, basename, dirname, relative } from "node:path";
+import { join, basename, dirname, relative, resolve } from "node:path";
 import type { Project, Settings } from "./types.js";
 import { DEFAULT_SETTINGS } from "./settings.js";
 import { log } from "./logger.js";
@@ -8,6 +8,36 @@ import { log } from "./logger.js";
 // Abort signal for cancelling scans
 export interface ScanAbortSignal {
   aborted: boolean;
+}
+
+// Detect if running in WSL
+let isWSL: boolean | null = null;
+function detectWSL(): boolean {
+  if (isWSL !== null) return isWSL;
+  try {
+    const procVersion = readFileSync("/proc/version", "utf-8").toLowerCase();
+    isWSL = procVersion.includes("microsoft") || procVersion.includes("wsl");
+  } catch {
+    isWSL = false;
+  }
+  log(`detectWSL: isWSL=${isWSL}`);
+  return isWSL;
+}
+
+// Convert Windows path to WSL path if needed (D:\projects -> /mnt/d/projects)
+function toNativePath(windowsPath: string): string {
+  if (!detectWSL()) return windowsPath;
+
+  // Check if it's a Windows-style path (e.g., D:\projects or D:/projects)
+  const match = windowsPath.match(/^([a-zA-Z]):[/\\](.*)$/);
+  if (match) {
+    const drive = match[1].toLowerCase();
+    const rest = match[2].replace(/\\/g, "/");
+    const wslPath = `/mnt/${drive}/${rest}`;
+    log(`toNativePath: converted ${windowsPath} -> ${wslPath}`);
+    return wslPath;
+  }
+  return windowsPath;
 }
 
 /**
@@ -28,16 +58,21 @@ function parseSkipPatterns(skipDirs: string): string[] {
  * Creates intermediate folder nodes for non-git-repo directories that contain repos.
  */
 function buildProjectTree(projectPaths: string[], projectsDir: string): Project[] {
+  // Normalize projectsDir using resolve for consistent comparisons
+  const normalizedProjectsDir = resolve(projectsDir);
+  log(`buildProjectTree: projectsDir="${projectsDir}" -> normalized="${normalizedProjectsDir}"`);
+  log(`buildProjectTree: processing ${projectPaths.length} paths`);
+
   // Map to store all nodes by their full path
   const nodeMap = new Map<string, Project>();
 
   for (const fullPath of projectPaths) {
     // Get path relative to projectsDir and split into segments
-    const relativePath = relative(projectsDir, fullPath);
+    const relativePath = relative(normalizedProjectsDir, fullPath);
     const segments = relativePath.split(/[/\\]/);
 
     // Build nodes for each path segment
-    let currentFullPath = projectsDir;
+    let currentFullPath = normalizedProjectsDir;
     let parentNode: Project | undefined;
 
     for (let i = 0; i < segments.length; i++) {
@@ -75,10 +110,11 @@ function buildProjectTree(projectPaths: string[], projectsDir: string): Project[
   // Collect root nodes (direct children of projectsDir)
   const rootProjects: Project[] = [];
   for (const [path, node] of nodeMap) {
-    if (dirname(path) === projectsDir) {
+    if (dirname(path) === normalizedProjectsDir) {
       rootProjects.push(node);
     }
   }
+  log(`buildProjectTree: found ${rootProjects.length} root projects`);
 
   // Sort all project lists alphabetically
   const sortProjects = (projects: Project[]): Project[] => {
@@ -98,7 +134,7 @@ function buildProjectTree(projectPaths: string[], projectsDir: string): Project[
  */
 export function scanProjects(settings?: Settings): Project[] {
   const config = settings ?? DEFAULT_SETTINGS;
-  const projectsDir = config.projectsDir;
+  const projectsDir = toNativePath(config.projectsDir);
   const maxDepth = config.maxDepth;
   const ignorePatterns = parseSkipPatterns(config.skipDirs);
 
@@ -131,7 +167,7 @@ export function scanProjects(settings?: Settings): Project[] {
  */
 export async function scanProjectsAsync(settings?: Settings, signal?: ScanAbortSignal): Promise<Project[]> {
   const config = settings ?? DEFAULT_SETTINGS;
-  const projectsDir = config.projectsDir;
+  const projectsDir = toNativePath(config.projectsDir);
   const maxDepth = config.maxDepth;
   const ignorePatterns = parseSkipPatterns(config.skipDirs);
   const abortSignal = signal ?? { aborted: false };

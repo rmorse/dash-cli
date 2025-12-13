@@ -4,8 +4,8 @@ import Spinner from "ink-spinner";
 import type { Project, HistoryEntry, FavoriteEntry, Settings } from "../types.js";
 import { basename } from "node:path";
 import { SettingsScreen } from "./Settings.js";
-import { scanProjects, scanProjectsAsync, ScanAbortSignal } from "../scanner.js";
-import { loadCache, saveCache } from "../cache.js";
+import { scanProjectsAsync, ScanAbortSignal } from "../scanner.js";
+import { loadCacheAsync, saveCache } from "../cache.js";
 import { addFavorite, removeFavorite, isFavorite } from "../history.js";
 import { log } from "../logger.js";
 
@@ -97,26 +97,31 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
   useEffect(() => {
     log("useEffect: mount - starting cache/scan");
     scanAbortSignal.current = { aborted: false };
-
-    // Try to load from cache first
-    log("useEffect: loading cache...");
-    const cached = loadCache(settings.projectsDir, settings.maxDepth, settings.skipDirs);
-    log(`useEffect: cache loaded, ${cached ? cached.length + " projects" : "no cache"}`);
-
-    if (cached) {
-      // Show cached results immediately
-      setProjects(cached);
-      log("useEffect: set projects from cache");
-    }
-
-    // Always scan (background refresh if cached, initial scan if not)
     setIsRefreshing(true);
-    log("useEffect: starting async scan...");
+
+    // Load cache and scan in parallel - show whichever finishes first
+    log("useEffect: starting async cache load and scan in parallel...");
+
+    // Track if we've shown results yet
+    let hasShownResults = false;
+
+    // Load cache (async)
+    loadCacheAsync(settings.projectsDir, settings.maxDepth, settings.skipDirs).then((cached) => {
+      log(`useEffect: cache loaded, ${cached ? cached.length + " projects" : "no cache"}`);
+      if (cached && !scanAbortSignal.current.aborted && !hasShownResults) {
+        setProjects(cached);
+        hasShownResults = true;
+        log("useEffect: showing cached projects");
+      }
+    });
+
+    // Scan (async)
     scanProjectsAsync(settings, scanAbortSignal.current).then((scanned) => {
       log(`useEffect: scan complete, ${scanned.length} projects`);
       if (!scanAbortSignal.current.aborted) {
         setProjects(scanned);
         setIsRefreshing(false);
+        hasShownResults = true;
         saveCache(scanned, settings.projectsDir, settings.maxDepth, settings.skipDirs);
         log("useEffect: projects updated and cache saved");
       }
@@ -407,27 +412,44 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
   };
 
   const handleSettingsSave = (newSettings: Settings) => {
+    log("handleSettingsSave: called");
     const needsRescan =
       newSettings.projectsDir !== settings.projectsDir ||
       newSettings.maxDepth !== settings.maxDepth ||
       newSettings.skipDirs !== settings.skipDirs;
 
+    log(`handleSettingsSave: needsRescan=${needsRescan}`);
+    log("handleSettingsSave: calling onSettingsSave (sync file write)...");
     setSettings(newSettings);
     onSettingsSave(newSettings);
+    log("handleSettingsSave: onSettingsSave done");
+
+    // Switch to main screen immediately
+    setScreen("main");
 
     if (needsRescan) {
-      const newProjects = scanProjects(newSettings);
-      setProjects(newProjects);
-      // Reset navigation and cache
-      setNavStack([{ projects: newProjects, parentPath: null, savedScrollOffset: 0, savedSelectedIndex: 1 }]);
-      setNestedCache(new Map());
-      setScrollOffset(0);
-      setSelectedIndex(1);
-      // Update disk cache
-      saveCache(newProjects, newSettings.projectsDir, newSettings.maxDepth, newSettings.skipDirs);
-    }
+      // Use async scan to avoid blocking UI
+      log("handleSettingsSave: starting async rescan...");
+      setIsRefreshing(true);
+      scanAbortSignal.current = { aborted: false };
 
-    setScreen("main");
+      scanProjectsAsync(newSettings, scanAbortSignal.current).then((newProjects) => {
+        log(`handleSettingsSave: async scan complete, ${newProjects.length} projects`);
+        if (!scanAbortSignal.current.aborted) {
+          setProjects(newProjects);
+          // Reset navigation and cache
+          setNavStack([{ projects: newProjects, parentPath: null, savedScrollOffset: 0, savedSelectedIndex: 1 }]);
+          setNestedCache(new Map());
+          setScrollOffset(0);
+          setSelectedIndex(1);
+          setIsRefreshing(false);
+          // Update disk cache
+          log("handleSettingsSave: saving cache...");
+          saveCache(newProjects, newSettings.projectsDir, newSettings.maxDepth, newSettings.skipDirs);
+          log("handleSettingsSave: done");
+        }
+      });
+    }
   };
 
   useInput((input, key) => {

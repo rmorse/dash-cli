@@ -20,7 +20,7 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  projectsDir: "D:\\projects",
+  projectsDir: "",
   maxDepth: 4,
   skipDirs: "node_modules,vendor,dist,build,.next,__pycache__,target,.svn,.expo,.gradle,wp-admin,wp-includes,wp-content,*.app,release,incremental,pristine,tags",
   recentCount: 5,

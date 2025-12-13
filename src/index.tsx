@@ -1,3 +1,5 @@
+import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import React from "react";
 import { render } from "ink";
 import { App } from "./components/App.js";
@@ -6,10 +8,28 @@ import { loadSettingsAsync, saveSettings } from "./settings.js";
 import { runSetup } from "./setup.js";
 import { initLog, log } from "./logger.js";
 
-// This runs after all imports are loaded
-console.error(`[${new Date().toISOString()}] All modules loaded, starting main...`);
+// Early startup timing - write directly to file since Ink captures console
+const LOG_DIR = join(process.cwd(), "logs");
+const LOG_FILE = join(LOG_DIR, "debug.log");
+const moduleLoadTime = Date.now();
+
+// Clear log file and write first entry
+try {
+  mkdirSync(LOG_DIR, { recursive: true });
+  writeFileSync(LOG_FILE, `=== Early startup at ${new Date().toISOString()} ===\n`);
+} catch {}
+
+function earlyLog(msg: string): void {
+  try {
+    appendFileSync(LOG_FILE, `[EARLY +${Date.now() - moduleLoadTime}ms] ${msg}\n`);
+  } catch {}
+}
+
+// Log immediately after imports
+earlyLog("all modules imported");
 
 async function main() {
+  earlyLog("main() called");
   initLog();
   log("main() started");
 

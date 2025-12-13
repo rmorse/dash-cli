@@ -16,7 +16,8 @@ function ensureLogsDir(): void {
 export function initLog(): void {
   ensureLogsDir();
   startTime = Date.now();
-  writeFileSync(LOG_FILE, `=== Log started at ${new Date().toISOString()} ===\n`);
+  // Use append to preserve early startup logs
+  appendFileSync(LOG_FILE, `\n=== Log started at ${new Date().toISOString()} ===\n`);
 }
 
 export function log(message: string): void {
