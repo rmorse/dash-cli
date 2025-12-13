@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
 import type { Project } from "./types.js";
+import { log } from "./logger.js";
 
 const CONFIG_DIR = join(homedir(), ".dash-cli");
 const CACHE_FILE = join(CONFIG_DIR, "cache.json");
@@ -18,13 +19,18 @@ interface CacheData {
  * Load cached scan results if available
  */
 export function loadCache(projectsDir: string, maxDepth: number, skipDirs: string): Project[] | null {
+  log(`loadCache: checking if cache exists at ${CACHE_FILE}`);
   if (!existsSync(CACHE_FILE)) {
+    log("loadCache: no cache file");
     return null;
   }
 
   try {
+    log("loadCache: reading cache file...");
     const content = readFileSync(CACHE_FILE, "utf-8");
+    log(`loadCache: read ${content.length} bytes, parsing...`);
     const cache: CacheData = JSON.parse(content);
+    log("loadCache: parsed successfully");
 
     // Validate cache matches current settings
     if (
@@ -32,11 +38,14 @@ export function loadCache(projectsDir: string, maxDepth: number, skipDirs: strin
       cache.maxDepth !== maxDepth ||
       cache.skipDirs !== skipDirs
     ) {
+      log("loadCache: cache settings mismatch");
       return null;
     }
 
+    log(`loadCache: returning ${cache.projects.length} cached projects`);
     return cache.projects;
-  } catch {
+  } catch (e) {
+    log(`loadCache: error - ${e}`);
     return null;
   }
 }

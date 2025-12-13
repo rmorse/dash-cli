@@ -1,4 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { readFile, mkdir, access } from "node:fs/promises";
 import { join } from "node:path";
 import { homedir } from "node:os";
 import type { HistoryData, HistoryEntry, FavoritesData, FavoriteEntry } from "./types.js";
@@ -135,4 +136,63 @@ export function isFavorite(path: string): boolean {
 
 export function clearFavorites(): void {
   saveFavoritesData({ favorites: [] });
+}
+
+// Async versions for faster startup
+async function pathExists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function ensureConfigDirAsync(): Promise<void> {
+  if (!await pathExists(CONFIG_DIR)) {
+    await mkdir(CONFIG_DIR, { recursive: true });
+  }
+}
+
+async function loadHistoryAsync(): Promise<HistoryData> {
+  await ensureConfigDirAsync();
+
+  if (!await pathExists(HISTORY_FILE)) {
+    return { recent: [] };
+  }
+
+  try {
+    const content = await readFile(HISTORY_FILE, "utf-8");
+    return JSON.parse(content) as HistoryData;
+  } catch {
+    return { recent: [] };
+  }
+}
+
+async function loadFavoritesDataAsync(): Promise<FavoritesData> {
+  await ensureConfigDirAsync();
+
+  if (!await pathExists(FAVORITES_FILE)) {
+    return { favorites: [] };
+  }
+
+  try {
+    const content = await readFile(FAVORITES_FILE, "utf-8");
+    return JSON.parse(content) as FavoritesData;
+  } catch {
+    return { favorites: [] };
+  }
+}
+
+export async function getRecentAsync(limit: number = 5): Promise<HistoryEntry[]> {
+  const data = await loadHistoryAsync();
+  return data.recent
+    .sort((a, b) => b.lastUsed - a.lastUsed)
+    .slice(0, limit);
+}
+
+export async function getFavoritesAsync(): Promise<FavoriteEntry[]> {
+  const data = await loadFavoritesDataAsync();
+  // Sort by addedAt ascending - first added stays #1
+  return data.favorites.sort((a, b) => a.addedAt - b.addedAt);
 }

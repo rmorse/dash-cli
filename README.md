@@ -56,7 +56,7 @@ Press `Tab` to open the settings screen, or edit `~/.dash-cli/settings.json`:
 |---------|---------|-------------|
 | `projectsDir` | `D:\projects` | Root directory to scan |
 | `maxDepth` | `4` | How deep to scan for nested repos |
-| `skipDirs` | `node_modules,.git,...` | Comma-separated patterns to skip (supports globs like `*.test`) |
+| `skipDirs` | `node_modules,...` | Comma-separated patterns to skip (supports globs like `*.test`) |
 | `recentCount` | `5` | Number of recent projects to show |
 | `visibleRows` | `12` | Viewport height |
 | `selectedColor` | `#FFD700` | Highlight color for selected item |

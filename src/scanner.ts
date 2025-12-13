@@ -1,233 +1,179 @@
-import { readdirSync, statSync, existsSync } from "node:fs";
-import { join, basename } from "node:path";
-import micromatch from "micromatch";
+import { existsSync } from "node:fs";
+import fg from "fast-glob";
+import { join, basename, dirname, relative } from "node:path";
 import type { Project, Settings } from "./types.js";
 import { DEFAULT_SETTINGS } from "./settings.js";
-
-// Yield to event loop every N directories to allow UI updates
-const YIELD_INTERVAL = 10;
-let directoriesProcessed = 0;
+import { log } from "./logger.js";
 
 // Abort signal for cancelling scans
 export interface ScanAbortSignal {
   aborted: boolean;
 }
 
-async function yieldToEventLoop(): Promise<void> {
-  return new Promise((resolve) => setImmediate(resolve));
-}
-
 /**
- * Check if a project tree contains any git repos
- */
-function containsGitRepos(projects: Project[]): boolean {
-  for (const p of projects) {
-    if (p.isGitRepo) return true;
-    if (p.nestedProjects && containsGitRepos(p.nestedProjects)) return true;
-  }
-  return false;
-}
-
-/**
- * Filter projects to only include git repos or containers of git repos
- */
-function filterToGitProjects(projects: Project[]): Project[] {
-  const filtered: Project[] = [];
-
-  for (const p of projects) {
-    // Filter nested projects first
-    const filteredNested = p.nestedProjects ? filterToGitProjects(p.nestedProjects) : [];
-    const hasNestedGitRepos = filteredNested.length > 0;
-
-    // Only include if it's a git repo OR has nested git repos
-    if (p.isGitRepo || hasNestedGitRepos) {
-      filtered.push({
-        ...p,
-        hasNestedProjects: hasNestedGitRepos,
-        nestedProjects: hasNestedGitRepos ? filteredNested : undefined,
-      });
-    }
-  }
-
-  return filtered;
-}
-
-/**
- * Parse skip patterns from comma-separated string
+ * Parse skip patterns from comma-separated string into glob ignore patterns
  */
 function parseSkipPatterns(skipDirs: string): string[] {
-  return skipDirs
+  const patterns = skipDirs
     .split(",")
     .map((p) => p.trim())
-    .filter((p) => p.length > 0);
+    .filter((p) => p.length > 0)
+    .map((p) => `**/${p}/**`);  // Convert to glob ignore format
+
+  return patterns;
 }
 
 /**
- * Check if a directory name should be skipped
+ * Build a nested project tree from flat list of project paths.
+ * Creates intermediate folder nodes for non-git-repo directories that contain repos.
  */
-function shouldSkip(name: string, patterns: string[]): boolean {
-  return patterns.some((pattern) => {
-    if (pattern.includes("*")) {
-      return micromatch.isMatch(name, pattern);
-    }
-    return name === pattern;
-  });
-}
+function buildProjectTree(projectPaths: string[], projectsDir: string): Project[] {
+  // Map to store all nodes by their full path
+  const nodeMap = new Map<string, Project>();
 
-/**
- * Scan a directory for nested git projects (sync version)
- */
-function findNestedProjects(
-  dir: string,
-  skipPatterns: string[],
-  maxDepth: number,
-  depth: number = 0
-): Project[] {
-  if (depth > maxDepth) return [];
+  for (const fullPath of projectPaths) {
+    // Get path relative to projectsDir and split into segments
+    const relativePath = relative(projectsDir, fullPath);
+    const segments = relativePath.split(/[/\\]/);
 
-  const projects: Project[] = [];
+    // Build nodes for each path segment
+    let currentFullPath = projectsDir;
+    let parentNode: Project | undefined;
 
-  try {
-    const entries = readdirSync(dir);
+    for (let i = 0; i < segments.length; i++) {
+      const segment = segments[i];
+      currentFullPath = join(currentFullPath, segment);
+      const isLastSegment = i === segments.length - 1;
 
-    for (const entry of entries) {
-      if (shouldSkip(entry, skipPatterns)) continue;
+      let node = nodeMap.get(currentFullPath);
+      if (!node) {
+        node = {
+          name: segment,
+          path: currentFullPath,
+          isGitRepo: isLastSegment, // Only the actual project path is a git repo
+          hasNestedProjects: false,
+          nestedProjects: undefined,
+        };
+        nodeMap.set(currentFullPath, node);
 
-      const fullPath = join(dir, entry);
-
-      try {
-        const stat = statSync(fullPath);
-        if (!stat.isDirectory()) continue;
-
-        const gitPath = join(fullPath, ".git");
-        const isGitRepo = existsSync(gitPath);
-
-        // Recursively find nested projects
-        const nested = findNestedProjects(fullPath, skipPatterns, maxDepth, depth + 1);
-
-        projects.push({
-          name: entry,
-          path: fullPath,
-          isGitRepo,
-          hasNestedProjects: nested.length > 0,
-          nestedProjects: nested.length > 0 ? nested : undefined,
-        });
-      } catch {
-        // Skip entries we can't access
-      }
-    }
-  } catch {
-    // Skip directories we can't read
-  }
-
-  return projects.sort((a, b) => a.name.localeCompare(b.name));
-}
-
-/**
- * Scan a directory for nested git projects (async version with yielding)
- */
-async function findNestedProjectsAsync(
-  dir: string,
-  skipPatterns: string[],
-  maxDepth: number,
-  signal: ScanAbortSignal,
-  depth: number = 0
-): Promise<Project[]> {
-  if (depth > maxDepth || signal.aborted) return [];
-
-  const projects: Project[] = [];
-
-  try {
-    const entries = readdirSync(dir);
-
-    for (const entry of entries) {
-      // Check abort signal frequently
-      if (signal.aborted) return projects;
-
-      if (shouldSkip(entry, skipPatterns)) continue;
-
-      const fullPath = join(dir, entry);
-
-      try {
-        const stat = statSync(fullPath);
-        if (!stat.isDirectory()) continue;
-
-        // Yield periodically to allow UI updates
-        directoriesProcessed++;
-        if (directoriesProcessed % YIELD_INTERVAL === 0) {
-          await yieldToEventLoop();
-          // Check again after yielding
-          if (signal.aborted) return projects;
+        if (parentNode) {
+          if (!parentNode.nestedProjects) {
+            parentNode.nestedProjects = [];
+          }
+          parentNode.nestedProjects.push(node);
+          parentNode.hasNestedProjects = true;
         }
-
-        const gitPath = join(fullPath, ".git");
-        const isGitRepo = existsSync(gitPath);
-
-        // Recursively find nested projects
-        const nested = await findNestedProjectsAsync(fullPath, skipPatterns, maxDepth, signal, depth + 1);
-
-        projects.push({
-          name: entry,
-          path: fullPath,
-          isGitRepo,
-          hasNestedProjects: nested.length > 0,
-          nestedProjects: nested.length > 0 ? nested : undefined,
-        });
-      } catch {
-        // Skip entries we can't access
+      } else if (isLastSegment) {
+        // Node already exists (as intermediate folder), mark it as a git repo too
+        node.isGitRepo = true;
       }
+
+      parentNode = node;
     }
-  } catch {
-    // Skip directories we can't read
   }
 
-  return projects.sort((a, b) => a.name.localeCompare(b.name));
+  // Collect root nodes (direct children of projectsDir)
+  const rootProjects: Project[] = [];
+  for (const [path, node] of nodeMap) {
+    if (dirname(path) === projectsDir) {
+      rootProjects.push(node);
+    }
+  }
+
+  // Sort all project lists alphabetically
+  const sortProjects = (projects: Project[]): Project[] => {
+    for (const p of projects) {
+      if (p.nestedProjects) {
+        p.nestedProjects = sortProjects(p.nestedProjects);
+      }
+    }
+    return projects.sort((a, b) => a.name.localeCompare(b.name));
+  };
+
+  return sortProjects(rootProjects);
 }
 
 /**
- * Scan the root projects directory (sync version)
+ * Scan the root projects directory (sync version using fast-glob sync)
  */
 export function scanProjects(settings?: Settings): Project[] {
   const config = settings ?? DEFAULT_SETTINGS;
   const projectsDir = config.projectsDir;
   const maxDepth = config.maxDepth;
-  const skipPatterns = parseSkipPatterns(config.skipDirs);
+  const ignorePatterns = parseSkipPatterns(config.skipDirs);
 
   if (!existsSync(projectsDir)) {
     return [];
   }
 
-  const allProjects = findNestedProjects(projectsDir, skipPatterns, maxDepth, 0);
-  // Filter to only include git repos and their containers
-  return filterToGitProjects(allProjects);
+  try {
+    // Find all .git directories
+    const gitDirs = fg.sync("**/.git", {
+      cwd: projectsDir,
+      onlyDirectories: true,
+      deep: maxDepth + 1,  // +1 because .git is inside the project
+      ignore: ignorePatterns,
+      followSymbolicLinks: false,
+      suppressErrors: true,
+    });
+
+    // Convert to full paths (parent of .git)
+    const projectPaths = gitDirs.map((g) => join(projectsDir, dirname(g)));
+
+    return buildProjectTree(projectPaths, projectsDir);
+  } catch {
+    return [];
+  }
 }
 
 /**
- * Scan the root projects directory (async version with yielding for UI)
+ * Scan the root projects directory (async version with fast-glob)
  */
 export async function scanProjectsAsync(settings?: Settings, signal?: ScanAbortSignal): Promise<Project[]> {
   const config = settings ?? DEFAULT_SETTINGS;
   const projectsDir = config.projectsDir;
   const maxDepth = config.maxDepth;
-  const skipPatterns = parseSkipPatterns(config.skipDirs);
+  const ignorePatterns = parseSkipPatterns(config.skipDirs);
   const abortSignal = signal ?? { aborted: false };
 
-  // Reset counter for each scan
-  directoriesProcessed = 0;
+  log(`scanProjectsAsync: starting glob scan of ${projectsDir}, maxDepth=${maxDepth}`);
 
   if (!existsSync(projectsDir)) {
+    log(`scanProjectsAsync: projectsDir does not exist`);
     return [];
   }
 
-  const allProjects = await findNestedProjectsAsync(projectsDir, skipPatterns, maxDepth, abortSignal, 0);
+  try {
+    // Find all .git directories with fast-glob
+    log(`scanProjectsAsync: running fast-glob for **/.git`);
+    const gitDirs = await fg("**/.git", {
+      cwd: projectsDir,
+      onlyDirectories: true,
+      deep: maxDepth + 1,  // +1 because .git is inside the project
+      ignore: ignorePatterns,
+      followSymbolicLinks: false,
+      suppressErrors: true,
+    });
 
-  // Don't bother filtering if aborted
-  if (abortSignal.aborted) {
+    log(`scanProjectsAsync: found ${gitDirs.length} git repos`);
+
+    if (abortSignal.aborted) {
+      log(`scanProjectsAsync: scan was aborted`);
+      return [];
+    }
+
+    // Convert to full paths (parent of .git)
+    const projectPaths = gitDirs.map((g) => join(projectsDir, dirname(g)));
+
+    // Build nested tree structure
+    const projects = buildProjectTree(projectPaths, projectsDir);
+    log(`scanProjectsAsync: built tree with ${projects.length} root projects`);
+
+    return projects;
+  } catch (e) {
+    log(`scanProjectsAsync: error - ${e}`);
     return [];
   }
-
-  // Filter to only include git repos and their containers
-  return filterToGitProjects(allProjects);
 }
 
 /**

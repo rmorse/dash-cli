@@ -5,6 +5,10 @@ import { getSelectionFile } from "./history.js";
 
 const SELECTION_FILE = getSelectionFile();
 
+// Convert Windows path to Git Bash format: C:\Users\foo -> /c/Users/foo
+const toBashPath = (p: string) =>
+  p.replace(/^([a-zA-Z]):/, (_, drive: string) => `/${drive.toLowerCase()}`).replace(/\\/g, "/");
+
 /**
  * Create a backup of a file before modifying it.
  * Uses .bkp, .bkp1, .bkp2, etc. to find an unused filename.
@@ -34,7 +38,7 @@ function getBashWrapper(withAlias: boolean): string {
 dash() {
     dash-cli "$@"
     local selected
-    selected=$(cat "${SELECTION_FILE.replace(/\\/g, "/")}" 2>/dev/null)
+    selected=$(cat "${toBashPath(SELECTION_FILE)}" 2>/dev/null)
     if [ -n "$selected" ] && [ -d "$selected" ]; then
         cd "$selected" || return 1
     fi
@@ -185,13 +189,14 @@ function removeExistingConfig(content: string): string {
 
 function setupBash(withAlias: boolean): void {
   const configFile = getBashConfigFile();
-  const sourceCmd = `source ${configFile}`;
+  const bashConfigFile = toBashPath(configFile);
+  const sourceCmd = `source ${bashConfigFile}`;
   let isUpdate = false;
 
   // Backup the file before modifying
   const backupPath = backupFile(configFile);
   if (backupPath) {
-    console.log(`  Backup created: ${backupPath}`);
+    console.log(`  Backup created: ${toBashPath(backupPath)}`);
   }
 
   // Remove existing config if present
@@ -206,7 +211,7 @@ function setupBash(withAlias: boolean): void {
 
   // Append wrapper
   appendFileSync(configFile, getBashWrapper(withAlias));
-  console.log(`✓ ${isUpdate ? "Updated" : "Added to"} ${configFile}`);
+  console.log(`✓ ${isUpdate ? "Updated" : "Added to"} ${bashConfigFile}`);
   if (withAlias) {
     console.log("  Added 'd' alias for quick access.");
   }

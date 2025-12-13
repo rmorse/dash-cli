@@ -3,11 +3,11 @@ import { Box, Text, useInput, useApp } from "ink";
 import Spinner from "ink-spinner";
 import type { Project, HistoryEntry, FavoriteEntry, Settings } from "../types.js";
 import { basename } from "node:path";
-import { existsSync } from "node:fs";
 import { SettingsScreen } from "./Settings.js";
 import { scanProjects, scanProjectsAsync, ScanAbortSignal } from "../scanner.js";
 import { loadCache, saveCache } from "../cache.js";
 import { addFavorite, removeFavorite, isFavorite } from "../history.js";
+import { log } from "../logger.js";
 
 const PAGE_SIZE = 10;
 
@@ -77,6 +77,7 @@ function collectNestedGitProjects(project: Project, basePath: string): Project[]
 }
 
 export function App({ initialSettings, recentEntries: initialRecentEntries, favoriteEntries: initialFavoriteEntries, onSelect, onSettingsSave }: AppProps) {
+  log("App component function called");
   const { exit } = useApp();
 
   // Screen state
@@ -94,23 +95,30 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
 
   // Load from cache and/or scan on mount
   useEffect(() => {
+    log("useEffect: mount - starting cache/scan");
     scanAbortSignal.current = { aborted: false };
 
     // Try to load from cache first
+    log("useEffect: loading cache...");
     const cached = loadCache(settings.projectsDir, settings.maxDepth, settings.skipDirs);
+    log(`useEffect: cache loaded, ${cached ? cached.length + " projects" : "no cache"}`);
 
     if (cached) {
       // Show cached results immediately
       setProjects(cached);
+      log("useEffect: set projects from cache");
     }
 
     // Always scan (background refresh if cached, initial scan if not)
     setIsRefreshing(true);
+    log("useEffect: starting async scan...");
     scanProjectsAsync(settings, scanAbortSignal.current).then((scanned) => {
+      log(`useEffect: scan complete, ${scanned.length} projects`);
       if (!scanAbortSignal.current.aborted) {
         setProjects(scanned);
         setIsRefreshing(false);
         saveCache(scanned, settings.projectsDir, settings.maxDepth, settings.skipDirs);
+        log("useEffect: projects updated and cache saved");
       }
     });
 
@@ -175,9 +183,6 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
       const validFavoriteItems: ListItem[] = [];
       for (let i = 0; i < favoriteEntries.length; i++) {
         const entry = favoriteEntries[i];
-        // Skip if path no longer exists
-        if (!existsSync(entry.path)) continue;
-
         // Use project data if available, otherwise create minimal entry from path
         const project = allProjectsMap.get(entry.path);
         validFavoriteItems.push({
@@ -204,8 +209,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
     if (isAtRoot && recentEntries.length > 0) {
       const validRecentItems: ListItem[] = [];
       for (const entry of recentEntries) {
-        // Skip if path no longer exists or is already in favorites
-        if (!existsSync(entry.path)) continue;
+        // Skip if already in favorites
         if (favoritePaths.has(entry.path)) continue;
 
         // Use project data if available, otherwise create minimal entry from path

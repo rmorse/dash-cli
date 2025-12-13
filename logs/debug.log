@@ -1,0 +1,65 @@
+=== Log started at 2025-12-13T15:37:55.452Z ===
+[+     1ms] main() started
+[+     1ms] args: []
+[+     1ms] loading settings...
+[+     4ms] settings loaded, projectsDir: D:\projects
+[+     4ms] loading recent and favorites...
+[+     5ms] loaded 5 recent, 3 favorites
+[+     5ms] about to render App...
+[+     9ms] App component function called
+[+    21ms] render() returned, waiting for exit...
+[+    22ms] useEffect: mount - starting cache/scan
+[+    22ms] useEffect: loading cache...
+[+    23ms] loadCache: checking if cache exists at C:\Users\r_mor\.dash-cli\cache.json
+[+    23ms] loadCache: reading cache file...
+[+    23ms] loadCache: read 109 bytes, parsing...
+[+    23ms] loadCache: parsed successfully
+[+    23ms] loadCache: returning 0 cached projects
+[+    23ms] useEffect: cache loaded, 0 projects
+[+    23ms] useEffect: set projects from cache
+[+    23ms] useEffect: starting async scan...
+[+    24ms] scanProjectsAsync: starting glob scan of D:\projects, maxDepth=4
+[+    24ms] scanProjectsAsync: running fast-glob for **/.git
+[+    27ms] App component function called
+[+    30ms] App component function called
+[+    68ms] scanProjectsAsync: found 130 git repos
+[+    69ms] scanProjectsAsync: built tree with 129 root projects
+[+    69ms] useEffect: scan complete, 129 projects
+[+    70ms] App component function called
+[+    72ms] App component function called
+[+    74ms] useEffect: projects updated and cache saved
+[+   633ms] App component function called
+[+  1149ms] App component function called
+[+  1306ms] App component function called
+[+  1475ms] App component function called
+[+  1986ms] App component function called
+[+  2017ms] App component function called
+[+  2048ms] App component function called
+[+  2080ms] App component function called
+[+  2110ms] App component function called
+[+  2141ms] App component function called
+[+  2188ms] App component function called
+[+  2219ms] App component function called
+[+  2251ms] App component function called
+[+  2282ms] App component function called
+[+  2313ms] App component function called
+[+  2344ms] App component function called
+[+  2376ms] App component function called
+[+  2406ms] App component function called
+[+  2453ms] App component function called
+[+  2484ms] App component function called
+[+  2515ms] App component function called
+[+  2546ms] App component function called
+[+  2578ms] App component function called
+[+  2609ms] App component function called
+[+  2639ms] App component function called
+[+  2670ms] App component function called
+[+  2717ms] App component function called
+[+  2747ms] App component function called
+[+  2779ms] App component function called
+[+  2810ms] App component function called
+[+  2842ms] App component function called
+[+  2981ms] App component function called
+[+  3132ms] App component function called
+[+  3152ms] App component function called
+[+  3358ms] app exited

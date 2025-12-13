@@ -1,4 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { readFile, mkdir, access } from "node:fs/promises";
 import { join } from "node:path";
 import { homedir } from "node:os";
 
@@ -21,7 +22,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   projectsDir: "D:\\projects",
   maxDepth: 4,
-  skipDirs: "node_modules,.git,vendor,dist,build,.next,__pycache__",
+  skipDirs: "node_modules,vendor,dist,build,.next,__pycache__,target,.svn,.expo,.gradle,wp-admin,wp-includes,wp-content,*.app,release,incremental,pristine,tags",
   recentCount: 5,
   visibleRows: 12,
   selectedColor: "#FFD700",
@@ -135,4 +136,35 @@ export function loadSettings(): Settings {
 export function saveSettings(settings: Settings): void {
   ensureConfigDir();
   writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
+}
+
+async function pathExists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function ensureConfigDirAsync(): Promise<void> {
+  if (!await pathExists(CONFIG_DIR)) {
+    await mkdir(CONFIG_DIR, { recursive: true });
+  }
+}
+
+export async function loadSettingsAsync(): Promise<Settings> {
+  await ensureConfigDirAsync();
+
+  if (!await pathExists(SETTINGS_FILE)) {
+    return { ...DEFAULT_SETTINGS };
+  }
+
+  try {
+    const content = await readFile(SETTINGS_FILE, "utf-8");
+    const loaded = JSON.parse(content) as Partial<Settings>;
+    return { ...DEFAULT_SETTINGS, ...loaded };
+  } catch {
+    return { ...DEFAULT_SETTINGS };
+  }
 }
