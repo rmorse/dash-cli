@@ -6,6 +6,7 @@ import { basename } from "node:path";
 import { existsSync } from "node:fs";
 import { SettingsScreen } from "./Settings.js";
 import { scanProjects, scanProjectsAsync, ScanAbortSignal } from "../scanner.js";
+import { loadCache, saveCache } from "../cache.js";
 
 const PAGE_SIZE = 10;
 
@@ -17,7 +18,7 @@ interface AppProps {
 }
 
 interface ListItem {
-  type: "header" | "project" | "back" | "loading";
+  type: "header" | "project" | "back";
   label: string;
   path?: string;
   project?: Project;
@@ -79,23 +80,32 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
 
   // Projects and settings state
   const [projects, setProjects] = useState<Project[] | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [settings, setSettings] = useState(initialSettings);
   const [recentEntries, setRecentEntries] = useState(initialRecentEntries);
 
   // Abort signal for cancelling scans early (e.g., when user selects before scan completes)
   const scanAbortSignal = useRef<ScanAbortSignal>({ aborted: false });
 
-  // Scan projects on mount
+  // Load from cache and/or scan on mount
   useEffect(() => {
     scanAbortSignal.current = { aborted: false };
-    setIsLoading(true);
 
-    // Use async scanning to allow UI updates (spinner animation)
+    // Try to load from cache first
+    const cached = loadCache(settings.projectsDir, settings.maxDepth, settings.skipDirs);
+
+    if (cached) {
+      // Show cached results immediately
+      setProjects(cached);
+    }
+
+    // Always scan (background refresh if cached, initial scan if not)
+    setIsRefreshing(true);
     scanProjectsAsync(settings, scanAbortSignal.current).then((scanned) => {
       if (!scanAbortSignal.current.aborted) {
         setProjects(scanned);
-        setIsLoading(false);
+        setIsRefreshing(false);
+        saveCache(scanned, settings.projectsDir, settings.maxDepth, settings.skipDirs);
       }
     });
 
@@ -181,21 +191,16 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
     const sectionLabel = isAtRoot ? "All Projects" : getDisplayName(currentLevel.parentPath || "", settings.projectsDir);
     list.push({ type: "header", label: sectionLabel });
 
-    // Show loading indicator while scanning
-    if (isLoading && isAtRoot) {
-      list.push({ type: "loading", label: "Scanning..." });
-    } else {
-      for (const project of currentProjects) {
-        if (isAtRoot && recentPaths.has(project.path)) continue;
+    for (const project of currentProjects) {
+      if (isAtRoot && recentPaths.has(project.path)) continue;
 
-        list.push({
-          type: "project",
-          label: project.name,
-          path: project.path,
-          project,
-          isRecent: false,
-        });
-      }
+      list.push({
+        type: "project",
+        label: project.name,
+        path: project.path,
+        project,
+        isRecent: false,
+      });
     }
 
     // Back option at bottom when not at root
@@ -204,7 +209,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
     }
 
     return list;
-  }, [currentProjects, recentEntries, isAtRoot, recentPaths, allProjectsMap, currentLevel.parentPath, settings.projectsDir, isLoading]);
+  }, [currentProjects, recentEntries, isAtRoot, recentPaths, allProjectsMap, currentLevel.parentPath, settings.projectsDir]);
 
   // Filter items based on search term
   const items = useMemo(() => {
@@ -222,13 +227,6 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
         headerAdded = false;
       } else if (item.type === "back") {
         backItem = item;
-      } else if (item.type === "loading") {
-        // Always include loading item with its header
-        if (currentHeader && !headerAdded) {
-          filtered.push(currentHeader);
-          headerAdded = true;
-        }
-        filtered.push(item);
       } else {
         if (item.label.toLowerCase().includes(lowerSearch)) {
           // Add header before first matching item in this section
@@ -324,6 +322,24 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
     }
   };
 
+  const refreshProjects = () => {
+    if (isRefreshing) return; // Already scanning
+
+    setIsRefreshing(true);
+    scanAbortSignal.current = { aborted: false };
+
+    scanProjectsAsync(settings, scanAbortSignal.current).then((scanned) => {
+      if (!scanAbortSignal.current.aborted) {
+        setProjects(scanned);
+        setIsRefreshing(false);
+        saveCache(scanned, settings.projectsDir, settings.maxDepth, settings.skipDirs);
+        // Reset navigation
+        setNavStack([{ projects: scanned, parentPath: null, savedScrollOffset: 0, savedSelectedIndex: 1 }]);
+        setNestedCache(new Map());
+      }
+    });
+  };
+
   const handleSettingsSave = (newSettings: Settings) => {
     const needsRescan =
       newSettings.projectsDir !== settings.projectsDir ||
@@ -341,6 +357,8 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
       setNestedCache(new Map());
       setScrollOffset(0);
       setSelectedIndex(1);
+      // Update disk cache
+      saveCache(newProjects, newSettings.projectsDir, newSettings.maxDepth, newSettings.skipDirs);
     }
 
     setScreen("main");
@@ -353,6 +371,12 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
     // Tab - open settings
     if (key.tab) {
       setScreen("settings");
+      return;
+    }
+
+    // Ctrl+R - refresh projects list
+    if (key.ctrl && input === "r") {
+      refreshProjects();
       return;
     }
 
@@ -569,14 +593,6 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
           );
         }
 
-        if (item.type === "loading") {
-          return (
-            <Box key="loading">
-              <Text color="cyan">{"  "}<Spinner type="dots" /> {item.label}</Text>
-            </Box>
-          );
-        }
-
         const project = item.project!;
         const hasNested = !item.isRecent && project.hasNestedProjects;
 
@@ -606,9 +622,17 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
         </Box>
       )}
 
-      <Box marginTop={1}>
+      {isRefreshing && (
+        <Box marginTop={1}>
+          <Text color="cyan">
+            <Spinner type="dots" /> Refreshing...
+          </Text>
+        </Box>
+      )}
+
+      <Box marginTop={isRefreshing ? 0 : 1}>
         <Text dimColor>
-          type to filter • ↑↓ navigate • enter select • →← drill/back • tab settings • esc quit
+          ↑↓ navigate • enter select • →← drill/back • tab settings • ^R refresh • esc quit
         </Text>
       </Box>
     </Box>

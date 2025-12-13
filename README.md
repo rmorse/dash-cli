@@ -5,6 +5,7 @@ Interactive CLI to quickly navigate to project directories.
 ## Features
 
 - Scans for git repositories (configurable depth)
+- **Instant startup** - cached results load immediately, background refresh
 - Type-to-filter search
 - Recent projects shown at top
 - Nested project drill-down navigation
@@ -29,6 +30,7 @@ projects
 | `→` / `←` | Drill into / back from nested projects |
 | `PgUp` / `PgDn` | Page navigation |
 | Type | Filter projects |
+| `Ctrl+R` | Refresh projects list |
 | `Esc` | Clear filter / go back / quit |
 | `Tab` | Open settings |
 
@@ -73,6 +75,7 @@ projects-cli --setup bash --alias       # Bash with 'p' shortcut
 Stored in `~/.projects-cli/`:
 - `settings.json` - User settings
 - `history.json` - Recent projects
+- `cache.json` - Cached project scan (for instant startup)
 - `last-selection` - Last selected path (for shell wrapper)
 
 ## Development
