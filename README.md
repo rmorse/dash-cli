@@ -7,6 +7,7 @@ Interactive CLI to quickly navigate to project directories.
 - Scans for git repositories (configurable depth)
 - **Instant startup** - cached results load immediately, background refresh
 - Type-to-filter search
+- **Favorites** - mark frequently used projects with Ctrl+F
 - Recent projects shown at top
 - Nested project drill-down navigation
 - Configurable via settings screen
@@ -30,6 +31,7 @@ projects
 | `→` / `←` | Drill into / back from nested projects |
 | `PgUp` / `PgDn` | Page navigation |
 | Type | Filter projects |
+| `Ctrl+F` | Toggle favorite |
 | `Ctrl+R` | Refresh projects list |
 | `Esc` | Clear filter / go back / quit |
 | `Tab` | Open settings |
@@ -46,6 +48,7 @@ Press `Tab` to open the settings screen, or edit `~/.projects-cli/settings.json`
 | `recentCount` | `5` | Number of recent projects to show |
 | `visibleRows` | `12` | Viewport height |
 | `selectedColor` | `#FFD700` | Highlight color for selected item |
+| `favoriteColor` | `#69FFBE` | Color for favorite items |
 | `recentColor` | `#6495ED` | Color for recent items |
 
 ## Installation
@@ -74,6 +77,7 @@ projects-cli --setup bash --alias       # Bash with 'p' shortcut
 
 Stored in `~/.projects-cli/`:
 - `settings.json` - User settings
+- `favorites.json` - Favorite projects
 - `history.json` - Recent projects
 - `cache.json` - Cached project scan (for instant startup)
 - `last-selection` - Last selected path (for shell wrapper)

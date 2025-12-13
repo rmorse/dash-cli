@@ -1,18 +1,20 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Box, Text, useInput, useApp } from "ink";
 import Spinner from "ink-spinner";
-import type { Project, HistoryEntry, Settings } from "../types.js";
+import type { Project, HistoryEntry, FavoriteEntry, Settings } from "../types.js";
 import { basename } from "node:path";
 import { existsSync } from "node:fs";
 import { SettingsScreen } from "./Settings.js";
 import { scanProjects, scanProjectsAsync, ScanAbortSignal } from "../scanner.js";
 import { loadCache, saveCache } from "../cache.js";
+import { addFavorite, removeFavorite, isFavorite } from "../history.js";
 
 const PAGE_SIZE = 10;
 
 interface AppProps {
   initialSettings: Settings;
   recentEntries: HistoryEntry[];
+  favoriteEntries: FavoriteEntry[];
   onSelect: (path: string, displayName: string) => void;
   onSettingsSave: (settings: Settings) => void;
 }
@@ -22,6 +24,7 @@ interface ListItem {
   label: string;
   path?: string;
   project?: Project;
+  isFavorite?: boolean;
   isRecent?: boolean;
 }
 
@@ -72,7 +75,7 @@ function collectNestedGitProjects(project: Project, basePath: string): Project[]
   return results;
 }
 
-export function App({ initialSettings, recentEntries: initialRecentEntries, onSelect, onSettingsSave }: AppProps) {
+export function App({ initialSettings, recentEntries: initialRecentEntries, favoriteEntries: initialFavoriteEntries, onSelect, onSettingsSave }: AppProps) {
   const { exit } = useApp();
 
   // Screen state
@@ -83,6 +86,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [settings, setSettings] = useState(initialSettings);
   const [recentEntries, setRecentEntries] = useState(initialRecentEntries);
+  const [favoriteEntries, setFavoriteEntries] = useState(initialFavoriteEntries);
 
   // Abort signal for cancelling scans early (e.g., when user selects before scan completes)
   const scanAbortSignal = useRef<ScanAbortSignal>({ aborted: false });
@@ -136,7 +140,12 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
   const currentProjects = currentLevel.projects;
   const isAtRoot = navStack.length === 1;
 
-  // Track recent paths for coloring
+  // Track favorite and recent paths for coloring and filtering
+  const favoritePaths = useMemo(
+    () => new Set(favoriteEntries.map((e) => e.path)),
+    [favoriteEntries]
+  );
+
   const recentPaths = useMemo(
     () => new Set(recentEntries.map((e) => e.path)),
     [recentEntries]
@@ -160,12 +169,41 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
   const unfilteredItems = useMemo(() => {
     const list: ListItem[] = [];
 
+    // Favorites section (only at root level)
+    if (isAtRoot && favoriteEntries.length > 0) {
+      const validFavoriteItems: ListItem[] = [];
+      for (const entry of favoriteEntries) {
+        // Skip if path no longer exists
+        if (!existsSync(entry.path)) continue;
+
+        // Use project data if available, otherwise create minimal entry from path
+        const project = allProjectsMap.get(entry.path);
+        validFavoriteItems.push({
+          type: "project",
+          label: entry.displayName,
+          path: entry.path,
+          project: project ?? {
+            name: basename(entry.path),
+            path: entry.path,
+            isGitRepo: true,
+          },
+          isFavorite: true,
+          isRecent: false,
+        });
+      }
+      if (validFavoriteItems.length > 0) {
+        list.push({ type: "header", label: "Favorites" });
+        list.push(...validFavoriteItems);
+      }
+    }
+
     // Recent section (only at root level) - show immediately from history
     if (isAtRoot && recentEntries.length > 0) {
       const validRecentItems: ListItem[] = [];
       for (const entry of recentEntries) {
-        // Skip if path no longer exists
+        // Skip if path no longer exists or is already in favorites
         if (!existsSync(entry.path)) continue;
+        if (favoritePaths.has(entry.path)) continue;
 
         // Use project data if available, otherwise create minimal entry from path
         const project = allProjectsMap.get(entry.path);
@@ -176,8 +214,9 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
           project: project ?? {
             name: basename(entry.path),
             path: entry.path,
-            isGitRepo: true, // Assume git repo for recent entries
+            isGitRepo: true,
           },
+          isFavorite: false,
           isRecent: true,
         });
       }
@@ -192,13 +231,15 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
     list.push({ type: "header", label: sectionLabel });
 
     for (const project of currentProjects) {
-      if (isAtRoot && recentPaths.has(project.path)) continue;
+      // Skip if already shown in favorites or recent
+      if (isAtRoot && (favoritePaths.has(project.path) || recentPaths.has(project.path))) continue;
 
       list.push({
         type: "project",
         label: project.name,
         path: project.path,
         project,
+        isFavorite: false,
         isRecent: false,
       });
     }
@@ -209,7 +250,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
     }
 
     return list;
-  }, [currentProjects, recentEntries, isAtRoot, recentPaths, allProjectsMap, currentLevel.parentPath, settings.projectsDir]);
+  }, [currentProjects, recentEntries, favoriteEntries, isAtRoot, recentPaths, favoritePaths, allProjectsMap, currentLevel.parentPath, settings.projectsDir]);
 
   // Filter items based on search term
   const items = useMemo(() => {
@@ -322,6 +363,24 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
     }
   };
 
+  const toggleFavorite = () => {
+    const currentItem = items[selectedIndex];
+    if (currentItem?.type !== "project" || !currentItem.path) return;
+
+    if (currentItem.isFavorite) {
+      // Remove from favorites
+      removeFavorite(currentItem.path);
+      setFavoriteEntries(prev => prev.filter(f => f.path !== currentItem.path));
+    } else {
+      // Add to favorites
+      addFavorite(currentItem.path, currentItem.label);
+      setFavoriteEntries(prev => [
+        { path: currentItem.path!, displayName: currentItem.label, addedAt: Date.now() },
+        ...prev
+      ]);
+    }
+  };
+
   const refreshProjects = () => {
     if (isRefreshing) return; // Already scanning
 
@@ -377,6 +436,12 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
     // Ctrl+R - refresh projects list
     if (key.ctrl && input === "r") {
       refreshProjects();
+      return;
+    }
+
+    // Ctrl+F - toggle favorite
+    if (key.ctrl && input === "f") {
+      toggleFavorite();
       return;
     }
 
@@ -539,6 +604,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
         settings={settings}
         onSave={handleSettingsSave}
         onCancel={() => setScreen("main")}
+        onClearFavorites={() => setFavoriteEntries([])}
         onClearHistory={() => setRecentEntries([])}
       />
     );
@@ -599,6 +665,8 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
         let color: string | undefined;
         if (isSelected) {
           color = settings.selectedColor;
+        } else if (item.isFavorite) {
+          color = settings.favoriteColor;
         } else if (item.isRecent) {
           color = settings.recentColor;
         }
@@ -632,7 +700,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
 
       <Box marginTop={isRefreshing ? 0 : 1}>
         <Text dimColor>
-          ↑↓ navigate • enter select • →← drill/back • tab settings • ^R refresh • esc quit
+          ↑↓ navigate • enter select • →← drill/back • ^F fav • tab settings • ^R refresh • esc quit
         </Text>
       </Box>
     </Box>

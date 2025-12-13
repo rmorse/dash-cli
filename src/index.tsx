@@ -1,7 +1,7 @@
 import React from "react";
 import { render } from "ink";
 import { App } from "./components/App.js";
-import { getRecent, addRecent, writeLastSelection, getConfigDir } from "./history.js";
+import { getRecent, addRecent, writeLastSelection, getFavorites } from "./history.js";
 import { loadSettings, saveSettings } from "./settings.js";
 import { runSetup } from "./setup.js";
 
@@ -16,6 +16,7 @@ async function main() {
 
   const settings = loadSettings();
   const recentEntries = getRecent(settings.recentCount);
+  const favoriteEntries = getFavorites();
 
   let selectedPath: string | null = null;
   let selectedDisplayName: string | null = null;
@@ -24,6 +25,7 @@ async function main() {
     <App
       initialSettings={settings}
       recentEntries={recentEntries}
+      favoriteEntries={favoriteEntries}
       onSelect={(path, displayName) => {
         selectedPath = path;
         selectedDisplayName = displayName;

@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 import type { Settings } from "../types.js";
 import { SETTING_FIELDS } from "../settings.js";
-import { clearHistory } from "../history.js";
+import { clearHistory, clearFavorites } from "../history.js";
 
 const CONFIG_FILE = join(homedir(), ".projects-cli", "settings.json");
 
@@ -13,30 +13,40 @@ interface SettingsProps {
   settings: Settings;
   onSave: (settings: Settings) => void;
   onCancel: () => void;
+  onClearFavorites: () => void;
   onClearHistory: () => void;
 }
 
-// Total items: settings fields + 2 action items (Edit config, Clear history)
-const TOTAL_ITEMS = SETTING_FIELDS.length + 2;
-const CLEAR_HISTORY_INDEX = SETTING_FIELDS.length;
-const EDIT_CONFIG_INDEX = SETTING_FIELDS.length + 1;
+// Total items: settings fields + 3 action items (Clear favorites, Clear history, Edit config)
+const TOTAL_ITEMS = SETTING_FIELDS.length + 3;
+const CLEAR_FAVORITES_INDEX = SETTING_FIELDS.length;
+const CLEAR_HISTORY_INDEX = SETTING_FIELDS.length + 1;
+const EDIT_CONFIG_INDEX = SETTING_FIELDS.length + 2;
 
-export function SettingsScreen({ settings, onSave, onCancel, onClearHistory }: SettingsProps) {
+export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, onClearHistory }: SettingsProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [editingKey, setEditingKey] = useState<keyof Settings | null>(null);
   const [editValue, setEditValue] = useState("");
   const [localSettings, setLocalSettings] = useState<Settings>({ ...settings });
 
+  const isOnClearFavorites = selectedIndex === CLEAR_FAVORITES_INDEX;
   const isOnClearHistory = selectedIndex === CLEAR_HISTORY_INDEX;
   const isOnEditConfig = selectedIndex === EDIT_CONFIG_INDEX;
-  const isOnActionItem = isOnClearHistory || isOnEditConfig;
+  const isOnActionItem = isOnClearFavorites || isOnClearHistory || isOnEditConfig;
   const currentField = isOnActionItem ? null : SETTING_FIELDS[selectedIndex];
   const isEditing = editingKey !== null;
 
+  const [favoritesCleared, setFavoritesCleared] = useState(false);
   const [historyCleared, setHistoryCleared] = useState(false);
 
   const openConfigFile = async () => {
     await open(CONFIG_FILE);
+  };
+
+  const handleClearFavorites = () => {
+    clearFavorites();
+    onClearFavorites();
+    setFavoritesCleared(true);
   };
 
   const handleClearHistory = () => {
@@ -46,6 +56,10 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearHistory }: S
   };
 
   const startEditing = () => {
+    if (isOnClearFavorites) {
+      handleClearFavorites();
+      return;
+    }
     if (isOnClearHistory) {
       handleClearHistory();
       return;
@@ -227,6 +241,15 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearHistory }: S
         );
       })}
 
+      {/* Clear favorites option */}
+      <Box>
+        <Text color={isOnClearFavorites ? "#FFD700" : "gray"} bold={isOnClearFavorites}>
+          {isOnClearFavorites ? "> " : "  "}
+          {"Clear favorites..."}
+        </Text>
+        {favoritesCleared && <Text color="green">{" "}✓</Text>}
+      </Box>
+
       {/* Clear history option */}
       <Box>
         <Text color={isOnClearHistory ? "#FFD700" : "gray"} bold={isOnClearHistory}>
@@ -252,11 +275,13 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearHistory }: S
       <Box>
         <Text dimColor>
           {"  "}
-          {isOnClearHistory
-            ? "Remove all recent projects from history"
-            : isOnEditConfig
-              ? "Open settings.json in default editor"
-              : currentField?.description}
+          {isOnClearFavorites
+            ? "Remove all favorite projects"
+            : isOnClearHistory
+              ? "Remove all recent projects from history"
+              : isOnEditConfig
+                ? "Open settings.json in default editor"
+                : currentField?.description}
         </Text>
       </Box>
 

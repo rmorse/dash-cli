@@ -12,6 +12,7 @@ export interface Settings {
   recentCount: number;
   visibleRows: number;
   selectedColor: string;
+  favoriteColor: string;
   recentColor: string;
 }
 
@@ -22,6 +23,7 @@ export const DEFAULT_SETTINGS: Settings = {
   recentCount: 5,
   visibleRows: 12,
   selectedColor: "#FFD700",
+  favoriteColor: "#69FFBE",
   recentColor: "#6495ED",
 };
 
@@ -76,6 +78,12 @@ export const SETTING_FIELDS: SettingField[] = [
     label: "Selected Color",
     type: "color",
     description: "Highlight color for selected item (hex)",
+  },
+  {
+    key: "favoriteColor",
+    label: "Favorite Color",
+    type: "color",
+    description: "Highlight color for favorite items (hex)",
   },
   {
     key: "recentColor",

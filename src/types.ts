@@ -12,8 +12,18 @@ export interface HistoryEntry {
   lastUsed: number;
 }
 
+export interface FavoriteEntry {
+  path: string;
+  displayName: string;
+  addedAt: number;
+}
+
 export interface HistoryData {
   recent: HistoryEntry[];
+}
+
+export interface FavoritesData {
+  favorites: FavoriteEntry[];
 }
 
 export interface SelectItem {
