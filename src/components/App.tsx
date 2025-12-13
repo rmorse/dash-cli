@@ -27,7 +27,9 @@ interface ListItem {
 interface NavLevel {
   projects: Project[];
   parentPath: string | null;
-  selectedPath?: string;
+  // Saved scroll/selection state for this level
+  savedScrollOffset: number;
+  savedSelectedIndex: number;
 }
 
 // Get display name for a path (relative to projects dir)
@@ -110,13 +112,13 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
 
   // Navigation stack - initialize empty, will update when projects load
   const [navStack, setNavStack] = useState<NavLevel[]>([
-    { projects: [], parentPath: null }
+    { projects: [], parentPath: null, savedScrollOffset: 0, savedSelectedIndex: 1 }
   ]);
 
   // Update nav stack when projects finish loading
   useEffect(() => {
     if (projects) {
-      setNavStack([{ projects, parentPath: null }]);
+      setNavStack([{ projects, parentPath: null, savedScrollOffset: 0, savedSelectedIndex: 1 }]);
     }
   }, [projects]);
 
@@ -257,36 +259,21 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
   const [selectedIndex, setSelectedIndex] = useState(selectableIndices[0] ?? 0);
   const [scrollOffset, setScrollOffset] = useState(0);
 
+  // Track previous search term to only reset on actual search changes
+  const prevSearchTerm = useRef(searchTerm);
+
   // When search changes, reset to first item and scroll to top
   useEffect(() => {
-    if (selectableIndices.length > 0) {
-      setSelectedIndex(selectableIndices[0]);
-      setScrollOffset(0);
+    // Only reset if search term actually changed (not on navigation)
+    if (searchTerm !== prevSearchTerm.current) {
+      prevSearchTerm.current = searchTerm;
+      if (selectableIndices.length > 0) {
+        setSelectedIndex(selectableIndices[0]);
+        setScrollOffset(0);
+      }
     }
   }, [searchTerm, selectableIndices.length]);
 
-  // When nav stack changes, restore selection or reset
-  useEffect(() => {
-    const restoredPath = currentLevel.selectedPath;
-    if (restoredPath) {
-      const itemIndex = items.findIndex(item => item.path === restoredPath);
-      if (itemIndex !== -1) {
-        setSelectedIndex(itemIndex);
-        if (itemIndex < scrollOffset) {
-          setScrollOffset(itemIndex);
-        } else if (itemIndex >= scrollOffset + settings.visibleRows) {
-          setScrollOffset(Math.max(0, itemIndex - settings.visibleRows + 1));
-        }
-        return;
-      }
-    }
-    // Reset
-    setSearchTerm("");
-    if (selectableIndices.length > 0) {
-      setSelectedIndex(selectableIndices[0]);
-    }
-    setScrollOffset(0);
-  }, [navStack.length]);
 
   const adjustScroll = (newSelectedIndex: number) => {
     if (newSelectedIndex < scrollOffset) {
@@ -306,23 +293,34 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
       }
 
       if (nestedGitProjects.length > 0) {
+        // Save current scroll/selection state to current level before pushing
         const updatedStack = [...navStack];
         updatedStack[updatedStack.length - 1] = {
           ...currentLevel,
-          selectedPath: fromPath || project.path,
+          savedScrollOffset: scrollOffset,
+          savedSelectedIndex: selectedIndex,
         };
 
+        // Push new level and reset scroll/selection atomically
         setNavStack([
           ...updatedStack,
-          { projects: nestedGitProjects, parentPath: project.path }
+          { projects: nestedGitProjects, parentPath: project.path, savedScrollOffset: 0, savedSelectedIndex: 1 }
         ]);
+        setScrollOffset(0);
+        setSelectedIndex(1); // First selectable item (after header)
+        setSearchTerm("");
       }
     }
   };
 
   const goBack = () => {
     if (navStack.length > 1) {
+      const previousLevel = navStack[navStack.length - 2];
+      // Restore scroll/selection from previous level atomically
       setNavStack(navStack.slice(0, -1));
+      setScrollOffset(previousLevel.savedScrollOffset);
+      setSelectedIndex(previousLevel.savedSelectedIndex);
+      setSearchTerm("");
     }
   };
 
@@ -339,8 +337,10 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
       const newProjects = scanProjects(newSettings);
       setProjects(newProjects);
       // Reset navigation and cache
-      setNavStack([{ projects: newProjects, parentPath: null }]);
+      setNavStack([{ projects: newProjects, parentPath: null, savedScrollOffset: 0, savedSelectedIndex: 1 }]);
       setNestedCache(new Map());
+      setScrollOffset(0);
+      setSelectedIndex(1);
     }
 
     setScreen("main");
@@ -501,10 +501,12 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
     }
   });
 
-  // Calculate visible items
-  const visibleItems = items.slice(scrollOffset, scrollOffset + settings.visibleRows);
-  const hasMoreAbove = scrollOffset > 0;
-  const hasMoreBelow = scrollOffset + settings.visibleRows < items.length;
+  // Calculate visible items (clamp scrollOffset to prevent flicker during navigation)
+  const maxScroll = Math.max(0, items.length - settings.visibleRows);
+  const clampedScrollOffset = Math.min(scrollOffset, maxScroll);
+  const visibleItems = items.slice(clampedScrollOffset, clampedScrollOffset + settings.visibleRows);
+  const hasMoreAbove = clampedScrollOffset > 0;
+  const hasMoreBelow = clampedScrollOffset + settings.visibleRows < items.length;
 
   // Show settings screen
   if (screen === "settings") {
@@ -543,7 +545,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, onSe
       )}
 
       {visibleItems.map((item, visibleIdx) => {
-        const actualIdx = scrollOffset + visibleIdx;
+        const actualIdx = clampedScrollOffset + visibleIdx;
 
         if (item.type === "header") {
           return (
