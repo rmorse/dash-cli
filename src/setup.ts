@@ -1,9 +1,31 @@
-import { existsSync, readFileSync, writeFileSync, appendFileSync, mkdirSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, appendFileSync, mkdirSync, copyFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { homedir } from "node:os";
 import { getSelectionFile } from "./history.js";
 
 const SELECTION_FILE = getSelectionFile();
+
+/**
+ * Create a backup of a file before modifying it.
+ * Uses .bkp, .bkp1, .bkp2, etc. to find an unused filename.
+ */
+function backupFile(filePath: string): string | null {
+  if (!existsSync(filePath)) {
+    return null;
+  }
+
+  // Try .bkp first, then .bkp1, .bkp2, etc.
+  let backupPath = `${filePath}.bkp`;
+  let counter = 1;
+
+  while (existsSync(backupPath)) {
+    backupPath = `${filePath}.bkp${counter}`;
+    counter++;
+  }
+
+  copyFileSync(filePath, backupPath);
+  return backupPath;
+}
 
 // Shell wrapper scripts
 function getBashWrapper(withAlias: boolean): string {
@@ -166,6 +188,12 @@ function setupBash(withAlias: boolean): void {
   const sourceCmd = `source ${configFile}`;
   let isUpdate = false;
 
+  // Backup the file before modifying
+  const backupPath = backupFile(configFile);
+  if (backupPath) {
+    console.log(`  Backup created: ${backupPath}`);
+  }
+
   // Remove existing config if present
   if (existsSync(configFile)) {
     let content = readFileSync(configFile, "utf-8");
@@ -194,6 +222,12 @@ function setupPowerShell(withAlias: boolean): void {
   const profileDir = dirname(profilePath);
   if (!existsSync(profileDir)) {
     mkdirSync(profileDir, { recursive: true });
+  }
+
+  // Backup the file before modifying
+  const backupPath = backupFile(profilePath);
+  if (backupPath) {
+    console.log(`  Backup created: ${backupPath}`);
   }
 
   // Remove existing config if present
