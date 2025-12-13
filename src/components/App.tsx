@@ -373,11 +373,11 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
       removeFavorite(currentItem.path);
       setFavoriteEntries(prev => prev.filter(f => f.path !== currentItem.path));
     } else {
-      // Add to favorites
+      // Add to favorites (append to end so first added stays #1)
       addFavorite(currentItem.path, currentItem.label);
       setFavoriteEntries(prev => [
+        ...prev,
         { path: currentItem.path!, displayName: currentItem.label, addedAt: Date.now() },
-        ...prev
       ]);
     }
   };
@@ -434,14 +434,14 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
       return;
     }
 
-    // Ctrl+R - refresh projects list
-    if (key.ctrl && input === "r") {
+    // Ctrl+R (or custom key) - refresh projects list
+    if (key.ctrl && input === settings.refreshKey) {
       refreshProjects();
       return;
     }
 
-    // Ctrl+F - toggle favorite
-    if (key.ctrl && input === "f") {
+    // Ctrl+F (or custom key) - toggle favorite
+    if (key.ctrl && input === settings.favoriteKey) {
       toggleFavorite();
       return;
     }
@@ -701,7 +701,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
 
       <Box marginTop={isRefreshing ? 0 : 1}>
         <Text dimColor>
-          ↑↓ navigate • enter select • →← drill/back • ^F fav • tab settings • ^R refresh • esc quit
+          ↑↓ navigate • enter select • →← drill/back • ^{settings.favoriteKey.toUpperCase()} fav • tab settings • ^{settings.refreshKey.toUpperCase()} refresh • esc quit
         </Text>
       </Box>
     </Box>

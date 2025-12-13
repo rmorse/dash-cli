@@ -14,6 +14,8 @@ export interface Settings {
   selectedColor: string;
   favoriteColor: string;
   recentColor: string;
+  favoriteKey: string;
+  refreshKey: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -25,12 +27,14 @@ export const DEFAULT_SETTINGS: Settings = {
   selectedColor: "#FFD700",
   favoriteColor: "#69FFBE",
   recentColor: "#6495ED",
+  favoriteKey: "f",
+  refreshKey: "r",
 };
 
 export interface SettingField {
   key: keyof Settings;
   label: string;
-  type: "path" | "number" | "text" | "color";
+  type: "path" | "number" | "text" | "color" | "key";
   min?: number;
   max?: number;
   description: string;
@@ -90,6 +94,18 @@ export const SETTING_FIELDS: SettingField[] = [
     label: "Recent Color",
     type: "color",
     description: "Highlight color for recent items (hex)",
+  },
+  {
+    key: "favoriteKey",
+    label: "Favorite Shortcut",
+    type: "key",
+    description: "Key for Ctrl+? to toggle favorite (letter or number)",
+  },
+  {
+    key: "refreshKey",
+    label: "Refresh Shortcut",
+    type: "key",
+    description: "Key for Ctrl+? to refresh projects (letter or number)",
   },
 ];
 

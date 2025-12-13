@@ -43,8 +43,8 @@ Favorites are numbered in the order you add them - your first favorite stays `#1
 | `→` / `←` | Drill into / back from nested projects |
 | `PgUp` / `PgDn` | Page navigation |
 | Type | Filter projects |
-| `Ctrl+F` | Toggle favorite |
-| `Ctrl+R` | Refresh projects list |
+| `Ctrl+F` | Toggle favorite (customizable) |
+| `Ctrl+R` | Refresh projects list (customizable) |
 | `Esc` | Clear filter / go back / quit |
 | `Tab` | Open settings |
 
@@ -62,6 +62,8 @@ Press `Tab` to open the settings screen, or edit `~/.dash-cli/settings.json`:
 | `selectedColor` | `#FFD700` | Highlight color for selected item |
 | `favoriteColor` | `#69FFBE` | Color for favorite items |
 | `recentColor` | `#6495ED` | Color for recent items |
+| `favoriteKey` | `f` | Key for Ctrl+? to toggle favorite |
+| `refreshKey` | `r` | Key for Ctrl+? to refresh projects |
 
 ## Installation
 

@@ -74,6 +74,10 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, o
     setEditValue(String(value));
   };
 
+  const isValidKey = (key: string): boolean => {
+    return /^[a-zA-Z0-9]$/.test(key);
+  };
+
   const commitEdit = () => {
     if (!editingKey) return;
 
@@ -90,6 +94,15 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, o
         newValue = Math.max(min, Math.min(max, num));
       } else {
         newValue = localSettings[editingKey] as number;
+      }
+    } else if (field.type === "key") {
+      // Validate key input - must be single letter or number
+      const key = editValue.toLowerCase();
+      if (isValidKey(key)) {
+        newValue = key;
+      } else {
+        // Keep existing value if invalid
+        newValue = localSettings[editingKey] as string;
       }
     }
 
@@ -151,6 +164,22 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, o
       // Regular character input
       if (input && input.length === 1 && !key.ctrl && !key.meta) {
         if (input.charCodeAt(0) >= 32) {
+          // For key type, only accept single letter/number and auto-commit
+          if (currentField?.type === "key") {
+            if (isValidKey(input)) {
+              setEditValue(input.toLowerCase());
+              // Auto-commit after valid key input
+              setTimeout(() => {
+                setLocalSettings((prev) => ({
+                  ...prev,
+                  [editingKey!]: input.toLowerCase(),
+                }));
+                setEditingKey(null);
+                setEditValue("");
+              }, 0);
+            }
+            return;
+          }
           setEditValue((prev) => prev + input);
         }
       }
@@ -196,6 +225,9 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, o
     }
     if (field.type === "path" && str.length > 35) {
       return str.slice(0, 32) + "...";
+    }
+    if (field.type === "key") {
+      return `Ctrl+${str.toUpperCase()}`;
     }
     return str;
   };
