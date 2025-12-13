@@ -1,6 +1,6 @@
-# projects-cli
+# Dash CLI
 
-Interactive CLI to quickly navigate to project directories.
+A speedy little project switcher for your terminal.
 
 ## Features
 
@@ -17,9 +17,9 @@ Interactive CLI to quickly navigate to project directories.
 
 ```bash
 npm install -g .
-projects-cli --setup
+dash-cli --setup
 # Restart terminal, then:
-projects
+dash
 ```
 
 ## Controls
@@ -38,7 +38,7 @@ projects
 
 ## Settings
 
-Press `Tab` to open the settings screen, or edit `~/.projects-cli/settings.json`:
+Press `Tab` to open the settings screen, or edit `~/.dash-cli/settings.json`:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
@@ -66,16 +66,16 @@ npm link
 
 ### Shell Setup
 ```bash
-projects-cli --setup                    # Auto-detect shell
-projects-cli --setup bash               # Git Bash
-projects-cli --setup powershell         # PowerShell
-projects-cli --setup --alias            # Add 'p' shortcut
-projects-cli --setup bash --alias       # Bash with 'p' shortcut
+dash-cli --setup                    # Auto-detect shell
+dash-cli --setup bash               # Git Bash
+dash-cli --setup powershell         # PowerShell
+dash-cli --setup --alias            # Add 'd' shortcut
+dash-cli --setup bash --alias       # Bash with 'd' shortcut
 ```
 
 ## Configuration Files
 
-Stored in `~/.projects-cli/`:
+Stored in `~/.dash-cli/`:
 - `settings.json` - User settings
 - `favorites.json` - Favorite projects
 - `history.json` - Recent projects

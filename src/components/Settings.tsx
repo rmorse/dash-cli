@@ -7,7 +7,7 @@ import type { Settings } from "../types.js";
 import { SETTING_FIELDS } from "../settings.js";
 import { clearHistory, clearFavorites } from "../history.js";
 
-const CONFIG_FILE = join(homedir(), ".projects-cli", "settings.json");
+const CONFIG_FILE = join(homedir(), ".dash-cli", "settings.json");
 
 interface SettingsProps {
   settings: Settings;

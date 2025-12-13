@@ -30,9 +30,9 @@ function backupFile(filePath: string): string | null {
 // Shell wrapper scripts
 function getBashWrapper(withAlias: boolean): string {
   let wrapper = `
-# projects-cli: Navigate to projects
-projects() {
-    projects-cli
+# Dash CLI: Navigate to projects
+dash() {
+    dash-cli
     local selected
     selected=$(cat "${SELECTION_FILE.replace(/\\/g, "/")}" 2>/dev/null)
     if [ -n "$selected" ] && [ -d "$selected" ]; then
@@ -41,7 +41,7 @@ projects() {
 }
 `;
   if (withAlias) {
-    wrapper += `alias p=projects
+    wrapper += `alias d=dash
 `;
   }
   return wrapper;
@@ -49,9 +49,9 @@ projects() {
 
 function getPowerShellWrapper(withAlias: boolean): string {
   let wrapper = `
-# projects-cli: Navigate to projects
-function projects {
-    projects-cli
+# Dash CLI: Navigate to projects
+function dash {
+    dash-cli
     $selectionFile = "${SELECTION_FILE.replace(/\\/g, "\\\\")}"
     if (Test-Path $selectionFile) {
         $selected = Get-Content $selectionFile -Raw
@@ -62,7 +62,7 @@ function projects {
 }
 `;
   if (withAlias) {
-    wrapper += `Set-Alias -Name p -Value projects
+    wrapper += `Set-Alias -Name d -Value dash
 `;
   }
   return wrapper;
@@ -135,8 +135,8 @@ function getPowerShellProfile(): string {
 }
 
 function removeExistingConfig(content: string): string {
-  // Remove existing projects-cli block (from marker to end of function + optional alias)
-  const marker = "# projects-cli:";
+  // Remove existing Dash CLI block (from marker to end of function + optional alias)
+  const marker = "# Dash CLI:";
   const markerIndex = content.indexOf(marker);
   if (markerIndex === -1) return content;
 
@@ -172,7 +172,7 @@ function removeExistingConfig(content: string): string {
     // Skip alias line right after function
     if (skipNextAlias) {
       skipNextAlias = false;
-      if (line.trim().startsWith("alias p=") || line.trim().startsWith("Set-Alias")) {
+      if (line.trim().startsWith("alias d=") || line.trim().startsWith("Set-Alias")) {
         continue;
       }
     }
@@ -197,7 +197,7 @@ function setupBash(withAlias: boolean): void {
   // Remove existing config if present
   if (existsSync(configFile)) {
     let content = readFileSync(configFile, "utf-8");
-    if (content.includes("# projects-cli:")) {
+    if (content.includes("# Dash CLI:")) {
       content = removeExistingConfig(content);
       writeFileSync(configFile, content);
       isUpdate = true;
@@ -208,7 +208,7 @@ function setupBash(withAlias: boolean): void {
   appendFileSync(configFile, getBashWrapper(withAlias));
   console.log(`✓ ${isUpdate ? "Updated" : "Added to"} ${configFile}`);
   if (withAlias) {
-    console.log("  Added 'p' alias for quick access.");
+    console.log("  Added 'd' alias for quick access.");
   }
   console.log(`\n  Reload with: ${sourceCmd}`);
   console.log("  Or restart your terminal.");
@@ -233,7 +233,7 @@ function setupPowerShell(withAlias: boolean): void {
   // Remove existing config if present
   if (existsSync(profilePath)) {
     let content = readFileSync(profilePath, "utf-8");
-    if (content.includes("# projects-cli:")) {
+    if (content.includes("# Dash CLI:")) {
       content = removeExistingConfig(content);
       writeFileSync(profilePath, content);
       isUpdate = true;
@@ -244,14 +244,14 @@ function setupPowerShell(withAlias: boolean): void {
   appendFileSync(profilePath, getPowerShellWrapper(withAlias));
   console.log(`✓ ${isUpdate ? "Updated" : "Added to"} ${profilePath}`);
   if (withAlias) {
-    console.log("  Added 'p' alias for quick access.");
+    console.log("  Added 'd' alias for quick access.");
   }
   console.log("\n  Reload with: . $PROFILE");
   console.log("  Or restart PowerShell.");
 }
 
 export async function runSetup(shellArg?: string, aliasArg?: string): Promise<void> {
-  console.log("Setting up projects-cli...\n");
+  console.log("Setting up Dash CLI...\n");
 
   // Check for --alias flag
   const withAlias = shellArg === "--alias" || aliasArg === "--alias";
@@ -265,7 +265,7 @@ export async function runSetup(shellArg?: string, aliasArg?: string): Promise<vo
     shell = "powershell";
   } else if (actualShellArg) {
     console.error(`Unknown shell: ${actualShellArg}`);
-    console.error("Usage: projects-cli --setup [bash|powershell] [--alias]");
+    console.error("Usage: dash-cli --setup [bash|powershell] [--alias]");
     process.exit(1);
   } else {
     shell = detectShell();
@@ -278,8 +278,8 @@ export async function runSetup(shellArg?: string, aliasArg?: string): Promise<vo
     setupPowerShell(withAlias);
   }
 
-  console.log("\nDone! You can now use 'projects' to navigate to your projects.");
+  console.log("\nDone! You can now use 'dash' to navigate to your projects.");
   if (withAlias) {
-    console.log("You can also use 'p' as a shortcut.");
+    console.log("You can also use 'd' as a shortcut.");
   }
 }

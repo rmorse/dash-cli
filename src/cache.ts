@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 import type { Project } from "./types.js";
 
-const CONFIG_DIR = join(homedir(), ".projects-cli");
+const CONFIG_DIR = join(homedir(), ".dash-cli");
 const CACHE_FILE = join(CONFIG_DIR, "cache.json");
 
 interface CacheData {

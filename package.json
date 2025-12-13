@@ -1,10 +1,10 @@
 {
-  "name": "projects-cli",
+  "name": "dash-cli",
   "version": "1.0.0",
-  "description": "Interactive CLI to navigate to projects",
+  "description": "A speedy little project switcher for your terminal.",
   "type": "module",
   "bin": {
-    "projects-cli": "./dist/index.js"
+    "dash-cli": "./dist/index.js"
   },
   "scripts": {
     "build": "tsup",

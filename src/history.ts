@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 import type { HistoryData, HistoryEntry, FavoritesData, FavoriteEntry } from "./types.js";
 
-const CONFIG_DIR = join(homedir(), ".projects-cli");
+const CONFIG_DIR = join(homedir(), ".dash-cli");
 const HISTORY_FILE = join(CONFIG_DIR, "history.json");
 const FAVORITES_FILE = join(CONFIG_DIR, "favorites.json");
 const SELECTION_FILE = join(CONFIG_DIR, "last-selection");

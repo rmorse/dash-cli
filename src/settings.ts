@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
 
-const CONFIG_DIR = join(homedir(), ".projects-cli");
+const CONFIG_DIR = join(homedir(), ".dash-cli");
 const SETTINGS_FILE = join(CONFIG_DIR, "settings.json");
 
 export interface Settings {
