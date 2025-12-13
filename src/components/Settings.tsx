@@ -1,7 +1,12 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
+import open from "open";
+import { join } from "node:path";
+import { homedir } from "node:os";
 import type { Settings } from "../types.js";
 import { SETTING_FIELDS } from "../settings.js";
+
+const CONFIG_FILE = join(homedir(), ".projects-cli", "settings.json");
 
 interface SettingsProps {
   settings: Settings;
@@ -9,16 +14,29 @@ interface SettingsProps {
   onCancel: () => void;
 }
 
+// Total items: settings fields + "Edit config file" action
+const TOTAL_ITEMS = SETTING_FIELDS.length + 1;
+const EDIT_CONFIG_INDEX = SETTING_FIELDS.length;
+
 export function SettingsScreen({ settings, onSave, onCancel }: SettingsProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [editingKey, setEditingKey] = useState<keyof Settings | null>(null);
   const [editValue, setEditValue] = useState("");
   const [localSettings, setLocalSettings] = useState<Settings>({ ...settings });
 
-  const currentField = SETTING_FIELDS[selectedIndex];
+  const isOnEditConfig = selectedIndex === EDIT_CONFIG_INDEX;
+  const currentField = isOnEditConfig ? null : SETTING_FIELDS[selectedIndex];
   const isEditing = editingKey !== null;
 
+  const openConfigFile = async () => {
+    await open(CONFIG_FILE);
+  };
+
   const startEditing = () => {
+    if (isOnEditConfig) {
+      openConfigFile();
+      return;
+    }
     const field = SETTING_FIELDS[selectedIndex];
     const value = localSettings[field.key];
     setEditingKey(field.key);
@@ -127,14 +145,14 @@ export function SettingsScreen({ settings, onSave, onCancel }: SettingsProps) {
 
     if (key.upArrow) {
       setSelectedIndex((prev) =>
-        prev <= 0 ? SETTING_FIELDS.length - 1 : prev - 1
+        prev <= 0 ? TOTAL_ITEMS - 1 : prev - 1
       );
       return;
     }
 
     if (key.downArrow) {
       setSelectedIndex((prev) =>
-        prev >= SETTING_FIELDS.length - 1 ? 0 : prev + 1
+        prev >= TOTAL_ITEMS - 1 ? 0 : prev + 1
       );
       return;
     }
@@ -192,13 +210,21 @@ export function SettingsScreen({ settings, onSave, onCancel }: SettingsProps) {
         );
       })}
 
+      {/* Edit config file option */}
+      <Box>
+        <Text color={isOnEditConfig ? "#FFD700" : "gray"} bold={isOnEditConfig}>
+          {isOnEditConfig ? "> " : "  "}
+          {"Edit config file..."}
+        </Text>
+      </Box>
+
       <Box marginTop={1}>
         <Text dimColor>{"  "}───────────────────────────────────────</Text>
       </Box>
 
       {/* Description of selected field */}
       <Box>
-        <Text dimColor>{"  "}{currentField?.description}</Text>
+        <Text dimColor>{"  "}{isOnEditConfig ? "Open settings.json in default editor" : currentField?.description}</Text>
       </Box>
 
       <Box marginTop={1}>

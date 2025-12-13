@@ -45,7 +45,7 @@ export function getRecent(limit: number = 5): HistoryEntry[] {
     .slice(0, limit);
 }
 
-export function addRecent(path: string): void {
+export function addRecent(path: string, displayName: string): void {
   const data = loadHistory();
 
   // Remove existing entry for this path
@@ -54,6 +54,7 @@ export function addRecent(path: string): void {
   // Add new entry at the beginning
   data.recent.unshift({
     path,
+    displayName,
     lastUsed: Date.now(),
   });
 

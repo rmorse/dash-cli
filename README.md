@@ -61,9 +61,11 @@ npm link
 
 ### Shell Setup
 ```bash
-projects-cli --setup           # Auto-detect
-projects-cli --setup bash      # Git Bash
-projects-cli --setup powershell
+projects-cli --setup                    # Auto-detect shell
+projects-cli --setup bash               # Git Bash
+projects-cli --setup powershell         # PowerShell
+projects-cli --setup --alias            # Add 'p' shortcut
+projects-cli --setup bash --alias       # Bash with 'p' shortcut
 ```
 
 ## Configuration Files

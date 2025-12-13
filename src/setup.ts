@@ -6,7 +6,8 @@ import { getSelectionFile } from "./history.js";
 const SELECTION_FILE = getSelectionFile();
 
 // Shell wrapper scripts
-const BASH_WRAPPER = `
+function getBashWrapper(withAlias: boolean): string {
+  let wrapper = `
 # projects-cli: Navigate to projects
 projects() {
     projects-cli
@@ -17,8 +18,15 @@ projects() {
     fi
 }
 `;
+  if (withAlias) {
+    wrapper += `alias p=projects
+`;
+  }
+  return wrapper;
+}
 
-const POWERSHELL_WRAPPER = `
+function getPowerShellWrapper(withAlias: boolean): string {
+  let wrapper = `
 # projects-cli: Navigate to projects
 function projects {
     projects-cli
@@ -31,6 +39,12 @@ function projects {
     }
 }
 `;
+  if (withAlias) {
+    wrapper += `Set-Alias -Name p -Value projects
+`;
+  }
+  return wrapper;
+}
 
 type Shell = "bash" | "powershell" | "auto";
 
@@ -51,6 +65,17 @@ function detectShell(): Shell {
 
 function getBashConfigFile(): string {
   const home = homedir();
+  const shell = process.env.SHELL || "";
+
+  // Check if using zsh
+  if (shell.includes("zsh")) {
+    const zshrc = join(home, ".zshrc");
+    if (existsSync(zshrc)) {
+      return zshrc;
+    }
+    // Create .zshrc if it doesn't exist
+    return zshrc;
+  }
 
   // Prefer .bashrc, fall back to .bash_profile
   const bashrc = join(home, ".bashrc");
@@ -87,29 +112,83 @@ function getPowerShellProfile(): string {
   return join(home, ".config", "powershell", "Microsoft.PowerShell_profile.ps1");
 }
 
-function setupBash(): void {
-  const configFile = getBashConfigFile();
+function removeExistingConfig(content: string): string {
+  // Remove existing projects-cli block (from marker to end of function + optional alias)
   const marker = "# projects-cli:";
+  const markerIndex = content.indexOf(marker);
+  if (markerIndex === -1) return content;
 
-  // Check if already configured
+  const lines = content.split("\n");
+  const result: string[] = [];
+  let inBlock = false;
+  let braceDepth = 0;
+  let skipNextAlias = false;
+
+  for (const line of lines) {
+    if (line.includes(marker)) {
+      inBlock = true;
+      braceDepth = 0;
+      continue;
+    }
+
+    if (inBlock) {
+      // Count braces to find end of function
+      for (const char of line) {
+        if (char === "{") braceDepth++;
+        if (char === "}") braceDepth--;
+      }
+
+      // Function ended when we return to 0 depth after going positive
+      if (braceDepth <= 0 && line.includes("}")) {
+        inBlock = false;
+        skipNextAlias = true;
+        continue;
+      }
+      continue;
+    }
+
+    // Skip alias line right after function
+    if (skipNextAlias) {
+      skipNextAlias = false;
+      if (line.trim().startsWith("alias p=") || line.trim().startsWith("Set-Alias")) {
+        continue;
+      }
+    }
+
+    result.push(line);
+  }
+
+  return result.join("\n");
+}
+
+function setupBash(withAlias: boolean): void {
+  const configFile = getBashConfigFile();
+  const sourceCmd = `source ${configFile}`;
+  let isUpdate = false;
+
+  // Remove existing config if present
   if (existsSync(configFile)) {
-    const content = readFileSync(configFile, "utf-8");
-    if (content.includes(marker)) {
-      console.log(`✓ Already configured in ${configFile}`);
-      console.log("  Run 'source " + configFile + "' or restart your terminal.");
-      return;
+    let content = readFileSync(configFile, "utf-8");
+    if (content.includes("# projects-cli:")) {
+      content = removeExistingConfig(content);
+      writeFileSync(configFile, content);
+      isUpdate = true;
     }
   }
 
   // Append wrapper
-  appendFileSync(configFile, BASH_WRAPPER);
-  console.log(`✓ Added to ${configFile}`);
-  console.log("  Run 'source " + configFile + "' or restart your terminal.");
+  appendFileSync(configFile, getBashWrapper(withAlias));
+  console.log(`✓ ${isUpdate ? "Updated" : "Added to"} ${configFile}`);
+  if (withAlias) {
+    console.log("  Added 'p' alias for quick access.");
+  }
+  console.log(`\n  Reload with: ${sourceCmd}`);
+  console.log("  Or restart your terminal.");
 }
 
-function setupPowerShell(): void {
+function setupPowerShell(withAlias: boolean): void {
   const profilePath = getPowerShellProfile();
-  const marker = "# projects-cli:";
+  let isUpdate = false;
 
   // Ensure directory exists
   const profileDir = dirname(profilePath);
@@ -117,34 +196,42 @@ function setupPowerShell(): void {
     mkdirSync(profileDir, { recursive: true });
   }
 
-  // Check if already configured
+  // Remove existing config if present
   if (existsSync(profilePath)) {
-    const content = readFileSync(profilePath, "utf-8");
-    if (content.includes(marker)) {
-      console.log(`✓ Already configured in ${profilePath}`);
-      console.log("  Run '. $PROFILE' or restart PowerShell.");
-      return;
+    let content = readFileSync(profilePath, "utf-8");
+    if (content.includes("# projects-cli:")) {
+      content = removeExistingConfig(content);
+      writeFileSync(profilePath, content);
+      isUpdate = true;
     }
   }
 
   // Append wrapper
-  appendFileSync(profilePath, POWERSHELL_WRAPPER);
-  console.log(`✓ Added to ${profilePath}`);
-  console.log("  Run '. $PROFILE' or restart PowerShell.");
+  appendFileSync(profilePath, getPowerShellWrapper(withAlias));
+  console.log(`✓ ${isUpdate ? "Updated" : "Added to"} ${profilePath}`);
+  if (withAlias) {
+    console.log("  Added 'p' alias for quick access.");
+  }
+  console.log("\n  Reload with: . $PROFILE");
+  console.log("  Or restart PowerShell.");
 }
 
-export async function runSetup(shellArg?: string): Promise<void> {
+export async function runSetup(shellArg?: string, aliasArg?: string): Promise<void> {
   console.log("Setting up projects-cli...\n");
+
+  // Check for --alias flag
+  const withAlias = shellArg === "--alias" || aliasArg === "--alias";
+  const actualShellArg = shellArg === "--alias" ? undefined : shellArg;
 
   let shell: Shell;
 
-  if (shellArg === "bash") {
+  if (actualShellArg === "bash") {
     shell = "bash";
-  } else if (shellArg === "powershell" || shellArg === "pwsh") {
+  } else if (actualShellArg === "powershell" || actualShellArg === "pwsh") {
     shell = "powershell";
-  } else if (shellArg) {
-    console.error(`Unknown shell: ${shellArg}`);
-    console.error("Usage: projects-cli --setup [bash|powershell]");
+  } else if (actualShellArg) {
+    console.error(`Unknown shell: ${actualShellArg}`);
+    console.error("Usage: projects-cli --setup [bash|powershell] [--alias]");
     process.exit(1);
   } else {
     shell = detectShell();
@@ -152,10 +239,13 @@ export async function runSetup(shellArg?: string): Promise<void> {
   }
 
   if (shell === "bash") {
-    setupBash();
+    setupBash(withAlias);
   } else {
-    setupPowerShell();
+    setupPowerShell(withAlias);
   }
 
   console.log("\nDone! You can now use 'projects' to navigate to your projects.");
+  if (withAlias) {
+    console.log("You can also use 'p' as a shortcut.");
+  }
 }

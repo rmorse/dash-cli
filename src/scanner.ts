@@ -4,6 +4,14 @@ import micromatch from "micromatch";
 import type { Project, Settings } from "./types.js";
 import { DEFAULT_SETTINGS } from "./settings.js";
 
+// Yield to event loop every N directories to allow UI updates
+const YIELD_INTERVAL = 10;
+let directoriesProcessed = 0;
+
+async function yieldToEventLoop(): Promise<void> {
+  return new Promise((resolve) => setImmediate(resolve));
+}
+
 /**
  * Check if a project tree contains any git repos
  */
@@ -62,7 +70,7 @@ function shouldSkip(name: string, patterns: string[]): boolean {
 }
 
 /**
- * Scan a directory for nested git projects
+ * Scan a directory for nested git projects (sync version)
  */
 function findNestedProjects(
   dir: string,
@@ -111,7 +119,62 @@ function findNestedProjects(
 }
 
 /**
- * Scan the root projects directory
+ * Scan a directory for nested git projects (async version with yielding)
+ */
+async function findNestedProjectsAsync(
+  dir: string,
+  skipPatterns: string[],
+  maxDepth: number,
+  depth: number = 0
+): Promise<Project[]> {
+  if (depth > maxDepth) return [];
+
+  const projects: Project[] = [];
+
+  try {
+    const entries = readdirSync(dir);
+
+    for (const entry of entries) {
+      if (shouldSkip(entry, skipPatterns)) continue;
+
+      const fullPath = join(dir, entry);
+
+      try {
+        const stat = statSync(fullPath);
+        if (!stat.isDirectory()) continue;
+
+        // Yield periodically to allow UI updates
+        directoriesProcessed++;
+        if (directoriesProcessed % YIELD_INTERVAL === 0) {
+          await yieldToEventLoop();
+        }
+
+        const gitPath = join(fullPath, ".git");
+        const isGitRepo = existsSync(gitPath);
+
+        // Recursively find nested projects
+        const nested = await findNestedProjectsAsync(fullPath, skipPatterns, maxDepth, depth + 1);
+
+        projects.push({
+          name: entry,
+          path: fullPath,
+          isGitRepo,
+          hasNestedProjects: nested.length > 0,
+          nestedProjects: nested.length > 0 ? nested : undefined,
+        });
+      } catch {
+        // Skip entries we can't access
+      }
+    }
+  } catch {
+    // Skip directories we can't read
+  }
+
+  return projects.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * Scan the root projects directory (sync version)
  */
 export function scanProjects(settings?: Settings): Project[] {
   const config = settings ?? DEFAULT_SETTINGS;
@@ -124,6 +187,27 @@ export function scanProjects(settings?: Settings): Project[] {
   }
 
   const allProjects = findNestedProjects(projectsDir, skipPatterns, maxDepth, 0);
+  // Filter to only include git repos and their containers
+  return filterToGitProjects(allProjects);
+}
+
+/**
+ * Scan the root projects directory (async version with yielding for UI)
+ */
+export async function scanProjectsAsync(settings?: Settings): Promise<Project[]> {
+  const config = settings ?? DEFAULT_SETTINGS;
+  const projectsDir = config.projectsDir;
+  const maxDepth = config.maxDepth;
+  const skipPatterns = parseSkipPatterns(config.skipDirs);
+
+  // Reset counter for each scan
+  directoriesProcessed = 0;
+
+  if (!existsSync(projectsDir)) {
+    return [];
+  }
+
+  const allProjects = await findNestedProjectsAsync(projectsDir, skipPatterns, maxDepth, 0);
   // Filter to only include git repos and their containers
   return filterToGitProjects(allProjects);
 }

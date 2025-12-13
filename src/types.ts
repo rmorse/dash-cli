@@ -8,6 +8,7 @@ export interface Project {
 
 export interface HistoryEntry {
   path: string;
+  displayName: string;
   lastUsed: number;
 }
 

@@ -1,22 +1,23 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Box, Text, useInput, useApp } from "ink";
+import Spinner from "ink-spinner";
 import type { Project, HistoryEntry, Settings } from "../types.js";
 import { basename } from "node:path";
+import { existsSync } from "node:fs";
 import { SettingsScreen } from "./Settings.js";
-import { scanProjects } from "../scanner.js";
+import { scanProjects, scanProjectsAsync } from "../scanner.js";
 
 const PAGE_SIZE = 10;
 
 interface AppProps {
-  initialProjects: Project[];
   initialSettings: Settings;
   recentEntries: HistoryEntry[];
-  onSelect: (path: string) => void;
+  onSelect: (path: string, displayName: string) => void;
   onSettingsSave: (settings: Settings) => void;
 }
 
 interface ListItem {
-  type: "header" | "project" | "back";
+  type: "header" | "project" | "back" | "loading";
   label: string;
   path?: string;
   project?: Project;
@@ -68,15 +69,34 @@ function collectNestedGitProjects(project: Project, basePath: string): Project[]
   return results;
 }
 
-export function App({ initialProjects, initialSettings, recentEntries, onSelect, onSettingsSave }: AppProps) {
+export function App({ initialSettings, recentEntries, onSelect, onSettingsSave }: AppProps) {
   const { exit } = useApp();
 
   // Screen state
   const [screen, setScreen] = useState<"main" | "settings">("main");
 
-  // Projects and settings state (lifted from props for rescan support)
-  const [projects, setProjects] = useState(initialProjects);
+  // Projects and settings state
+  const [projects, setProjects] = useState<Project[] | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [settings, setSettings] = useState(initialSettings);
+
+  // Scan projects on mount
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+
+    // Use async scanning to allow UI updates (spinner animation)
+    scanProjectsAsync(settings).then((scanned) => {
+      if (!cancelled) {
+        setProjects(scanned);
+        setIsLoading(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Search state - just the term, no focus state
   const [searchTerm, setSearchTerm] = useState("");
@@ -84,10 +104,17 @@ export function App({ initialProjects, initialSettings, recentEntries, onSelect,
   // Cache for flattened nested projects
   const [nestedCache, setNestedCache] = useState<Map<string, Project[]>>(() => new Map());
 
-  // Navigation stack
+  // Navigation stack - initialize empty, will update when projects load
   const [navStack, setNavStack] = useState<NavLevel[]>([
-    { projects, parentPath: null }
+    { projects: [], parentPath: null }
   ]);
+
+  // Update nav stack when projects finish loading
+  useEffect(() => {
+    if (projects) {
+      setNavStack([{ projects, parentPath: null }]);
+    }
+  }, [projects]);
 
   const currentLevel = navStack[navStack.length - 1];
   const currentProjects = currentLevel.projects;
@@ -102,6 +129,7 @@ export function App({ initialProjects, initialSettings, recentEntries, onSelect,
   // Build flat map of all projects for recent lookup
   const allProjectsMap = useMemo(() => {
     const map = new Map<string, Project>();
+    if (!projects) return map;
     function traverse(list: Project[]) {
       for (const p of list) {
         map.set(p.path, p);
@@ -116,20 +144,30 @@ export function App({ initialProjects, initialSettings, recentEntries, onSelect,
   const unfilteredItems = useMemo(() => {
     const list: ListItem[] = [];
 
-    // Recent section (only at root level)
+    // Recent section (only at root level) - show immediately from history
     if (isAtRoot && recentEntries.length > 0) {
-      list.push({ type: "header", label: "Recent" });
+      const validRecentItems: ListItem[] = [];
       for (const entry of recentEntries) {
+        // Skip if path no longer exists
+        if (!existsSync(entry.path)) continue;
+
+        // Use project data if available, otherwise create minimal entry from path
         const project = allProjectsMap.get(entry.path);
-        if (project) {
-          list.push({
-            type: "project",
-            label: getDisplayName(project.path, settings.projectsDir),
-            path: project.path,
-            project,
-            isRecent: true,
-          });
-        }
+        validRecentItems.push({
+          type: "project",
+          label: entry.displayName,
+          path: entry.path,
+          project: project ?? {
+            name: basename(entry.path),
+            path: entry.path,
+            isGitRepo: true, // Assume git repo for recent entries
+          },
+          isRecent: true,
+        });
+      }
+      if (validRecentItems.length > 0) {
+        list.push({ type: "header", label: "Recent" });
+        list.push(...validRecentItems);
       }
     }
 
@@ -137,25 +175,30 @@ export function App({ initialProjects, initialSettings, recentEntries, onSelect,
     const sectionLabel = isAtRoot ? "All Projects" : getDisplayName(currentLevel.parentPath || "", settings.projectsDir);
     list.push({ type: "header", label: sectionLabel });
 
-    for (const project of currentProjects) {
-      if (isAtRoot && recentPaths.has(project.path)) continue;
+    // Show loading indicator while scanning
+    if (isLoading && isAtRoot) {
+      list.push({ type: "loading", label: "Scanning..." });
+    } else {
+      for (const project of currentProjects) {
+        if (isAtRoot && recentPaths.has(project.path)) continue;
 
-      list.push({
-        type: "project",
-        label: project.name,
-        path: project.path,
-        project,
-        isRecent: false,
-      });
+        list.push({
+          type: "project",
+          label: project.name,
+          path: project.path,
+          project,
+          isRecent: false,
+        });
+      }
     }
 
     // Back option at bottom when not at root
     if (!isAtRoot) {
-      list.push({ type: "back", label: "← Back" });
+      list.push({ type: "back", label: "Back" });
     }
 
     return list;
-  }, [currentProjects, recentEntries, isAtRoot, recentPaths, allProjectsMap, currentLevel.parentPath, settings.projectsDir]);
+  }, [currentProjects, recentEntries, isAtRoot, recentPaths, allProjectsMap, currentLevel.parentPath, settings.projectsDir, isLoading]);
 
   // Filter items based on search term
   const items = useMemo(() => {
@@ -173,6 +216,13 @@ export function App({ initialProjects, initialSettings, recentEntries, onSelect,
         headerAdded = false;
       } else if (item.type === "back") {
         backItem = item;
+      } else if (item.type === "loading") {
+        // Always include loading item with its header
+        if (currentHeader && !headerAdded) {
+          filtered.push(currentHeader);
+          headerAdded = true;
+        }
+        filtered.push(item);
       } else {
         if (item.label.toLowerCase().includes(lowerSearch)) {
           // Add header before first matching item in this section
@@ -338,7 +388,7 @@ export function App({ initialProjects, initialSettings, recentEntries, onSelect,
         const project = currentItem.project;
 
         if (project.isGitRepo) {
-          onSelect(project.path);
+          onSelect(project.path, currentItem.label);
           return;
         }
 
@@ -347,7 +397,7 @@ export function App({ initialProjects, initialSettings, recentEntries, onSelect,
           return;
         }
 
-        onSelect(project.path);
+        onSelect(project.path, currentItem.label);
       }
       return;
     }
@@ -416,7 +466,12 @@ export function App({ initialProjects, initialSettings, recentEntries, onSelect,
       const newPos = Math.max(0, currentPos - PAGE_SIZE);
       const newIndex = selectableIndices[newPos];
       setSelectedIndex(newIndex);
-      adjustScroll(newIndex);
+      // If at first item, scroll to top to show headers
+      if (newPos === 0) {
+        setScrollOffset(0);
+      } else {
+        adjustScroll(newIndex);
+      }
       return;
     }
 
@@ -457,12 +512,12 @@ export function App({ initialProjects, initialSettings, recentEntries, onSelect,
   return (
     <Box flexDirection="column">
       {/* Search input - outside scroll area */}
-      <Box marginBottom={1}>
+      <Box marginTop={1}>
         <Text color="gray">{"  "}</Text>
-        <Text color={searchTerm ? settings.selectedColor : "gray"}>
+        <Text color={searchTerm ? "white" : "gray"}>
           {searchTerm || "Type to search..."}
         </Text>
-        {searchTerm && <Text color={settings.selectedColor}>▌</Text>}
+        {searchTerm && <Text color="white">▌</Text>}
       </Box>
 
       {/* Scrollable list area */}
@@ -497,9 +552,16 @@ export function App({ initialProjects, initialSettings, recentEntries, onSelect,
           return (
             <Box key="back">
               <Text color={isSelected ? settings.selectedColor : "gray"} bold={isSelected}>
-                {isSelected ? "> " : "  "}
-                {item.label}
+                {"< "}{item.label}
               </Text>
+            </Box>
+          );
+        }
+
+        if (item.type === "loading") {
+          return (
+            <Box key="loading">
+              <Text color="cyan">{"  "}<Spinner type="dots" /> {item.label}</Text>
             </Box>
           );
         }
