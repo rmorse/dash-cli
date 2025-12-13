@@ -23,6 +23,7 @@ interface ListItem {
   type: "header" | "project" | "back";
   label: string;
   path?: string;
+  selectionKey?: string;  // Unique key for selection tracking (fav-path, recent-path, path, __back__)
   project?: Project;
   isFavorite?: boolean;
   isRecent?: boolean;
@@ -34,7 +35,7 @@ interface NavLevel {
   parentPath: string | null;
   // Saved scroll/selection state for this level
   savedScrollOffset: number;
-  savedSelectedIndex: number;
+  savedSelectedKey: string | null;  // Selection by key, not index
 }
 
 // Get display name for a path (relative to projects dir)
@@ -139,13 +140,13 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
 
   // Navigation stack - initialize empty, will update when projects load
   const [navStack, setNavStack] = useState<NavLevel[]>([
-    { projects: [], parentPath: null, savedScrollOffset: 0, savedSelectedIndex: 1 }
+    { projects: [], parentPath: null, savedScrollOffset: 0, savedSelectedKey: null }
   ]);
 
   // Update nav stack when projects finish loading
   useEffect(() => {
     if (projects) {
-      setNavStack([{ projects, parentPath: null, savedScrollOffset: 0, savedSelectedIndex: 1 }]);
+      setNavStack([{ projects, parentPath: null, savedScrollOffset: 0, savedSelectedKey: null }]);
     }
   }, [projects]);
 
@@ -178,21 +179,31 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
     return map;
   }, [projects]);
 
-  // Build list with sections (before filtering)
-  const unfilteredItems = useMemo(() => {
-    const list: ListItem[] = [];
+  // Build favorite number lookup (for showing #1, #2 etc on inline items)
+  const favoriteNumbers = useMemo(() => {
+    const map = new Map<string, number>();
+    favoriteEntries.forEach((entry, i) => map.set(entry.path, i + 1));
+    return map;
+  }, [favoriteEntries]);
 
-    // Favorites section (only at root level)
-    if (isAtRoot && favoriteEntries.length > 0) {
-      const validFavoriteItems: ListItem[] = [];
+  // Build list with sections and keyToIndex map (before filtering)
+  const { unfilteredItems, unfilteredKeyToIndex } = useMemo(() => {
+    const list: ListItem[] = [];
+    const keyMap = new Map<string, number>();
+
+    // Favorites section (only at root level, hidden when searching)
+    if (isAtRoot && favoriteEntries.length > 0 && !searchTerm) {
+      list.push({ type: "header", label: "Favorites" });
       for (let i = 0; i < favoriteEntries.length; i++) {
         const entry = favoriteEntries[i];
-        // Use project data if available, otherwise create minimal entry from path
         const project = allProjectsMap.get(entry.path);
-        validFavoriteItems.push({
+        const selectionKey = `fav-${entry.path}`;
+        const idx = list.length;
+        list.push({
           type: "project",
           label: entry.displayName,
           path: entry.path,
+          selectionKey,
           favoriteNumber: i + 1,
           project: project ?? {
             name: basename(entry.path),
@@ -202,26 +213,28 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
           isFavorite: true,
           isRecent: false,
         });
-      }
-      if (validFavoriteItems.length > 0) {
-        list.push({ type: "header", label: "Favorites" });
-        list.push(...validFavoriteItems);
+        keyMap.set(selectionKey, idx);
       }
     }
 
-    // Recent section (only at root level) - show immediately from history
-    if (isAtRoot && recentEntries.length > 0) {
-      const validRecentItems: ListItem[] = [];
+    // Recent section (only at root level, hidden when searching)
+    if (isAtRoot && recentEntries.length > 0 && !searchTerm) {
+      const recentHeader = list.length;
+      let hasRecent = false;
       for (const entry of recentEntries) {
-        // Skip if already in favorites
         if (favoritePaths.has(entry.path)) continue;
-
-        // Use project data if available, otherwise create minimal entry from path
+        if (!hasRecent) {
+          list.push({ type: "header", label: "Recent" });
+          hasRecent = true;
+        }
         const project = allProjectsMap.get(entry.path);
-        validRecentItems.push({
+        const selectionKey = `recent-${entry.path}`;
+        const idx = list.length;
+        list.push({
           type: "project",
           label: entry.displayName,
           path: entry.path,
+          selectionKey,
           project: project ?? {
             name: basename(entry.path),
             path: entry.path,
@@ -230,10 +243,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
           isFavorite: false,
           isRecent: true,
         });
-      }
-      if (validRecentItems.length > 0) {
-        list.push({ type: "header", label: "Recent" });
-        list.push(...validRecentItems);
+        keyMap.set(selectionKey, idx);
       }
     }
 
@@ -242,33 +252,42 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
     list.push({ type: "header", label: sectionLabel });
 
     for (const project of currentProjects) {
-      // Skip if already shown in favorites or recent
-      if (isAtRoot && (favoritePaths.has(project.path) || recentPaths.has(project.path))) continue;
-
+      const isFav = favoritePaths.has(project.path);
+      const isRec = recentPaths.has(project.path) && !isFav;
+      const selectionKey = project.path;  // Main list uses plain path
+      const idx = list.length;
       list.push({
         type: "project",
         label: project.name,
         path: project.path,
+        selectionKey,
         project,
-        isFavorite: false,
-        isRecent: false,
+        isFavorite: isFav,
+        isRecent: isRec,
+        favoriteNumber: isFav ? favoriteNumbers.get(project.path) : undefined,
       });
+      keyMap.set(selectionKey, idx);
     }
 
     // Back option at bottom when not at root
     if (!isAtRoot) {
-      list.push({ type: "back", label: "Back" });
+      const idx = list.length;
+      list.push({ type: "back", label: "Back", selectionKey: "__back__" });
+      keyMap.set("__back__", idx);
     }
 
-    return list;
-  }, [currentProjects, recentEntries, favoriteEntries, isAtRoot, recentPaths, favoritePaths, allProjectsMap, currentLevel.parentPath, settings.projectsDir]);
+    return { unfilteredItems: list, unfilteredKeyToIndex: keyMap };
+  }, [currentProjects, recentEntries, favoriteEntries, isAtRoot, recentPaths, favoritePaths, allProjectsMap, currentLevel.parentPath, settings.projectsDir, searchTerm, favoriteNumbers]);
 
-  // Filter items based on search term
-  const items = useMemo(() => {
-    if (!searchTerm) return unfilteredItems;
+  // Filter items based on search term, also build keyToIndex map
+  const { items, keyToIndex } = useMemo(() => {
+    if (!searchTerm) {
+      return { items: unfilteredItems, keyToIndex: unfilteredKeyToIndex };
+    }
 
     const lowerSearch = searchTerm.toLowerCase();
     const filtered: ListItem[] = [];
+    const keyMap = new Map<string, number>();
     let currentHeader: ListItem | null = null;
     let headerAdded = false;
     let backItem: ListItem | null = null;
@@ -286,17 +305,23 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
             filtered.push(currentHeader);
             headerAdded = true;
           }
+          const idx = filtered.length;
           filtered.push(item);
+          if (item.selectionKey) {
+            keyMap.set(item.selectionKey, idx);
+          }
         }
       }
     }
 
     if (backItem) {
+      const idx = filtered.length;
       filtered.push(backItem);
+      keyMap.set("__back__", idx);
     }
 
-    return filtered;
-  }, [unfilteredItems, searchTerm]);
+    return { items: filtered, keyToIndex: keyMap };
+  }, [unfilteredItems, unfilteredKeyToIndex, searchTerm]);
 
   // Find selectable indices (not headers)
   const selectableIndices = useMemo(
@@ -306,8 +331,17 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
     [items]
   );
 
-  const [selectedIndex, setSelectedIndex] = useState(selectableIndices[0] ?? 0);
+  // Selection by key (path) - more stable than index
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
+
+  // Derive selectedIndex from selectedKey using O(1) map lookup
+  const selectedIndex = useMemo(() => {
+    if (!selectedKey) return selectableIndices[0] ?? 0;
+    const idx = keyToIndex.get(selectedKey);
+    // If key not found (item removed), fall back to first selectable
+    return idx !== undefined ? idx : selectableIndices[0] ?? 0;
+  }, [selectedKey, keyToIndex, selectableIndices]);
 
   // Track previous search term to only reset on actual search changes
   const prevSearchTerm = useRef(searchTerm);
@@ -318,11 +352,11 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
     if (searchTerm !== prevSearchTerm.current) {
       prevSearchTerm.current = searchTerm;
       if (selectableIndices.length > 0) {
-        setSelectedIndex(selectableIndices[0]);
+        setSelectedKey(items[selectableIndices[0]]?.selectionKey ?? null);
         setScrollOffset(0);
       }
     }
-  }, [searchTerm, selectableIndices.length]);
+  }, [searchTerm, selectableIndices, items]);
 
 
   const adjustScroll = (newSelectedIndex: number) => {
@@ -348,16 +382,16 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
         updatedStack[updatedStack.length - 1] = {
           ...currentLevel,
           savedScrollOffset: scrollOffset,
-          savedSelectedIndex: selectedIndex,
+          savedSelectedKey: selectedKey,
         };
 
         // Push new level and reset scroll/selection atomically
         setNavStack([
           ...updatedStack,
-          { projects: nestedGitProjects, parentPath: project.path, savedScrollOffset: 0, savedSelectedIndex: 1 }
+          { projects: nestedGitProjects, parentPath: project.path, savedScrollOffset: 0, savedSelectedKey: null }
         ]);
         setScrollOffset(0);
-        setSelectedIndex(1); // First selectable item (after header)
+        setSelectedKey(null); // Reset to first selectable item
         setSearchTerm("");
       }
     }
@@ -369,7 +403,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
       // Restore scroll/selection from previous level atomically
       setNavStack(navStack.slice(0, -1));
       setScrollOffset(previousLevel.savedScrollOffset);
-      setSelectedIndex(previousLevel.savedSelectedIndex);
+      setSelectedKey(previousLevel.savedSelectedKey);
       setSearchTerm("");
     }
   };
@@ -378,18 +412,35 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
     const currentItem = items[selectedIndex];
     if (currentItem?.type !== "project" || !currentItem.path) return;
 
+    const isInFavoritesSection = currentItem.selectionKey?.startsWith("fav-");
+    const isInRecentSection = currentItem.selectionKey?.startsWith("recent-");
+
     if (currentItem.isFavorite) {
       // Remove from favorites
       removeFavorite(currentItem.path);
       setFavoriteEntries(prev => prev.filter(f => f.path !== currentItem.path));
+
+      if (isInFavoritesSection) {
+        // Item will disappear from favorites section - select next item in list
+        const currentPos = selectableIndices.indexOf(selectedIndex);
+        const nextPos = currentPos + 1 < selectableIndices.length ? currentPos + 1 : currentPos - 1;
+        if (nextPos >= 0 && nextPos < selectableIndices.length) {
+          const nextIndex = selectableIndices[nextPos];
+          setSelectedKey(items[nextIndex]?.selectionKey ?? null);
+        } else {
+          setSelectedKey(null); // Fall back to first item
+        }
+      }
+      // If in main list, item stays (just loses favorite color) - key unchanged
     } else {
-      // Add to favorites (append to end so first added stays #1)
+      // Add to favorites
       const displayName = getDisplayName(currentItem.path!, settings.projectsDir);
       addFavorite(currentItem.path, displayName);
       setFavoriteEntries(prev => [
         ...prev,
         { path: currentItem.path!, displayName, addedAt: Date.now() },
       ]);
+      // Item stays in place (main list) - key unchanged
     }
   };
 
@@ -405,7 +456,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
         setIsRefreshing(false);
         saveCache(scanned, settings.projectsDir, settings.maxDepth, settings.skipDirs);
         // Reset navigation
-        setNavStack([{ projects: scanned, parentPath: null, savedScrollOffset: 0, savedSelectedIndex: 1 }]);
+        setNavStack([{ projects: scanned, parentPath: null, savedScrollOffset: 0, savedSelectedKey: null }]);
         setNestedCache(new Map());
       }
     });
@@ -438,10 +489,10 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
         if (!scanAbortSignal.current.aborted) {
           setProjects(newProjects);
           // Reset navigation and cache
-          setNavStack([{ projects: newProjects, parentPath: null, savedScrollOffset: 0, savedSelectedIndex: 1 }]);
+          setNavStack([{ projects: newProjects, parentPath: null, savedScrollOffset: 0, savedSelectedKey: null }]);
           setNestedCache(new Map());
           setScrollOffset(0);
-          setSelectedIndex(1);
+          setSelectedKey(null);
           setIsRefreshing(false);
           // Update disk cache
           log("handleSettingsSave: saving cache...");
@@ -553,13 +604,13 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
         // Loop to bottom
         newPos = selectableIndices.length - 1;
         const newIndex = selectableIndices[newPos];
-        setSelectedIndex(newIndex);
+        setSelectedKey(items[newIndex]?.selectionKey ?? null);
         // Scroll to show the item (near bottom)
         setScrollOffset(Math.max(0, items.length - settings.visibleRows));
       } else {
         newPos = currentPos - 1;
         const newIndex = selectableIndices[newPos];
-        setSelectedIndex(newIndex);
+        setSelectedKey(items[newIndex]?.selectionKey ?? null);
         adjustScroll(newIndex);
       }
       return;
@@ -574,13 +625,13 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
         // Loop to top
         newPos = 0;
         const newIndex = selectableIndices[newPos];
-        setSelectedIndex(newIndex);
+        setSelectedKey(items[newIndex]?.selectionKey ?? null);
         // Scroll to top to show headers
         setScrollOffset(0);
       } else {
         newPos = currentPos + 1;
         const newIndex = selectableIndices[newPos];
-        setSelectedIndex(newIndex);
+        setSelectedKey(items[newIndex]?.selectionKey ?? null);
         adjustScroll(newIndex);
       }
       return;
@@ -591,7 +642,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
       if (selectableIndices.length === 0) return;
       const newPos = Math.max(0, currentPos - PAGE_SIZE);
       const newIndex = selectableIndices[newPos];
-      setSelectedIndex(newIndex);
+      setSelectedKey(items[newIndex]?.selectionKey ?? null);
       // If at first item, scroll to top to show headers
       if (newPos === 0) {
         setScrollOffset(0);
@@ -606,7 +657,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
       if (selectableIndices.length === 0) return;
       const newPos = Math.min(selectableIndices.length - 1, currentPos + PAGE_SIZE);
       const newIndex = selectableIndices[newPos];
-      setSelectedIndex(newIndex);
+      setSelectedKey(items[newIndex]?.selectionKey ?? null);
       adjustScroll(newIndex);
       return;
     }
@@ -701,7 +752,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
         }
 
         return (
-          <Box key={item.path}>
+          <Box key={`item-${actualIdx}`}>
             <Text color={color} bold={isSelected}>
               {isSelected ? "> " : "  "}
               {item.label}
