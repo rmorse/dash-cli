@@ -74,7 +74,7 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, o
     setEditValue(String(value));
   };
 
-  const isValidKey = (key: string): boolean => {
+  const isValidShortcutKey = (key: string): boolean => {
     return /^[a-zA-Z0-9]$/.test(key);
   };
 
@@ -98,7 +98,7 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, o
     } else if (field.type === "key") {
       // Validate key input - must be single letter or number
       const key = editValue.toLowerCase();
-      if (isValidKey(key)) {
+      if (isValidShortcutKey(key)) {
         newValue = key;
       } else {
         // Keep existing value if invalid
@@ -166,7 +166,7 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, o
         if (input.charCodeAt(0) >= 32) {
           // For key type, only accept single letter/number and auto-commit
           if (currentField?.type === "key") {
-            if (isValidKey(input)) {
+            if (isValidShortcutKey(input)) {
               setEditValue(input.toLowerCase());
               // Auto-commit after valid key input
               setTimeout(() => {
