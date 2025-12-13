@@ -3,6 +3,7 @@ import { render } from "ink";
 import { App } from "./components/App.js";
 import { scanProjects } from "./scanner.js";
 import { getRecent, addRecent, writeLastSelection, getConfigDir } from "./history.js";
+import { loadSettings, saveSettings } from "./settings.js";
 import { runSetup } from "./setup.js";
 
 async function main() {
@@ -14,19 +15,22 @@ async function main() {
     return;
   }
 
-  const projects = scanProjects();
-  const recentEntries = getRecent(5);
+  const settings = loadSettings();
+  const projects = scanProjects(settings);
+  const recentEntries = getRecent(settings.recentCount);
 
   let selectedPath: string | null = null;
 
   const { waitUntilExit, unmount } = render(
     <App
-      projects={projects}
+      initialProjects={projects}
+      initialSettings={settings}
       recentEntries={recentEntries}
       onSelect={(path) => {
         selectedPath = path;
         unmount();
       }}
+      onSettingsSave={saveSettings}
     />,
     {
       exitOnCtrlC: true,

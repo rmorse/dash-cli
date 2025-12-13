@@ -20,3 +20,7 @@ export interface SelectItem {
   value: string;
   isHeader?: boolean;
 }
+
+// Re-export settings types
+export type { Settings, SettingField } from "./settings.js";
+export { DEFAULT_SETTINGS, SETTING_FIELDS } from "./settings.js";

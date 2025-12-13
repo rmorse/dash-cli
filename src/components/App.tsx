@@ -1,16 +1,18 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Box, Text, useInput, useApp } from "ink";
-import type { Project, HistoryEntry } from "../types.js";
+import type { Project, HistoryEntry, Settings } from "../types.js";
 import { basename } from "node:path";
+import { SettingsScreen } from "./Settings.js";
+import { scanProjects } from "../scanner.js";
 
-const VISIBLE_COUNT = 12;
 const PAGE_SIZE = 10;
-const PROJECTS_DIR = "D:\\projects";
 
 interface AppProps {
-  projects: Project[];
+  initialProjects: Project[];
+  initialSettings: Settings;
   recentEntries: HistoryEntry[];
   onSelect: (path: string) => void;
+  onSettingsSave: (settings: Settings) => void;
 }
 
 interface ListItem {
@@ -28,9 +30,9 @@ interface NavLevel {
 }
 
 // Get display name for a path (relative to projects dir)
-function getDisplayName(path: string): string {
-  if (path.startsWith(PROJECTS_DIR)) {
-    return path.slice(PROJECTS_DIR.length + 1).replace(/\\/g, "/");
+function getDisplayName(path: string, projectsDir: string): string {
+  if (path.startsWith(projectsDir)) {
+    return path.slice(projectsDir.length + 1).replace(/\\/g, "/");
   }
   return basename(path);
 }
@@ -66,14 +68,21 @@ function collectNestedGitProjects(project: Project, basePath: string): Project[]
   return results;
 }
 
-export function App({ projects, recentEntries, onSelect }: AppProps) {
+export function App({ initialProjects, initialSettings, recentEntries, onSelect, onSettingsSave }: AppProps) {
   const { exit } = useApp();
+
+  // Screen state
+  const [screen, setScreen] = useState<"main" | "settings">("main");
+
+  // Projects and settings state (lifted from props for rescan support)
+  const [projects, setProjects] = useState(initialProjects);
+  const [settings, setSettings] = useState(initialSettings);
 
   // Search state - just the term, no focus state
   const [searchTerm, setSearchTerm] = useState("");
 
   // Cache for flattened nested projects
-  const [nestedCache] = useState<Map<string, Project[]>>(() => new Map());
+  const [nestedCache, setNestedCache] = useState<Map<string, Project[]>>(() => new Map());
 
   // Navigation stack
   const [navStack, setNavStack] = useState<NavLevel[]>([
@@ -115,7 +124,7 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
         if (project) {
           list.push({
             type: "project",
-            label: getDisplayName(project.path),
+            label: getDisplayName(project.path, settings.projectsDir),
             path: project.path,
             project,
             isRecent: true,
@@ -125,7 +134,7 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
     }
 
     // Current level projects
-    const sectionLabel = isAtRoot ? "All Projects" : getDisplayName(currentLevel.parentPath || "");
+    const sectionLabel = isAtRoot ? "All Projects" : getDisplayName(currentLevel.parentPath || "", settings.projectsDir);
     list.push({ type: "header", label: sectionLabel });
 
     for (const project of currentProjects) {
@@ -146,7 +155,7 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
     }
 
     return list;
-  }, [currentProjects, recentEntries, isAtRoot, recentPaths, allProjectsMap, currentLevel.parentPath]);
+  }, [currentProjects, recentEntries, isAtRoot, recentPaths, allProjectsMap, currentLevel.parentPath, settings.projectsDir]);
 
   // Filter items based on search term
   const items = useMemo(() => {
@@ -211,8 +220,8 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
         setSelectedIndex(itemIndex);
         if (itemIndex < scrollOffset) {
           setScrollOffset(itemIndex);
-        } else if (itemIndex >= scrollOffset + VISIBLE_COUNT) {
-          setScrollOffset(Math.max(0, itemIndex - VISIBLE_COUNT + 1));
+        } else if (itemIndex >= scrollOffset + settings.visibleRows) {
+          setScrollOffset(Math.max(0, itemIndex - settings.visibleRows + 1));
         }
         return;
       }
@@ -228,8 +237,8 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
   const adjustScroll = (newSelectedIndex: number) => {
     if (newSelectedIndex < scrollOffset) {
       setScrollOffset(newSelectedIndex);
-    } else if (newSelectedIndex >= scrollOffset + VISIBLE_COUNT) {
-      setScrollOffset(newSelectedIndex - VISIBLE_COUNT + 1);
+    } else if (newSelectedIndex >= scrollOffset + settings.visibleRows) {
+      setScrollOffset(newSelectedIndex - settings.visibleRows + 1);
     }
   };
 
@@ -263,7 +272,36 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
     }
   };
 
+  const handleSettingsSave = (newSettings: Settings) => {
+    const needsRescan =
+      newSettings.projectsDir !== settings.projectsDir ||
+      newSettings.maxDepth !== settings.maxDepth ||
+      newSettings.skipDirs !== settings.skipDirs;
+
+    setSettings(newSettings);
+    onSettingsSave(newSettings);
+
+    if (needsRescan) {
+      const newProjects = scanProjects(newSettings);
+      setProjects(newProjects);
+      // Reset navigation and cache
+      setNavStack([{ projects: newProjects, parentPath: null }]);
+      setNestedCache(new Map());
+    }
+
+    setScreen("main");
+  };
+
   useInput((input, key) => {
+    // Skip input handling when in settings screen
+    if (screen === "settings") return;
+
+    // Tab - open settings
+    if (key.tab) {
+      setScreen("settings");
+      return;
+    }
+
     // Escape - clear search or go back or exit
     if (key.escape) {
       if (searchTerm) {
@@ -273,12 +311,6 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
       } else {
         exit();
       }
-      return;
-    }
-
-    // Quit
-    if (input === "q" && !searchTerm) {
-      exit();
       return;
     }
 
@@ -347,7 +379,7 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
         const newIndex = selectableIndices[newPos];
         setSelectedIndex(newIndex);
         // Scroll to show the item (near bottom)
-        setScrollOffset(Math.max(0, items.length - VISIBLE_COUNT));
+        setScrollOffset(Math.max(0, items.length - settings.visibleRows));
       } else {
         newPos = currentPos - 1;
         const newIndex = selectableIndices[newPos];
@@ -407,19 +439,30 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
   });
 
   // Calculate visible items
-  const visibleItems = items.slice(scrollOffset, scrollOffset + VISIBLE_COUNT);
+  const visibleItems = items.slice(scrollOffset, scrollOffset + settings.visibleRows);
   const hasMoreAbove = scrollOffset > 0;
-  const hasMoreBelow = scrollOffset + VISIBLE_COUNT < items.length;
+  const hasMoreBelow = scrollOffset + settings.visibleRows < items.length;
+
+  // Show settings screen
+  if (screen === "settings") {
+    return (
+      <SettingsScreen
+        settings={settings}
+        onSave={handleSettingsSave}
+        onCancel={() => setScreen("main")}
+      />
+    );
+  }
 
   return (
     <Box flexDirection="column">
       {/* Search input - outside scroll area */}
       <Box marginBottom={1}>
         <Text color="gray">{"  "}</Text>
-        <Text color={searchTerm ? "#FFD700" : "gray"}>
+        <Text color={searchTerm ? settings.selectedColor : "gray"}>
           {searchTerm || "Type to search..."}
         </Text>
-        {searchTerm && <Text color="#FFD700">▌</Text>}
+        {searchTerm && <Text color={settings.selectedColor}>▌</Text>}
       </Box>
 
       {/* Scrollable list area */}
@@ -453,7 +496,7 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
         if (item.type === "back") {
           return (
             <Box key="back">
-              <Text color={isSelected ? "#FFD700" : "gray"} bold={isSelected}>
+              <Text color={isSelected ? settings.selectedColor : "gray"} bold={isSelected}>
                 {isSelected ? "> " : "  "}
                 {item.label}
               </Text>
@@ -466,9 +509,9 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
 
         let color: string | undefined;
         if (isSelected) {
-          color = "#FFD700";
+          color = settings.selectedColor;
         } else if (item.isRecent) {
-          color = "#6495ED";
+          color = settings.recentColor;
         }
 
         return (
@@ -486,13 +529,13 @@ export function App({ projects, recentEntries, onSelect }: AppProps) {
 
       {hasMoreBelow && (
         <Box>
-          <Text dimColor>  ↓ {items.length - scrollOffset - VISIBLE_COUNT} more</Text>
+          <Text dimColor>  ↓ {items.length - scrollOffset - settings.visibleRows} more</Text>
         </Box>
       )}
 
       <Box marginTop={1}>
         <Text dimColor>
-          type to filter • ↑↓ navigate • enter select • →← drill/back • esc clear • q quit
+          type to filter • ↑↓ navigate • enter select • →← drill/back • tab settings • esc quit
         </Text>
       </Box>
     </Box>

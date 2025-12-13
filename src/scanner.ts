@@ -1,10 +1,8 @@
 import { readdirSync, statSync, existsSync } from "node:fs";
 import { join, basename } from "node:path";
-import type { Project } from "./types.js";
-
-const PROJECTS_DIR = "D:\\projects";
-const MAX_DEPTH = 4;
-const SKIP_DIRS = new Set([".git", "node_modules", "vendor", "dist", "build", ".next", "__pycache__"]);
+import micromatch from "micromatch";
+import type { Project, Settings } from "./types.js";
+import { DEFAULT_SETTINGS } from "./settings.js";
 
 /**
  * Check if a project tree contains any git repos
@@ -42,10 +40,37 @@ function filterToGitProjects(projects: Project[]): Project[] {
 }
 
 /**
+ * Parse skip patterns from comma-separated string
+ */
+function parseSkipPatterns(skipDirs: string): string[] {
+  return skipDirs
+    .split(",")
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+}
+
+/**
+ * Check if a directory name should be skipped
+ */
+function shouldSkip(name: string, patterns: string[]): boolean {
+  return patterns.some((pattern) => {
+    if (pattern.includes("*")) {
+      return micromatch.isMatch(name, pattern);
+    }
+    return name === pattern;
+  });
+}
+
+/**
  * Scan a directory for nested git projects
  */
-function findNestedProjects(dir: string, depth: number = 0): Project[] {
-  if (depth > MAX_DEPTH) return [];
+function findNestedProjects(
+  dir: string,
+  skipPatterns: string[],
+  maxDepth: number,
+  depth: number = 0
+): Project[] {
+  if (depth > maxDepth) return [];
 
   const projects: Project[] = [];
 
@@ -53,7 +78,7 @@ function findNestedProjects(dir: string, depth: number = 0): Project[] {
     const entries = readdirSync(dir);
 
     for (const entry of entries) {
-      if (SKIP_DIRS.has(entry)) continue;
+      if (shouldSkip(entry, skipPatterns)) continue;
 
       const fullPath = join(dir, entry);
 
@@ -65,7 +90,7 @@ function findNestedProjects(dir: string, depth: number = 0): Project[] {
         const isGitRepo = existsSync(gitPath);
 
         // Recursively find nested projects
-        const nested = findNestedProjects(fullPath, depth + 1);
+        const nested = findNestedProjects(fullPath, skipPatterns, maxDepth, depth + 1);
 
         projects.push({
           name: entry,
@@ -88,12 +113,17 @@ function findNestedProjects(dir: string, depth: number = 0): Project[] {
 /**
  * Scan the root projects directory
  */
-export function scanProjects(): Project[] {
-  if (!existsSync(PROJECTS_DIR)) {
+export function scanProjects(settings?: Settings): Project[] {
+  const config = settings ?? DEFAULT_SETTINGS;
+  const projectsDir = config.projectsDir;
+  const maxDepth = config.maxDepth;
+  const skipPatterns = parseSkipPatterns(config.skipDirs);
+
+  if (!existsSync(projectsDir)) {
     return [];
   }
 
-  const allProjects = findNestedProjects(PROJECTS_DIR, 0);
+  const allProjects = findNestedProjects(projectsDir, skipPatterns, maxDepth, 0);
   // Filter to only include git repos and their containers
   return filterToGitProjects(allProjects);
 }
