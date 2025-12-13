@@ -1,5 +1,3 @@
-import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
 import React from "react";
 import { render } from "ink";
 import { App } from "./components/App.js";
@@ -8,43 +6,26 @@ import { loadSettingsAsync, saveSettings } from "./settings.js";
 import { runSetup } from "./setup.js";
 import { initLog, log } from "./logger.js";
 
-// Early startup timing - write directly to file since Ink captures console
-const LOG_DIR = join(process.cwd(), "logs");
-const LOG_FILE = join(LOG_DIR, "debug.log");
-const moduleLoadTime = Date.now();
-
-// Clear log file and write first entry
-try {
-  mkdirSync(LOG_DIR, { recursive: true });
-  writeFileSync(LOG_FILE, `=== Early startup at ${new Date().toISOString()} ===\n`);
-} catch {}
-
-function earlyLog(msg: string): void {
-  try {
-    appendFileSync(LOG_FILE, `[EARLY +${Date.now() - moduleLoadTime}ms] ${msg}\n`);
-  } catch {}
-}
-
-// Log immediately after imports
-earlyLog("all modules imported");
-
 async function main() {
-  earlyLog("main() called");
-  initLog();
-  log("main() started");
-
   const args = process.argv.slice(2);
-  log(`args: ${JSON.stringify(args)}`);
+
+  // Check for --debug flag
+  const debugMode = args.includes("--debug");
+  const filteredArgs = args.filter(arg => arg !== "--debug");
+
+  initLog(debugMode);
+  log("main() started");
+  log(`args: ${JSON.stringify(filteredArgs)}`);
 
   // Handle --setup command
-  if (args[0] === "--setup") {
+  if (filteredArgs[0] === "--setup") {
     log("running setup");
-    await runSetup(args[1], args[2]);
+    await runSetup(filteredArgs[1], filteredArgs[2]);
     return;
   }
 
   // Handle numeric argument for quick favorite access
-  const favoriteIndex = parseInt(args[0], 10);
+  const favoriteIndex = parseInt(filteredArgs[0], 10);
   if (!isNaN(favoriteIndex) && favoriteIndex > 0) {
     log(`quick favorite access: ${favoriteIndex}`);
     const favorites = await getFavoritesAsync();

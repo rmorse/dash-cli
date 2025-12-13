@@ -87,6 +87,20 @@ dash-cli --setup --alias            # Add 'd' shortcut
 dash-cli --setup bash --alias       # Bash with 'd' shortcut
 ```
 
+## CLI Options
+
+```bash
+dash-cli --setup [shell] [--alias]  # Configure shell integration
+dash-cli --debug                     # Enable debug logging
+dash 1                               # Jump to favorite #1
+```
+
+| Flag | Description |
+|------|-------------|
+| `--setup` | Configure shell integration (bash/powershell) |
+| `--alias` | Add 'd' shortcut during setup |
+| `--debug` | Enable debug logging to `~/.dash-cli/debug.log` |
+
 ## Configuration Files
 
 Stored in `~/.dash-cli/`:
@@ -95,6 +109,7 @@ Stored in `~/.dash-cli/`:
 - `history.json` - Recent projects
 - `cache.json` - Cached project scan (for instant startup)
 - `last-selection` - Last selected path (for shell wrapper)
+- `debug.log` - Debug log (when running with `--debug`)
 
 ## Development
 
