@@ -8,6 +8,11 @@ import { DEFAULT_SETTINGS } from "./settings.js";
 const YIELD_INTERVAL = 10;
 let directoriesProcessed = 0;
 
+// Abort signal for cancelling scans
+export interface ScanAbortSignal {
+  aborted: boolean;
+}
+
 async function yieldToEventLoop(): Promise<void> {
   return new Promise((resolve) => setImmediate(resolve));
 }
@@ -125,9 +130,10 @@ async function findNestedProjectsAsync(
   dir: string,
   skipPatterns: string[],
   maxDepth: number,
+  signal: ScanAbortSignal,
   depth: number = 0
 ): Promise<Project[]> {
-  if (depth > maxDepth) return [];
+  if (depth > maxDepth || signal.aborted) return [];
 
   const projects: Project[] = [];
 
@@ -135,6 +141,9 @@ async function findNestedProjectsAsync(
     const entries = readdirSync(dir);
 
     for (const entry of entries) {
+      // Check abort signal frequently
+      if (signal.aborted) return projects;
+
       if (shouldSkip(entry, skipPatterns)) continue;
 
       const fullPath = join(dir, entry);
@@ -147,13 +156,15 @@ async function findNestedProjectsAsync(
         directoriesProcessed++;
         if (directoriesProcessed % YIELD_INTERVAL === 0) {
           await yieldToEventLoop();
+          // Check again after yielding
+          if (signal.aborted) return projects;
         }
 
         const gitPath = join(fullPath, ".git");
         const isGitRepo = existsSync(gitPath);
 
         // Recursively find nested projects
-        const nested = await findNestedProjectsAsync(fullPath, skipPatterns, maxDepth, depth + 1);
+        const nested = await findNestedProjectsAsync(fullPath, skipPatterns, maxDepth, signal, depth + 1);
 
         projects.push({
           name: entry,
@@ -194,11 +205,12 @@ export function scanProjects(settings?: Settings): Project[] {
 /**
  * Scan the root projects directory (async version with yielding for UI)
  */
-export async function scanProjectsAsync(settings?: Settings): Promise<Project[]> {
+export async function scanProjectsAsync(settings?: Settings, signal?: ScanAbortSignal): Promise<Project[]> {
   const config = settings ?? DEFAULT_SETTINGS;
   const projectsDir = config.projectsDir;
   const maxDepth = config.maxDepth;
   const skipPatterns = parseSkipPatterns(config.skipDirs);
+  const abortSignal = signal ?? { aborted: false };
 
   // Reset counter for each scan
   directoriesProcessed = 0;
@@ -207,7 +219,13 @@ export async function scanProjectsAsync(settings?: Settings): Promise<Project[]>
     return [];
   }
 
-  const allProjects = await findNestedProjectsAsync(projectsDir, skipPatterns, maxDepth, 0);
+  const allProjects = await findNestedProjectsAsync(projectsDir, skipPatterns, maxDepth, abortSignal, 0);
+
+  // Don't bother filtering if aborted
+  if (abortSignal.aborted) {
+    return [];
+  }
+
   // Filter to only include git repos and their containers
   return filterToGitProjects(allProjects);
 }

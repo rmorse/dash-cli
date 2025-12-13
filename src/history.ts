@@ -69,6 +69,10 @@ export function writeLastSelection(path: string): void {
   writeFileSync(SELECTION_FILE, path);
 }
 
+export function clearHistory(): void {
+  saveHistory({ recent: [] });
+}
+
 export function getSelectionFile(): string {
   return SELECTION_FILE;
 }

@@ -1,11 +1,11 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Box, Text, useInput, useApp } from "ink";
 import Spinner from "ink-spinner";
 import type { Project, HistoryEntry, Settings } from "../types.js";
 import { basename } from "node:path";
 import { existsSync } from "node:fs";
 import { SettingsScreen } from "./Settings.js";
-import { scanProjects, scanProjectsAsync } from "../scanner.js";
+import { scanProjects, scanProjectsAsync, ScanAbortSignal } from "../scanner.js";
 
 const PAGE_SIZE = 10;
 
@@ -69,7 +69,7 @@ function collectNestedGitProjects(project: Project, basePath: string): Project[]
   return results;
 }
 
-export function App({ initialSettings, recentEntries, onSelect, onSettingsSave }: AppProps) {
+export function App({ initialSettings, recentEntries: initialRecentEntries, onSelect, onSettingsSave }: AppProps) {
   const { exit } = useApp();
 
   // Screen state
@@ -79,22 +79,26 @@ export function App({ initialSettings, recentEntries, onSelect, onSettingsSave }
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [settings, setSettings] = useState(initialSettings);
+  const [recentEntries, setRecentEntries] = useState(initialRecentEntries);
+
+  // Abort signal for cancelling scans early (e.g., when user selects before scan completes)
+  const scanAbortSignal = useRef<ScanAbortSignal>({ aborted: false });
 
   // Scan projects on mount
   useEffect(() => {
-    let cancelled = false;
+    scanAbortSignal.current = { aborted: false };
     setIsLoading(true);
 
     // Use async scanning to allow UI updates (spinner animation)
-    scanProjectsAsync(settings).then((scanned) => {
-      if (!cancelled) {
+    scanProjectsAsync(settings, scanAbortSignal.current).then((scanned) => {
+      if (!scanAbortSignal.current.aborted) {
         setProjects(scanned);
         setIsLoading(false);
       }
     });
 
     return () => {
-      cancelled = true;
+      scanAbortSignal.current.aborted = true;
     };
   }, []);
 
@@ -388,6 +392,8 @@ export function App({ initialSettings, recentEntries, onSelect, onSettingsSave }
         const project = currentItem.project;
 
         if (project.isGitRepo) {
+          // Abort any pending scan to exit immediately
+          scanAbortSignal.current.aborted = true;
           onSelect(project.path, currentItem.label);
           return;
         }
@@ -397,6 +403,8 @@ export function App({ initialSettings, recentEntries, onSelect, onSettingsSave }
           return;
         }
 
+        // Abort any pending scan to exit immediately
+        scanAbortSignal.current.aborted = true;
         onSelect(project.path, currentItem.label);
       }
       return;
@@ -505,6 +513,7 @@ export function App({ initialSettings, recentEntries, onSelect, onSettingsSave }
         settings={settings}
         onSave={handleSettingsSave}
         onCancel={() => setScreen("main")}
+        onClearHistory={() => setRecentEntries([])}
       />
     );
   }

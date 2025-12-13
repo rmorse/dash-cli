@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 import type { Settings } from "../types.js";
 import { SETTING_FIELDS } from "../settings.js";
+import { clearHistory } from "../history.js";
 
 const CONFIG_FILE = join(homedir(), ".projects-cli", "settings.json");
 
@@ -12,27 +13,43 @@ interface SettingsProps {
   settings: Settings;
   onSave: (settings: Settings) => void;
   onCancel: () => void;
+  onClearHistory: () => void;
 }
 
-// Total items: settings fields + "Edit config file" action
-const TOTAL_ITEMS = SETTING_FIELDS.length + 1;
-const EDIT_CONFIG_INDEX = SETTING_FIELDS.length;
+// Total items: settings fields + 2 action items (Edit config, Clear history)
+const TOTAL_ITEMS = SETTING_FIELDS.length + 2;
+const CLEAR_HISTORY_INDEX = SETTING_FIELDS.length;
+const EDIT_CONFIG_INDEX = SETTING_FIELDS.length + 1;
 
-export function SettingsScreen({ settings, onSave, onCancel }: SettingsProps) {
+export function SettingsScreen({ settings, onSave, onCancel, onClearHistory }: SettingsProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [editingKey, setEditingKey] = useState<keyof Settings | null>(null);
   const [editValue, setEditValue] = useState("");
   const [localSettings, setLocalSettings] = useState<Settings>({ ...settings });
 
+  const isOnClearHistory = selectedIndex === CLEAR_HISTORY_INDEX;
   const isOnEditConfig = selectedIndex === EDIT_CONFIG_INDEX;
-  const currentField = isOnEditConfig ? null : SETTING_FIELDS[selectedIndex];
+  const isOnActionItem = isOnClearHistory || isOnEditConfig;
+  const currentField = isOnActionItem ? null : SETTING_FIELDS[selectedIndex];
   const isEditing = editingKey !== null;
+
+  const [historyCleared, setHistoryCleared] = useState(false);
 
   const openConfigFile = async () => {
     await open(CONFIG_FILE);
   };
 
+  const handleClearHistory = () => {
+    clearHistory();
+    onClearHistory();
+    setHistoryCleared(true);
+  };
+
   const startEditing = () => {
+    if (isOnClearHistory) {
+      handleClearHistory();
+      return;
+    }
     if (isOnEditConfig) {
       openConfigFile();
       return;
@@ -210,6 +227,15 @@ export function SettingsScreen({ settings, onSave, onCancel }: SettingsProps) {
         );
       })}
 
+      {/* Clear history option */}
+      <Box>
+        <Text color={isOnClearHistory ? "#FFD700" : "gray"} bold={isOnClearHistory}>
+          {isOnClearHistory ? "> " : "  "}
+          {"Clear history..."}
+        </Text>
+        {historyCleared && <Text color="green">{" "}✓</Text>}
+      </Box>
+
       {/* Edit config file option */}
       <Box>
         <Text color={isOnEditConfig ? "#FFD700" : "gray"} bold={isOnEditConfig}>
@@ -224,7 +250,14 @@ export function SettingsScreen({ settings, onSave, onCancel }: SettingsProps) {
 
       {/* Description of selected field */}
       <Box>
-        <Text dimColor>{"  "}{isOnEditConfig ? "Open settings.json in default editor" : currentField?.description}</Text>
+        <Text dimColor>
+          {"  "}
+          {isOnClearHistory
+            ? "Remove all recent projects from history"
+            : isOnEditConfig
+              ? "Open settings.json in default editor"
+              : currentField?.description}
+        </Text>
       </Box>
 
       <Box marginTop={1}>
