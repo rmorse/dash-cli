@@ -32,7 +32,7 @@ function getBashWrapper(withAlias: boolean): string {
   let wrapper = `
 # Dash CLI: Navigate to projects
 dash() {
-    dash-cli
+    dash-cli "$@"
     local selected
     selected=$(cat "${SELECTION_FILE.replace(/\\/g, "/")}" 2>/dev/null)
     if [ -n "$selected" ] && [ -d "$selected" ]; then
@@ -51,7 +51,7 @@ function getPowerShellWrapper(withAlias: boolean): string {
   let wrapper = `
 # Dash CLI: Navigate to projects
 function dash {
-    dash-cli
+    dash-cli @args
     $selectionFile = "${SELECTION_FILE.replace(/\\/g, "\\\\")}"
     if (Test-Path $selectionFile) {
         $selected = Get-Content $selectionFile -Raw

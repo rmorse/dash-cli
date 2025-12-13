@@ -101,7 +101,8 @@ function saveFavoritesData(data: FavoritesData): void {
 
 export function getFavorites(): FavoriteEntry[] {
   const data = loadFavoritesData();
-  return data.favorites.sort((a, b) => b.addedAt - a.addedAt);
+  // Sort by addedAt ascending - first added stays #1
+  return data.favorites.sort((a, b) => a.addedAt - b.addedAt);
 }
 
 export function addFavorite(path: string, displayName: string): void {

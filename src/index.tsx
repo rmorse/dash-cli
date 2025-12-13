@@ -14,6 +14,22 @@ async function main() {
     return;
   }
 
+  // Handle numeric argument for quick favorite access
+  const favoriteIndex = parseInt(args[0], 10);
+  if (!isNaN(favoriteIndex) && favoriteIndex > 0) {
+    const favorites = getFavorites();
+    if (favoriteIndex <= favorites.length) {
+      const favorite = favorites[favoriteIndex - 1];
+      writeLastSelection(favorite.path);
+      return;
+    } else {
+      console.error(
+        `Favorite #${favoriteIndex} does not exist. You have ${favorites.length} favorite(s).`
+      );
+      process.exit(1);
+    }
+  }
+
   const settings = loadSettings();
   const recentEntries = getRecent(settings.recentCount);
   const favoriteEntries = getFavorites();

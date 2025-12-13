@@ -172,7 +172,8 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
     // Favorites section (only at root level)
     if (isAtRoot && favoriteEntries.length > 0) {
       const validFavoriteItems: ListItem[] = [];
-      for (const entry of favoriteEntries) {
+      for (let i = 0; i < favoriteEntries.length; i++) {
+        const entry = favoriteEntries[i];
         // Skip if path no longer exists
         if (!existsSync(entry.path)) continue;
 
@@ -180,7 +181,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
         const project = allProjectsMap.get(entry.path);
         validFavoriteItems.push({
           type: "project",
-          label: entry.displayName,
+          label: `${entry.displayName} #${i + 1}`,
           path: entry.path,
           project: project ?? {
             name: basename(entry.path),

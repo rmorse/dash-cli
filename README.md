@@ -7,7 +7,7 @@ A speedy little project switcher for your terminal.
 - Scans for git repositories (configurable depth)
 - **Instant startup** - cached results load immediately, background refresh
 - Type-to-filter search
-- **Favorites** - mark frequently used projects with Ctrl+F
+- **Favorites** - mark frequently used projects with Ctrl+F, jump to them by number
 - Recent projects shown at top
 - Nested project drill-down navigation
 - Configurable via settings screen
@@ -21,6 +21,18 @@ dash-cli --setup
 # Restart terminal, then:
 dash
 ```
+
+## Favorite Shortcuts
+
+Jump directly to a favorite without opening the UI:
+
+```bash
+dash 1      # Go to your first favorite
+dash 2      # Go to your second favorite
+d 1         # Same thing, using the 'd' alias
+```
+
+Favorites are numbered in the order you add them - your first favorite stays `#1`. The shortcut number is displayed next to each favorite in the UI.
 
 ## Controls
 
