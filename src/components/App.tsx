@@ -246,8 +246,8 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
     const list: ListItem[] = [];
     const keyMap = new Map<string, number>();
 
-    // Shortcuts section (only at root level, hidden when searching, respects showShortcuts setting)
-    if (isAtRoot && settings.showShortcuts && shortcutEntries.length > 0 && !searchTerm) {
+    // Shortcuts section (only at root level, respects showShortcuts setting)
+    if (isAtRoot && settings.showShortcuts && shortcutEntries.length > 0) {
       list.push({ type: "header", label: "Shortcuts" });
       for (const sc of shortcutEntries) {
         // Extract path from cd command
@@ -276,8 +276,8 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
       }
     }
 
-    // Recent section (only at root level, hidden when searching, respects showRecent setting)
-    if (isAtRoot && settings.showRecent && recentEntries.length > 0 && !searchTerm) {
+    // Recent section (only at root level, respects showRecent setting)
+    if (isAtRoot && settings.showRecent && recentEntries.length > 0) {
       const recentHeader = list.length;
       let hasRecent = false;
       for (const entry of recentEntries) {
@@ -338,7 +338,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
     }
 
     return { unfilteredItems: list, unfilteredKeyToIndex: keyMap };
-  }, [currentProjects, recentEntries, shortcutEntries, isAtRoot, recentPaths, exactShortcutPaths, triggersByPath, allProjectsMap, currentLevel.parentPath, settings.projectsDir, settings.showShortcuts, settings.showRecent, searchTerm]);
+  }, [currentProjects, recentEntries, shortcutEntries, isAtRoot, recentPaths, exactShortcutPaths, triggersByPath, allProjectsMap, currentLevel.parentPath, settings.projectsDir, settings.showShortcuts, settings.showRecent]);
 
   // Filter items based on search term, also build keyToIndex map
   const { items, keyToIndex } = useMemo(() => {

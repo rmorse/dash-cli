@@ -55995,7 +55995,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
   const { unfilteredItems, unfilteredKeyToIndex } = (0, import_react27.useMemo)(() => {
     const list = [];
     const keyMap = /* @__PURE__ */ new Map();
-    if (isAtRoot && settings.showShortcuts && shortcutEntries.length > 0 && !searchTerm) {
+    if (isAtRoot && settings.showShortcuts && shortcutEntries.length > 0) {
       list.push({ type: "header", label: "Shortcuts" });
       for (const sc of shortcutEntries) {
         const cdCmd = sc.command.find((c) => c.startsWith("cd "));
@@ -56022,7 +56022,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
         keyMap.set(selectionKey, idx);
       }
     }
-    if (isAtRoot && settings.showRecent && recentEntries.length > 0 && !searchTerm) {
+    if (isAtRoot && settings.showRecent && recentEntries.length > 0) {
       const recentHeader = list.length;
       let hasRecent = false;
       for (const entry of recentEntries) {
@@ -56076,7 +56076,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
       keyMap.set("__back__", idx);
     }
     return { unfilteredItems: list, unfilteredKeyToIndex: keyMap };
-  }, [currentProjects, recentEntries, shortcutEntries, isAtRoot, recentPaths, exactShortcutPaths, triggersByPath, allProjectsMap, currentLevel.parentPath, settings.projectsDir, settings.showShortcuts, settings.showRecent, searchTerm]);
+  }, [currentProjects, recentEntries, shortcutEntries, isAtRoot, recentPaths, exactShortcutPaths, triggersByPath, allProjectsMap, currentLevel.parentPath, settings.projectsDir, settings.showShortcuts, settings.showRecent]);
   const { items, keyToIndex } = (0, import_react27.useMemo)(() => {
     if (!searchTerm) {
       return { items: unfilteredItems, keyToIndex: unfilteredKeyToIndex };
