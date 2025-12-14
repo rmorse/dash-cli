@@ -167,13 +167,13 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, o
         return;
       }
 
-      // Number adjustment with arrows
+      // Number adjustment with arrows (all four directions)
       if (currentField?.type === "number") {
-        if (key.upArrow) {
+        if (key.upArrow || key.rightArrow) {
           adjustNumber(1);
           return;
         }
-        if (key.downArrow) {
+        if (key.downArrow || key.leftArrow) {
           adjustNumber(-1);
           return;
         }
@@ -366,7 +366,7 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, o
         <Text dimColor>
           {isEditing
             ? currentField?.type === "number"
-              ? "  type or ↑↓ adjust • enter save • esc cancel"
+              ? "  type or ←→↑↓ adjust • enter save • esc cancel"
               : "  ←→ cursor • enter save • esc cancel"
             : "  ↑↓ navigate • enter edit • esc save & exit"}
         </Text>

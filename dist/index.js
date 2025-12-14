@@ -55079,11 +55079,11 @@ function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, onClearH
         return;
       }
       if (currentField?.type === "number") {
-        if (key.upArrow) {
+        if (key.upArrow || key.rightArrow) {
           adjustNumber(1);
           return;
         }
-        if (key.downArrow) {
+        if (key.downArrow || key.leftArrow) {
           adjustNumber(-1);
           return;
         }
@@ -55235,7 +55235,7 @@ function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, onClearH
       "  ",
       isOnEditFavorites ? "Manage favorites: edit names, shortcuts, and commands" : isOnClearFavorites ? "Remove all favorite projects" : isOnClearHistory ? "Remove all recent projects from history" : isOnEditConfig ? "Open settings.json in default editor" : currentField?.description
     ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { dimColor: true, children: isEditing ? currentField?.type === "number" ? "  type or \u2191\u2193 adjust \u2022 enter save \u2022 esc cancel" : "  \u2190\u2192 cursor \u2022 enter save \u2022 esc cancel" : "  \u2191\u2193 navigate \u2022 enter edit \u2022 esc save & exit" }) })
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { dimColor: true, children: isEditing ? currentField?.type === "number" ? "  type or \u2190\u2192\u2191\u2193 adjust \u2022 enter save \u2022 esc cancel" : "  \u2190\u2192 cursor \u2022 enter save \u2022 esc cancel" : "  \u2191\u2193 navigate \u2022 enter edit \u2022 esc save & exit" }) })
   ] });
 }
 
