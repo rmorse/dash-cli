@@ -256,10 +256,10 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, o
   };
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" marginTop={1}>
       <Breadcrumb items={breadcrumbs} />
 
-      <Box marginBottom={1}>
+      <Box>
         <Text color="gray">{"  "}Settings </Text>
         <Text dimColor>(Tab to close)</Text>
       </Box>

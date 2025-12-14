@@ -864,13 +864,16 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
         const hasNested = !item.isRecent && project.hasNestedProjects;
 
         let color: string | undefined;
+        const isInFavoritesSection = item.selectionKey?.startsWith("fav-");
         if (isSelected) {
           color = settings.selectedColor;
-        } else if (item.isFavorite) {
+        } else if (isInFavoritesSection) {
+          // Only color favorites green when in the actual Favorites section
           color = settings.favoriteColor;
         } else if (item.isRecent) {
           color = settings.recentColor;
         }
+        // Note: projects in All Projects section with shortcuts show normal text + [shortcut] tags
 
         return (
           <Box key={`item-${actualIdx}`}>

@@ -55151,9 +55151,9 @@ function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, onClearH
     }
     return str;
   };
-  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { flexDirection: "column", children: [
+  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { flexDirection: "column", marginTop: 1, children: [
     /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Breadcrumb, { items: breadcrumbs }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { marginBottom: 1, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { children: [
       /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: "gray", children: [
         "  ",
         "Settings "
@@ -55295,9 +55295,9 @@ function FavoritesEditor({
       return;
     }
   });
-  return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { flexDirection: "column", children: [
+  return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { flexDirection: "column", marginTop: 1, children: [
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Breadcrumb, { items: breadcrumbs }),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Favorites \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Favorites \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
     favorites.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { color: "gray", dimColor: true, children: [
       "  ",
       "No favorites yet"
@@ -55318,7 +55318,7 @@ function FavoritesEditor({
         isDeleting && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "red", children: " Delete? (y/n)" })
       ] }, fav.id);
     }),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { marginTop: favorites.length > 0 ? 1 : 0, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
       Text,
       {
         color: isOnAddNew ? "#FFD700" : "cyan",
@@ -55329,7 +55329,7 @@ function FavoritesEditor({
         ]
       }
     ) }),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { dimColor: true, children: [
       "enter edit ",
       favorites.length > 0 ? "\u2022 ^D delete " : "",
@@ -55402,8 +55402,10 @@ function FavoriteEdit({
       return;
     }
     if (field.type === "action") {
+      const newCmdIndex = commands.length;
       setCommands((prev) => [...prev, ""]);
-      setSelectedIndex(fields.length - 1);
+      setSelectedIndex(3 + newCmdIndex);
+      setEditingField(`cmd-${newCmdIndex}`);
       return;
     }
     setEditingField(field.key);
@@ -55509,9 +55511,9 @@ function FavoriteEdit({
       ) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: isSelected ? "#FFD700" : value ? "white" : "gray", children: value || "(empty)" })
     ] }, field.key);
   };
-  return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { flexDirection: "column", children: [
+  return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { flexDirection: "column", marginTop: 1, children: [
     /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Breadcrumb, { items: breadcrumbs }),
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Edit Favorite \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Edit Favorite \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
     renderField(fields[0], 0),
     renderField(fields[1], 1),
     /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
@@ -55529,7 +55531,7 @@ function FavoriteEdit({
       /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { children: " " }),
       /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: selectedIndex === 2 ? "#FFD700" : "white", children: caseSensitive ? "Yes" : "No" })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Commands \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Commands \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
     commands.map((cmd, idx) => {
       const fieldIdx = 3 + idx;
       const field = fields[fieldIdx];
@@ -55555,7 +55557,7 @@ function FavoriteEdit({
         ) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: isSelected ? "#FFD700" : cmd ? "white" : "gray", children: cmd || "(empty)" })
       ] }, `cmd-${idx}`);
     }),
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
       Text,
       {
         color: selectedIndex === fields.length - 1 ? "#FFD700" : "cyan",
@@ -55567,7 +55569,7 @@ function FavoriteEdit({
       }
     ) }),
     error && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "red", children: error }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
     /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { dimColor: true, children: "enter edit \u2022 ^D delete line \u2022 esc save & back" }) })
   ] });
 }
@@ -56411,9 +56413,10 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
       const project = item.project;
       const hasNested = !item.isRecent && project.hasNestedProjects;
       let color;
+      const isInFavoritesSection = item.selectionKey?.startsWith("fav-");
       if (isSelected) {
         color = settings.selectedColor;
-      } else if (item.isFavorite) {
+      } else if (isInFavoritesSection) {
         color = settings.favoriteColor;
       } else if (item.isRecent) {
         color = settings.recentColor;

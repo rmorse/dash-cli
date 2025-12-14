@@ -92,8 +92,11 @@ export function FavoriteEdit({
       return;
     }
     if (field.type === "action") {
+      // Add new line and immediately enter edit mode for it
+      const newCmdIndex = commands.length;
       setCommands((prev) => [...prev, ""]);
-      setSelectedIndex(fields.length - 1);
+      setSelectedIndex(3 + newCmdIndex); // Select the new command line
+      setEditingField(`cmd-${newCmdIndex}`); // Enter edit mode immediately
       return;
     }
     setEditingField(field.key);
@@ -218,10 +221,10 @@ export function FavoriteEdit({
   };
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" marginTop={1}>
       <Breadcrumb items={breadcrumbs} />
 
-      <Box marginTop={1}>
+      <Box>
         <Text color="gray" dimColor>
           ── Edit Favorite ───────────────
         </Text>
@@ -249,7 +252,7 @@ export function FavoriteEdit({
       </Box>
 
       {/* Commands section */}
-      <Box marginTop={1}>
+      <Box>
         <Text color="gray" dimColor>
           ── Commands ────────────────────
         </Text>
@@ -286,7 +289,7 @@ export function FavoriteEdit({
       })}
 
       {/* Add line action */}
-      <Box marginTop={1}>
+      <Box>
         <Text
           color={selectedIndex === fields.length - 1 ? "#FFD700" : "cyan"}
           bold={selectedIndex === fields.length - 1}
@@ -302,12 +305,11 @@ export function FavoriteEdit({
         </Box>
       )}
 
-      <Box marginTop={1}>
+      <Box>
         <Text color="gray" dimColor>
           ────────────────────────────────
         </Text>
       </Box>
-
       <Box>
         <Text dimColor>
           enter edit • ^D delete line • esc save & back

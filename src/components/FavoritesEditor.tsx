@@ -82,10 +82,10 @@ export function FavoritesEditor({
   });
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" marginTop={1}>
       <Breadcrumb items={breadcrumbs} />
 
-      <Box marginTop={1}>
+      <Box>
         <Text color="gray" dimColor>
           ── Favorites ──────────────────
         </Text>
@@ -117,7 +117,7 @@ export function FavoritesEditor({
         );
       })}
 
-      <Box marginTop={favorites.length > 0 ? 1 : 0}>
+      <Box>
         <Text
           color={isOnAddNew ? "#FFD700" : "cyan"}
           bold={isOnAddNew}
@@ -126,12 +126,11 @@ export function FavoritesEditor({
         </Text>
       </Box>
 
-      <Box marginTop={1}>
+      <Box>
         <Text color="gray" dimColor>
           ────────────────────────────────
         </Text>
       </Box>
-
       <Box>
         <Text dimColor>
           enter edit {favorites.length > 0 ? "• ^D delete " : ""}• esc/tab back
