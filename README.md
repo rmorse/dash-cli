@@ -7,7 +7,7 @@ A speedy little project switcher for your terminal.
 - Scans for git repositories (configurable depth)
 - **Instant startup** - cached results load immediately, background refresh
 - Type-to-filter search
-- **Favorites** - mark frequently used projects with Ctrl+F, jump to them by number
+- **Favorites** - custom shortcuts, multi-line commands, chainable
 - Recent projects shown at top
 - Nested project drill-down navigation
 - Configurable via settings screen
@@ -22,17 +22,57 @@ dash-cli --setup
 dash
 ```
 
-## Favorite Shortcuts
+## Favorites
 
-Jump directly to a favorite without opening the UI:
+### Quick Access
+
+Jump directly to a favorite by its shortcut:
 
 ```bash
-dash 1      # Go to your first favorite
-dash 2      # Go to your second favorite
-d 1         # Same thing, using the 'd' alias
+dash myproj     # Run favorite with shortcut "myproj"
+dash 1          # Run favorite with shortcut "1"
+d work          # Same thing, using the 'd' alias
 ```
 
-Favorites are numbered in the order you add them - your first favorite stays `#1`. The shortcut number is displayed next to each favorite in the UI.
+### Chaining Favorites
+
+Chain multiple favorites together - commands run in sequence:
+
+```bash
+dash 1 claude       # cd to project, then run claude
+dash work code      # cd to work project, then open VS Code
+dash proj test run  # Chain three favorites together
+```
+
+If any shortcut in the chain doesn't exist, you'll get an error.
+
+### Favorites Editor
+
+Access the full favorites editor from **Settings > Edit favorites** to:
+
+- **Custom shortcuts** - Use any text (e.g., `work`, `api`, `1`)
+- **Multi-line commands** - Run multiple commands in sequence
+- **Case sensitivity** - Toggle per-favorite (default: case-insensitive)
+
+Example favorite:
+```
+Name:           My Project
+Shortcut:       proj
+Case Sensitive: No
+Commands:
+  cd ~/projects/my-project
+  code .
+  npm run dev
+```
+
+### Quick Add
+
+Press `Ctrl+F` on any project to quickly add it as a favorite. This creates a favorite with:
+- Name: the project path
+- Shortcut: next available number (1, 2, 3...)
+- Command: `cd "/path/to/project"`
+
+Edit the favorite later to customize the shortcut or add more commands.
 
 ## Controls
 
@@ -92,7 +132,8 @@ dash-cli --setup bash --alias       # Bash with 'd' shortcut
 ```bash
 dash-cli --setup [shell] [--alias]  # Configure shell integration
 dash-cli --debug                     # Enable debug logging
-dash 1                               # Jump to favorite #1
+dash proj                            # Run favorite "proj"
+dash 1 claude                        # Chain favorites together
 ```
 
 | Flag | Description |
@@ -100,15 +141,16 @@ dash 1                               # Jump to favorite #1
 | `--setup` | Configure shell integration (bash/powershell) |
 | `--alias` | Add 'd' shortcut during setup |
 | `--debug` | Enable debug logging to `~/.dash-cli/debug.log` |
+| `[shortcuts...]` | Run one or more favorites by shortcut |
 
 ## Configuration Files
 
 Stored in `~/.dash-cli/`:
 - `settings.json` - User settings
-- `favorites.json` - Favorite projects
+- `favorites.json` - Favorites with shortcuts and commands
 - `history.json` - Recent projects
 - `cache.json` - Cached project scan (for instant startup)
-- `last-selection` - Last selected path (for shell wrapper)
+- `last-command` - Commands to execute (sourced by shell wrapper)
 - `debug.log` - Debug log (when running with `--debug`)
 
 ## Development

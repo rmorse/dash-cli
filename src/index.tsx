@@ -25,19 +25,24 @@ async function main() {
     return;
   }
 
-  // Handle shortcut argument for quick favorite access
-  const shortcutArg = filteredArgs[0];
-  if (shortcutArg && !shortcutArg.startsWith("--")) {
-    log(`quick favorite access: ${shortcutArg}`);
-    const favorite = await getFavoriteByShortcutAsync(shortcutArg);
-    if (favorite) {
+  // Handle shortcut arguments for quick favorite access (supports chaining)
+  const shortcutArgs = filteredArgs.filter(arg => !arg.startsWith("--"));
+  if (shortcutArgs.length > 0) {
+    log(`quick favorite access: ${shortcutArgs.join(" ")}`);
+    const allCommands: string[] = [];
+
+    for (const shortcut of shortcutArgs) {
+      const favorite = await getFavoriteByShortcutAsync(shortcut);
+      if (!favorite) {
+        console.error(`Shortcut not found: ${shortcut}`);
+        process.exit(1);
+      }
       log(`found favorite: ${favorite.name}`);
-      writeLastCommand(favorite.command);
-      return;
+      allCommands.push(...favorite.command);
     }
-    // No match - show error and exit
-    console.error(`Shortcut not found: ${shortcutArg}`);
-    process.exit(1);
+
+    writeLastCommand(allCommands);
+    return;
   }
 
   // Load config files asynchronously

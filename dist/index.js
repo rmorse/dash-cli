@@ -56729,17 +56729,21 @@ async function main() {
     await runSetup(filteredArgs[1], filteredArgs[2]);
     return;
   }
-  const shortcutArg = filteredArgs[0];
-  if (shortcutArg && !shortcutArg.startsWith("--")) {
-    log(`quick favorite access: ${shortcutArg}`);
-    const favorite = await getFavoriteByShortcutAsync(shortcutArg);
-    if (favorite) {
+  const shortcutArgs = filteredArgs.filter((arg) => !arg.startsWith("--"));
+  if (shortcutArgs.length > 0) {
+    log(`quick favorite access: ${shortcutArgs.join(" ")}`);
+    const allCommands = [];
+    for (const shortcut of shortcutArgs) {
+      const favorite = await getFavoriteByShortcutAsync(shortcut);
+      if (!favorite) {
+        console.error(`Shortcut not found: ${shortcut}`);
+        process.exit(1);
+      }
       log(`found favorite: ${favorite.name}`);
-      writeLastCommand(favorite.command);
-      return;
+      allCommands.push(...favorite.command);
     }
-    console.error(`Shortcut not found: ${shortcutArg}`);
-    process.exit(1);
+    writeLastCommand(allCommands);
+    return;
   }
   log("loading settings...");
   const settings = await loadSettingsAsync();
