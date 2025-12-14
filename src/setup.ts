@@ -2,10 +2,10 @@ import { existsSync, readFileSync, writeFileSync, appendFileSync, mkdirSync, cop
 import { join, dirname, resolve } from "node:path";
 import { homedir } from "node:os";
 import { createInterface, Interface as ReadlineInterface } from "node:readline";
-import { getSelectionFile } from "./history.js";
+import { getCommandFile } from "./history.js";
 import { loadSettings, saveSettings } from "./settings.js";
 
-const SELECTION_FILE = getSelectionFile();
+const COMMAND_FILE = getCommandFile();
 
 // Convert Windows path to Git Bash format: C:\Users\foo -> /c/Users/foo
 const toBashPath = (p: string) =>
@@ -84,10 +84,10 @@ function getBashWrapper(withAlias: boolean): string {
 # Dash CLI: Navigate to projects
 dash() {
     dash-cli "$@"
-    local selected
-    selected=$(cat "${toBashPath(SELECTION_FILE)}" 2>/dev/null)
-    if [ -n "$selected" ] && [ -d "$selected" ]; then
-        cd "$selected" || return 1
+    local cmd_file="${toBashPath(COMMAND_FILE)}"
+    if [ -f "$cmd_file" ]; then
+        . "$cmd_file"
+        rm -f "$cmd_file"
     fi
 }
 `;
@@ -103,12 +103,11 @@ function getPowerShellWrapper(withAlias: boolean): string {
 # Dash CLI: Navigate to projects
 function dash {
     dash-cli @args
-    $selectionFile = "${SELECTION_FILE.replace(/\\/g, "\\\\")}"
-    if (Test-Path $selectionFile) {
-        $selected = Get-Content $selectionFile -Raw
-        if ($selected -and (Test-Path $selected.Trim())) {
-            Set-Location $selected.Trim()
-        }
+    $cmdFile = "${COMMAND_FILE.replace(/\\/g, "\\\\")}"
+    if (Test-Path $cmdFile) {
+        $commands = Get-Content $cmdFile -Raw
+        if ($commands) { Invoke-Expression $commands }
+        Remove-Item $cmdFile -Force -ErrorAction SilentlyContinue
     }
 }
 `;

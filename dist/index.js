@@ -1372,7 +1372,7 @@ var require_react_development = __commonJS({
           }
           return dispatcher.useContext(Context);
         }
-        function useState5(initialState) {
+        function useState7(initialState) {
           var dispatcher = resolveDispatcher();
           return dispatcher.useState(initialState);
         }
@@ -1384,7 +1384,7 @@ var require_react_development = __commonJS({
           var dispatcher = resolveDispatcher();
           return dispatcher.useRef(initialValue);
         }
-        function useEffect5(create2, deps) {
+        function useEffect6(create2, deps) {
           var dispatcher = resolveDispatcher();
           return dispatcher.useEffect(create2, deps);
         }
@@ -2167,7 +2167,7 @@ var require_react_development = __commonJS({
         exports.useContext = useContext7;
         exports.useDebugValue = useDebugValue;
         exports.useDeferredValue = useDeferredValue;
-        exports.useEffect = useEffect5;
+        exports.useEffect = useEffect6;
         exports.useId = useId;
         exports.useImperativeHandle = useImperativeHandle;
         exports.useInsertionEffect = useInsertionEffect;
@@ -2175,7 +2175,7 @@ var require_react_development = __commonJS({
         exports.useMemo = useMemo4;
         exports.useReducer = useReducer;
         exports.useRef = useRef2;
-        exports.useState = useState5;
+        exports.useState = useState7;
         exports.useSyncExternalStore = useSyncExternalStore;
         exports.useTransition = useTransition;
         exports.version = ReactVersion;
@@ -7870,9 +7870,9 @@ var require_react_reconciler_development = __commonJS({
       module.exports = function $$$reconciler($$$hostConfig) {
         var exports2 = {};
         "use strict";
-        var React13 = require_react();
+        var React16 = require_react();
         var Scheduler = require_scheduler();
-        var ReactSharedInternals = React13.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+        var ReactSharedInternals = React16.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
         var suppressWarning = false;
         function setSuppressWarning(newSuppressWarning) {
           {
@@ -7936,7 +7936,7 @@ var require_react_reconciler_development = __commonJS({
         var HostPortal = 4;
         var HostComponent = 5;
         var HostText = 6;
-        var Fragment = 7;
+        var Fragment2 = 7;
         var Mode = 8;
         var ContextConsumer = 9;
         var ContextProvider = 10;
@@ -8076,7 +8076,7 @@ var require_react_reconciler_development = __commonJS({
               return "DehydratedFragment";
             case ForwardRef:
               return getWrappedName$1(type, type.render, "ForwardRef");
-            case Fragment:
+            case Fragment2:
               return "Fragment";
             case HostComponent:
               return type;
@@ -11210,7 +11210,7 @@ var require_react_reconciler_development = __commonJS({
             }
           }
           function updateFragment2(returnFiber, current2, fragment, lanes, key) {
-            if (current2 === null || current2.tag !== Fragment) {
+            if (current2 === null || current2.tag !== Fragment2) {
               var created = createFiberFromFragment(fragment, returnFiber.mode, lanes, key);
               created.return = returnFiber;
               return created;
@@ -11613,7 +11613,7 @@ var require_react_reconciler_development = __commonJS({
               if (child.key === key) {
                 var elementType = element.type;
                 if (elementType === REACT_FRAGMENT_TYPE) {
-                  if (child.tag === Fragment) {
+                  if (child.tag === Fragment2) {
                     deleteRemainingChildren(returnFiber, child.sibling);
                     var existing = useFiber(child, element.props.children);
                     existing.return = returnFiber;
@@ -17104,7 +17104,7 @@ var require_react_reconciler_development = __commonJS({
               var _resolvedProps2 = workInProgress2.elementType === type ? _unresolvedProps2 : resolveDefaultProps(type, _unresolvedProps2);
               return updateForwardRef(current2, workInProgress2, type, _resolvedProps2, renderLanes2);
             }
-            case Fragment:
+            case Fragment2:
               return updateFragment(current2, workInProgress2, renderLanes2);
             case Mode:
               return updateMode(current2, workInProgress2, renderLanes2);
@@ -17541,7 +17541,7 @@ var require_react_reconciler_development = __commonJS({
             case SimpleMemoComponent:
             case FunctionComponent:
             case ForwardRef:
-            case Fragment:
+            case Fragment2:
             case Mode:
             case Profiler:
             case ContextConsumer:
@@ -22309,7 +22309,7 @@ var require_react_reconciler_development = __commonJS({
           return fiber;
         }
         function createFiberFromFragment(elements, mode, lanes, key) {
-          var fiber = createFiber(Fragment, elements, key, mode);
+          var fiber = createFiber(Fragment2, elements, key, mode);
           fiber.lanes = lanes;
           return fiber;
         }
@@ -26861,7 +26861,7 @@ var require_backend = __commonJS({
                     });
                     return a._currentValue;
                   },
-                  useEffect: function useEffect5(a) {
+                  useEffect: function useEffect6(a) {
                     C();
                     x.push({
                       primitive: "Effect",
@@ -26938,7 +26938,7 @@ var require_backend = __commonJS({
                     });
                     return a;
                   },
-                  useState: function useState5(a) {
+                  useState: function useState7(a) {
                     var b = C();
                     a = null !== b ? b.memoizedState : "function" === typeof a ? a() : a;
                     x.push({
@@ -34098,7 +34098,7 @@ var require_backend = __commonJS({
                   symbolOrNumber.toString()
                 ) : symbolOrNumber;
               }
-              var _ReactTypeOfWork = ReactTypeOfWork, CacheComponent = _ReactTypeOfWork.CacheComponent, ClassComponent = _ReactTypeOfWork.ClassComponent, IncompleteClassComponent = _ReactTypeOfWork.IncompleteClassComponent, FunctionComponent = _ReactTypeOfWork.FunctionComponent, IndeterminateComponent = _ReactTypeOfWork.IndeterminateComponent, ForwardRef = _ReactTypeOfWork.ForwardRef, HostRoot = _ReactTypeOfWork.HostRoot, HostHoistable = _ReactTypeOfWork.HostHoistable, HostSingleton = _ReactTypeOfWork.HostSingleton, HostComponent = _ReactTypeOfWork.HostComponent, HostPortal = _ReactTypeOfWork.HostPortal, HostText = _ReactTypeOfWork.HostText, Fragment = _ReactTypeOfWork.Fragment, LazyComponent = _ReactTypeOfWork.LazyComponent, LegacyHiddenComponent = _ReactTypeOfWork.LegacyHiddenComponent, MemoComponent = _ReactTypeOfWork.MemoComponent, OffscreenComponent = _ReactTypeOfWork.OffscreenComponent, Profiler = _ReactTypeOfWork.Profiler, ScopeComponent = _ReactTypeOfWork.ScopeComponent, SimpleMemoComponent = _ReactTypeOfWork.SimpleMemoComponent, SuspenseComponent = _ReactTypeOfWork.SuspenseComponent, SuspenseListComponent = _ReactTypeOfWork.SuspenseListComponent, TracingMarkerComponent = _ReactTypeOfWork.TracingMarkerComponent;
+              var _ReactTypeOfWork = ReactTypeOfWork, CacheComponent = _ReactTypeOfWork.CacheComponent, ClassComponent = _ReactTypeOfWork.ClassComponent, IncompleteClassComponent = _ReactTypeOfWork.IncompleteClassComponent, FunctionComponent = _ReactTypeOfWork.FunctionComponent, IndeterminateComponent = _ReactTypeOfWork.IndeterminateComponent, ForwardRef = _ReactTypeOfWork.ForwardRef, HostRoot = _ReactTypeOfWork.HostRoot, HostHoistable = _ReactTypeOfWork.HostHoistable, HostSingleton = _ReactTypeOfWork.HostSingleton, HostComponent = _ReactTypeOfWork.HostComponent, HostPortal = _ReactTypeOfWork.HostPortal, HostText = _ReactTypeOfWork.HostText, Fragment2 = _ReactTypeOfWork.Fragment, LazyComponent = _ReactTypeOfWork.LazyComponent, LegacyHiddenComponent = _ReactTypeOfWork.LegacyHiddenComponent, MemoComponent = _ReactTypeOfWork.MemoComponent, OffscreenComponent = _ReactTypeOfWork.OffscreenComponent, Profiler = _ReactTypeOfWork.Profiler, ScopeComponent = _ReactTypeOfWork.ScopeComponent, SimpleMemoComponent = _ReactTypeOfWork.SimpleMemoComponent, SuspenseComponent = _ReactTypeOfWork.SuspenseComponent, SuspenseListComponent = _ReactTypeOfWork.SuspenseListComponent, TracingMarkerComponent = _ReactTypeOfWork.TracingMarkerComponent;
               function resolveFiberType(type) {
                 var typeSymbol = getTypeSymbol(type);
                 switch (typeSymbol) {
@@ -34143,7 +34143,7 @@ var require_backend = __commonJS({
                   case HostPortal:
                   case HostText:
                     return null;
-                  case Fragment:
+                  case Fragment2:
                     return "Fragment";
                   case LazyComponent:
                     return "Lazy";
@@ -34207,7 +34207,7 @@ var require_backend = __commonJS({
             function attach(hook2, rendererID, renderer2, global2) {
               var version = renderer2.reconcilerVersion || renderer2.version;
               var _getInternalReactCons = getInternalReactConstants(version), getDisplayNameForFiber = _getInternalReactCons.getDisplayNameForFiber, getTypeSymbol = _getInternalReactCons.getTypeSymbol, ReactPriorityLevels = _getInternalReactCons.ReactPriorityLevels, ReactTypeOfWork = _getInternalReactCons.ReactTypeOfWork, StrictModeBits = _getInternalReactCons.StrictModeBits;
-              var CacheComponent = ReactTypeOfWork.CacheComponent, ClassComponent = ReactTypeOfWork.ClassComponent, ContextConsumer = ReactTypeOfWork.ContextConsumer, DehydratedSuspenseComponent = ReactTypeOfWork.DehydratedSuspenseComponent, ForwardRef = ReactTypeOfWork.ForwardRef, Fragment = ReactTypeOfWork.Fragment, FunctionComponent = ReactTypeOfWork.FunctionComponent, HostRoot = ReactTypeOfWork.HostRoot, HostHoistable = ReactTypeOfWork.HostHoistable, HostSingleton = ReactTypeOfWork.HostSingleton, HostPortal = ReactTypeOfWork.HostPortal, HostComponent = ReactTypeOfWork.HostComponent, HostText = ReactTypeOfWork.HostText, IncompleteClassComponent = ReactTypeOfWork.IncompleteClassComponent, IndeterminateComponent = ReactTypeOfWork.IndeterminateComponent, LegacyHiddenComponent = ReactTypeOfWork.LegacyHiddenComponent, MemoComponent = ReactTypeOfWork.MemoComponent, OffscreenComponent = ReactTypeOfWork.OffscreenComponent, SimpleMemoComponent = ReactTypeOfWork.SimpleMemoComponent, SuspenseComponent = ReactTypeOfWork.SuspenseComponent, SuspenseListComponent = ReactTypeOfWork.SuspenseListComponent, TracingMarkerComponent = ReactTypeOfWork.TracingMarkerComponent;
+              var CacheComponent = ReactTypeOfWork.CacheComponent, ClassComponent = ReactTypeOfWork.ClassComponent, ContextConsumer = ReactTypeOfWork.ContextConsumer, DehydratedSuspenseComponent = ReactTypeOfWork.DehydratedSuspenseComponent, ForwardRef = ReactTypeOfWork.ForwardRef, Fragment2 = ReactTypeOfWork.Fragment, FunctionComponent = ReactTypeOfWork.FunctionComponent, HostRoot = ReactTypeOfWork.HostRoot, HostHoistable = ReactTypeOfWork.HostHoistable, HostSingleton = ReactTypeOfWork.HostSingleton, HostPortal = ReactTypeOfWork.HostPortal, HostComponent = ReactTypeOfWork.HostComponent, HostText = ReactTypeOfWork.HostText, IncompleteClassComponent = ReactTypeOfWork.IncompleteClassComponent, IndeterminateComponent = ReactTypeOfWork.IndeterminateComponent, LegacyHiddenComponent = ReactTypeOfWork.LegacyHiddenComponent, MemoComponent = ReactTypeOfWork.MemoComponent, OffscreenComponent = ReactTypeOfWork.OffscreenComponent, SimpleMemoComponent = ReactTypeOfWork.SimpleMemoComponent, SuspenseComponent = ReactTypeOfWork.SuspenseComponent, SuspenseListComponent = ReactTypeOfWork.SuspenseListComponent, TracingMarkerComponent = ReactTypeOfWork.TracingMarkerComponent;
               var ImmediatePriority = ReactPriorityLevels.ImmediatePriority, UserBlockingPriority = ReactPriorityLevels.UserBlockingPriority, NormalPriority = ReactPriorityLevels.NormalPriority, LowPriority = ReactPriorityLevels.LowPriority, IdlePriority = ReactPriorityLevels.IdlePriority, NoPriority = ReactPriorityLevels.NoPriority;
               var getLaneLabelMap = renderer2.getLaneLabelMap, injectProfilingHooks = renderer2.injectProfilingHooks, overrideHookState = renderer2.overrideHookState, overrideHookStateDeletePath = renderer2.overrideHookStateDeletePath, overrideHookStateRenamePath = renderer2.overrideHookStateRenamePath, overrideProps = renderer2.overrideProps, overridePropsDeletePath = renderer2.overridePropsDeletePath, overridePropsRenamePath = renderer2.overridePropsRenamePath, scheduleRefresh = renderer2.scheduleRefresh, setErrorHandler = renderer2.setErrorHandler, setSuspenseHandler = renderer2.setSuspenseHandler, scheduleUpdate = renderer2.scheduleUpdate;
               var supportsTogglingError = typeof setErrorHandler === "function" && typeof scheduleUpdate === "function";
@@ -34414,7 +34414,7 @@ var require_backend = __commonJS({
                     return true;
                   case HostRoot:
                     return false;
-                  case Fragment:
+                  case Fragment2:
                     return key === null;
                   default:
                     var typeSymbol = getTypeSymbol(type);
@@ -34488,7 +34488,7 @@ var require_backend = __commonJS({
                     return ElementTypeHostComponent;
                   case HostPortal:
                   case HostText:
-                  case Fragment:
+                  case Fragment2:
                     return ElementTypeOtherOrUnknown;
                   case MemoComponent:
                   case SimpleMemoComponent:
@@ -41831,7 +41831,7 @@ var require_react_jsx_runtime_development = __commonJS({
     if (process.env.NODE_ENV !== "production") {
       (function() {
         "use strict";
-        var React13 = require_react();
+        var React16 = require_react();
         var REACT_ELEMENT_TYPE = /* @__PURE__ */ Symbol.for("react.element");
         var REACT_PORTAL_TYPE = /* @__PURE__ */ Symbol.for("react.portal");
         var REACT_FRAGMENT_TYPE = /* @__PURE__ */ Symbol.for("react.fragment");
@@ -41857,7 +41857,7 @@ var require_react_jsx_runtime_development = __commonJS({
           }
           return null;
         }
-        var ReactSharedInternals = React13.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+        var ReactSharedInternals = React16.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
         function error(format) {
           {
             {
@@ -42707,11 +42707,11 @@ var require_react_jsx_runtime_development = __commonJS({
             return jsxWithValidation(type, props, key, false);
           }
         }
-        var jsx4 = jsxWithValidationDynamic;
-        var jsxs3 = jsxWithValidationStatic;
+        var jsx7 = jsxWithValidationDynamic;
+        var jsxs6 = jsxWithValidationStatic;
         exports.Fragment = REACT_FRAGMENT_TYPE;
-        exports.jsx = jsx4;
-        exports.jsxs = jsxs3;
+        exports.jsx = jsx7;
+        exports.jsxs = jsxs6;
       })();
     }
   }
@@ -53787,7 +53787,7 @@ var import_react20 = __toESM(require_react(), 1);
 var import_react21 = __toESM(require_react(), 1);
 
 // src/components/App.tsx
-var import_react24 = __toESM(require_react(), 1);
+var import_react27 = __toESM(require_react(), 1);
 
 // node_modules/ink-spinner/build/index.js
 var import_react22 = __toESM(require_react(), 1);
@@ -53814,7 +53814,7 @@ var build_default = Spinner;
 import { basename as basename2, relative as relative2 } from "path";
 
 // src/components/Settings.tsx
-var import_react23 = __toESM(require_react(), 1);
+var import_react24 = __toESM(require_react(), 1);
 
 // node_modules/open/index.js
 import process19 from "process";
@@ -54417,8 +54417,8 @@ defineLazyProperty(apps, "safari", () => detectPlatformBinary({
 var open_default = open;
 
 // src/components/Settings.tsx
-import { join as join3 } from "path";
-import { homedir as homedir3 } from "os";
+import { join as join4 } from "path";
+import { homedir as homedir4 } from "os";
 
 // src/settings.ts
 import { existsSync as existsSync2, mkdirSync, readFileSync as readFileSync2, writeFileSync } from "fs";
@@ -54563,8 +54563,7 @@ import { join as join2 } from "path";
 import { homedir as homedir2 } from "os";
 var CONFIG_DIR2 = join2(homedir2(), ".dash-cli");
 var HISTORY_FILE = join2(CONFIG_DIR2, "history.json");
-var FAVORITES_FILE = join2(CONFIG_DIR2, "favorites.json");
-var SELECTION_FILE = join2(CONFIG_DIR2, "last-selection");
+var COMMAND_FILE = join2(CONFIG_DIR2, "last-command");
 var MAX_HISTORY = 20;
 function ensureConfigDir2() {
   if (!existsSync3(CONFIG_DIR2)) {
@@ -54598,51 +54597,15 @@ function addRecent(path2, displayName) {
   data.recent = data.recent.slice(0, MAX_HISTORY);
   saveHistory(data);
 }
-function writeLastSelection(path2) {
+function writeLastCommand(commands) {
   ensureConfigDir2();
-  writeFileSync2(SELECTION_FILE, path2);
+  writeFileSync2(COMMAND_FILE, commands.join("\n"));
 }
 function clearHistory() {
   saveHistory({ recent: [] });
 }
-function getSelectionFile() {
-  return SELECTION_FILE;
-}
-function loadFavoritesData() {
-  ensureConfigDir2();
-  if (!existsSync3(FAVORITES_FILE)) {
-    return { favorites: [] };
-  }
-  try {
-    const content = readFileSync3(FAVORITES_FILE, "utf-8");
-    return JSON.parse(content);
-  } catch {
-    return { favorites: [] };
-  }
-}
-function saveFavoritesData(data) {
-  ensureConfigDir2();
-  writeFileSync2(FAVORITES_FILE, JSON.stringify(data, null, 2));
-}
-function addFavorite(path2, displayName) {
-  const data = loadFavoritesData();
-  if (data.favorites.some((f) => f.path === path2)) {
-    return;
-  }
-  data.favorites.push({
-    path: path2,
-    displayName,
-    addedAt: Date.now()
-  });
-  saveFavoritesData(data);
-}
-function removeFavorite(path2) {
-  const data = loadFavoritesData();
-  data.favorites = data.favorites.filter((f) => f.path !== path2);
-  saveFavoritesData(data);
-}
-function clearFavorites() {
-  saveFavoritesData({ favorites: [] });
+function getCommandFile() {
+  return COMMAND_FILE;
 }
 async function pathExists2(path2) {
   try {
@@ -54669,47 +54632,264 @@ async function loadHistoryAsync() {
     return { recent: [] };
   }
 }
-async function loadFavoritesDataAsync() {
-  await ensureConfigDirAsync2();
-  if (!await pathExists2(FAVORITES_FILE)) {
+async function getRecentAsync(limit = 5) {
+  const data = await loadHistoryAsync();
+  return data.recent.sort((a, b) => b.lastUsed - a.lastUsed).slice(0, limit);
+}
+
+// src/favorites.ts
+import { existsSync as existsSync4, mkdirSync as mkdirSync3, readFileSync as readFileSync4, writeFileSync as writeFileSync3 } from "fs";
+import { readFile as readFile3, mkdir as mkdir3, access as access3 } from "fs/promises";
+import { join as join3 } from "path";
+import { homedir as homedir3 } from "os";
+import { randomUUID } from "crypto";
+var CONFIG_DIR3 = join3(homedir3(), ".dash-cli");
+var FAVORITES_FILE = join3(CONFIG_DIR3, "favorites.json");
+function ensureConfigDir3() {
+  if (!existsSync4(CONFIG_DIR3)) {
+    mkdirSync3(CONFIG_DIR3, { recursive: true });
+  }
+}
+function loadFavoritesData() {
+  ensureConfigDir3();
+  if (!existsSync4(FAVORITES_FILE)) {
     return { favorites: [] };
   }
   try {
-    const content = await readFile2(FAVORITES_FILE, "utf-8");
+    const content = readFileSync4(FAVORITES_FILE, "utf-8");
     return JSON.parse(content);
   } catch {
     return { favorites: [] };
   }
 }
-async function getRecentAsync(limit = 5) {
-  const data = await loadHistoryAsync();
-  return data.recent.sort((a, b) => b.lastUsed - a.lastUsed).slice(0, limit);
+function saveFavoritesData(data) {
+  ensureConfigDir3();
+  writeFileSync3(FAVORITES_FILE, JSON.stringify(data, null, 2));
+}
+function shortcutsCollide(shortcut1, caseSensitive1, shortcut2, caseSensitive2) {
+  if (caseSensitive1 && caseSensitive2) {
+    return shortcut1 === shortcut2;
+  }
+  return shortcut1.toLowerCase() === shortcut2.toLowerCase();
+}
+function validateShortcutFormat(shortcut) {
+  if (!shortcut || shortcut.trim() === "") {
+    return { valid: false, error: "Shortcut cannot be empty" };
+  }
+  if (shortcut.includes(" ")) {
+    return { valid: false, error: "Shortcut cannot contain spaces" };
+  }
+  return { valid: true };
+}
+function validateShortcut(shortcut, caseSensitive, excludeId) {
+  const formatResult = validateShortcutFormat(shortcut);
+  if (!formatResult.valid) {
+    return formatResult;
+  }
+  const data = loadFavoritesData();
+  for (const favorite of data.favorites) {
+    if (excludeId && favorite.id === excludeId) {
+      continue;
+    }
+    if (shortcutsCollide(
+      shortcut,
+      caseSensitive,
+      favorite.shortcut,
+      favorite.caseSensitive
+    )) {
+      const sensitivity = favorite.caseSensitive ? "case-sensitive" : "case-insensitive";
+      return {
+        valid: false,
+        error: `Shortcut "${shortcut}" collides with "${favorite.shortcut}" (${sensitivity}) on "${favorite.name}"`
+      };
+    }
+  }
+  return { valid: true };
+}
+function validateCommand(command) {
+  if (!command || !Array.isArray(command)) {
+    return { valid: false, error: "Command must be an array" };
+  }
+  if (command.length === 0) {
+    return { valid: false, error: "Command array cannot be empty" };
+  }
+  const hasNonEmpty = command.some((cmd) => cmd && cmd.trim() !== "");
+  if (!hasNonEmpty) {
+    return {
+      valid: false,
+      error: "Command array must contain at least one non-empty command"
+    };
+  }
+  return { valid: true };
+}
+function validateFavoriteInput(input, excludeId) {
+  if (!input.name || input.name.trim() === "") {
+    return { valid: false, error: "Name cannot be empty" };
+  }
+  const shortcutResult = validateShortcut(
+    input.shortcut,
+    input.caseSensitive,
+    excludeId
+  );
+  if (!shortcutResult.valid) {
+    return shortcutResult;
+  }
+  const commandResult = validateCommand(input.command);
+  if (!commandResult.valid) {
+    return commandResult;
+  }
+  return { valid: true };
+}
+function addFavorite(input) {
+  const validation = validateFavoriteInput(input);
+  if (!validation.valid) {
+    throw new Error(validation.error);
+  }
+  const data = loadFavoritesData();
+  const newFavorite = {
+    id: randomUUID(),
+    name: input.name.trim(),
+    shortcut: input.shortcut,
+    caseSensitive: input.caseSensitive,
+    command: input.command.filter((cmd) => cmd.trim() !== ""),
+    createdAt: Date.now()
+  };
+  data.favorites.push(newFavorite);
+  saveFavoritesData(data);
+  return newFavorite;
+}
+function updateFavorite(id, updates) {
+  const data = loadFavoritesData();
+  const index = data.favorites.findIndex((f) => f.id === id);
+  if (index === -1) {
+    throw new Error(`Favorite with ID "${id}" not found`);
+  }
+  const existing = data.favorites[index];
+  const merged = {
+    name: updates.name ?? existing.name,
+    shortcut: updates.shortcut ?? existing.shortcut,
+    caseSensitive: updates.caseSensitive ?? existing.caseSensitive,
+    command: updates.command ?? existing.command
+  };
+  const validation = validateFavoriteInput(merged, id);
+  if (!validation.valid) {
+    throw new Error(validation.error);
+  }
+  const updated = {
+    ...existing,
+    name: merged.name.trim(),
+    shortcut: merged.shortcut,
+    caseSensitive: merged.caseSensitive,
+    command: merged.command.filter((cmd) => cmd.trim() !== "")
+  };
+  data.favorites[index] = updated;
+  saveFavoritesData(data);
+  return updated;
+}
+function removeFavorite(id) {
+  const data = loadFavoritesData();
+  const initialLength = data.favorites.length;
+  data.favorites = data.favorites.filter((f) => f.id !== id);
+  if (data.favorites.length < initialLength) {
+    saveFavoritesData(data);
+    return true;
+  }
+  return false;
+}
+function clearFavorites() {
+  saveFavoritesData({ favorites: [] });
+}
+function generateCommand(path2) {
+  const escapedPath = path2.replace(/"/g, '\\"');
+  return [`cd "${escapedPath}"`];
+}
+function generateUniqueShortcut(favorites) {
+  const existing = new Set(favorites.map((f) => f.shortcut.toLowerCase()));
+  let num = 1;
+  while (existing.has(String(num))) {
+    num++;
+  }
+  return String(num);
+}
+async function pathExists3(p) {
+  try {
+    await access3(p);
+    return true;
+  } catch {
+    return false;
+  }
+}
+async function ensureConfigDirAsync3() {
+  if (!await pathExists3(CONFIG_DIR3)) {
+    await mkdir3(CONFIG_DIR3, { recursive: true });
+  }
+}
+async function loadFavoritesDataAsync() {
+  await ensureConfigDirAsync3();
+  if (!await pathExists3(FAVORITES_FILE)) {
+    return { favorites: [] };
+  }
+  try {
+    const content = await readFile3(FAVORITES_FILE, "utf-8");
+    return JSON.parse(content);
+  } catch {
+    return { favorites: [] };
+  }
 }
 async function getFavoritesAsync() {
   const data = await loadFavoritesDataAsync();
-  return data.favorites.sort((a, b) => a.addedAt - b.addedAt);
+  return data.favorites.sort((a, b) => a.createdAt - b.createdAt);
+}
+async function getFavoriteByShortcutAsync(shortcut) {
+  const data = await loadFavoritesDataAsync();
+  const lowerShortcut = shortcut.toLowerCase();
+  return data.favorites.find((favorite) => {
+    if (favorite.caseSensitive) {
+      return favorite.shortcut === shortcut;
+    } else {
+      return favorite.shortcut.toLowerCase() === lowerShortcut;
+    }
+  });
+}
+
+// src/components/Breadcrumb.tsx
+var import_react23 = __toESM(require_react(), 1);
+var import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
+function Breadcrumb({ items }) {
+  if (items.length === 0) {
+    return null;
+  }
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { children: [
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { dimColor: true, children: "  " }),
+    items.map((item, idx) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_react23.default.Fragment, { children: [
+      idx > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { dimColor: true, children: " > " }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: idx === items.length - 1 ? "white" : "gray", children: item })
+    ] }, idx))
+  ] });
 }
 
 // src/components/Settings.tsx
-var import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
-var CONFIG_FILE = join3(homedir3(), ".dash-cli", "settings.json");
-var TOTAL_ITEMS = SETTING_FIELDS.length + 3;
-var CLEAR_FAVORITES_INDEX = SETTING_FIELDS.length;
-var CLEAR_HISTORY_INDEX = SETTING_FIELDS.length + 1;
-var EDIT_CONFIG_INDEX = SETTING_FIELDS.length + 2;
-function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, onClearHistory }) {
-  const [selectedIndex, setSelectedIndex] = (0, import_react23.useState)(0);
-  const [editingKey, setEditingKey] = (0, import_react23.useState)(null);
-  const [editValue, setEditValue] = (0, import_react23.useState)("");
-  const [localSettings, setLocalSettings] = (0, import_react23.useState)({ ...settings });
+var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
+var CONFIG_FILE = join4(homedir4(), ".dash-cli", "settings.json");
+var TOTAL_ITEMS = SETTING_FIELDS.length + 4;
+var EDIT_FAVORITES_INDEX = SETTING_FIELDS.length;
+var CLEAR_FAVORITES_INDEX = SETTING_FIELDS.length + 1;
+var CLEAR_HISTORY_INDEX = SETTING_FIELDS.length + 2;
+var EDIT_CONFIG_INDEX = SETTING_FIELDS.length + 3;
+function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, onClearHistory, onEditFavorites, breadcrumbs }) {
+  const [selectedIndex, setSelectedIndex] = (0, import_react24.useState)(0);
+  const [editingKey, setEditingKey] = (0, import_react24.useState)(null);
+  const [editValue, setEditValue] = (0, import_react24.useState)("");
+  const [localSettings, setLocalSettings] = (0, import_react24.useState)({ ...settings });
+  const isOnEditFavorites = selectedIndex === EDIT_FAVORITES_INDEX;
   const isOnClearFavorites = selectedIndex === CLEAR_FAVORITES_INDEX;
   const isOnClearHistory = selectedIndex === CLEAR_HISTORY_INDEX;
   const isOnEditConfig = selectedIndex === EDIT_CONFIG_INDEX;
-  const isOnActionItem = isOnClearFavorites || isOnClearHistory || isOnEditConfig;
+  const isOnActionItem = isOnEditFavorites || isOnClearFavorites || isOnClearHistory || isOnEditConfig;
   const currentField = isOnActionItem ? null : SETTING_FIELDS[selectedIndex];
   const isEditing = editingKey !== null;
-  const [favoritesCleared, setFavoritesCleared] = (0, import_react23.useState)(false);
-  const [historyCleared, setHistoryCleared] = (0, import_react23.useState)(false);
+  const [favoritesCleared, setFavoritesCleared] = (0, import_react24.useState)(false);
+  const [historyCleared, setHistoryCleared] = (0, import_react24.useState)(false);
   const openConfigFile = async () => {
     await open_default(CONFIG_FILE);
   };
@@ -54724,6 +54904,10 @@ function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, onClearH
     setHistoryCleared(true);
   };
   const startEditing = () => {
+    if (isOnEditFavorites) {
+      onEditFavorites();
+      return;
+    }
     if (isOnClearFavorites) {
       handleClearFavorites();
       return;
@@ -54870,15 +55054,16 @@ function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, onClearH
     }
     return str;
   };
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { flexDirection: "column", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { marginBottom: 1, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: "gray", children: [
+  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { flexDirection: "column", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Breadcrumb, { items: breadcrumbs }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { marginBottom: 1, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: "gray", children: [
         "  ",
         "Settings "
       ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { dimColor: true, children: "(Tab to close)" })
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { dimColor: true, children: "(Tab to close)" })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { dimColor: true, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { dimColor: true, children: [
       "  ",
       "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
     ] }) }),
@@ -54887,88 +55072,445 @@ function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, onClearH
       const isFieldEditing = editingKey === field.key;
       const value = localSettings[field.key];
       const displayValue = isFieldEditing ? editValue : formatValue(field, value);
-      return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { flexDirection: "row", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isSelected ? "#FFD700" : void 0, bold: isSelected, children: [
+      return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { flexDirection: "row", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isSelected ? "#FFD700" : void 0, bold: isSelected, children: [
           isSelected ? "> " : "  ",
           field.label.padEnd(20)
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
           Text,
           {
             color: isFieldEditing ? "#FFD700" : isSelected ? "#FFD700" : "gray",
             children: displayValue
           }
         ),
-        isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: "#FFD700", children: "|" }),
-        field.type === "color" && !isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { children: "  " }),
-        field.type === "color" && !isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { backgroundColor: String(value), children: "    " })
+        isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: "#FFD700", children: "|" }),
+        field.type === "color" && !isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { children: "  " }),
+        field.type === "color" && !isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { backgroundColor: String(value), children: "    " })
       ] }, field.key);
     }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isOnClearFavorites ? "#FFD700" : "gray", bold: isOnClearFavorites, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isOnEditFavorites ? "#FFD700" : "gray", bold: isOnEditFavorites, children: [
+      isOnEditFavorites ? "> " : "  ",
+      "Edit favorites..."
+    ] }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isOnClearFavorites ? "#FFD700" : "gray", bold: isOnClearFavorites, children: [
         isOnClearFavorites ? "> " : "  ",
         "Clear favorites..."
       ] }),
-      favoritesCleared && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: "green", children: [
+      favoritesCleared && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: "green", children: [
         " ",
         "\u2713"
       ] })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isOnClearHistory ? "#FFD700" : "gray", bold: isOnClearHistory, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isOnClearHistory ? "#FFD700" : "gray", bold: isOnClearHistory, children: [
         isOnClearHistory ? "> " : "  ",
         "Clear history..."
       ] }),
-      historyCleared && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: "green", children: [
+      historyCleared && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: "green", children: [
         " ",
         "\u2713"
       ] })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isOnEditConfig ? "#FFD700" : "gray", bold: isOnEditConfig, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isOnEditConfig ? "#FFD700" : "gray", bold: isOnEditConfig, children: [
       isOnEditConfig ? "> " : "  ",
       "Edit config file..."
     ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { dimColor: true, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { dimColor: true, children: [
       "  ",
       "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
     ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { dimColor: true, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { dimColor: true, children: [
       "  ",
-      isOnClearFavorites ? "Remove all favorite projects" : isOnClearHistory ? "Remove all recent projects from history" : isOnEditConfig ? "Open settings.json in default editor" : currentField?.description
+      isOnEditFavorites ? "Manage favorites: edit names, shortcuts, and commands" : isOnClearFavorites ? "Remove all favorite projects" : isOnClearHistory ? "Remove all recent projects from history" : isOnEditConfig ? "Open settings.json in default editor" : currentField?.description
     ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { dimColor: true, children: isEditing ? currentField?.type === "number" ? "  type or \u2191\u2193 adjust \u2022 enter save \u2022 esc cancel" : "  type to edit \u2022 enter save \u2022 esc cancel" : "  \u2191\u2193 navigate \u2022 enter edit \u2022 esc save & exit" }) })
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { dimColor: true, children: isEditing ? currentField?.type === "number" ? "  type or \u2191\u2193 adjust \u2022 enter save \u2022 esc cancel" : "  type to edit \u2022 enter save \u2022 esc cancel" : "  \u2191\u2193 navigate \u2022 enter edit \u2022 esc save & exit" }) })
+  ] });
+}
+
+// src/components/FavoritesEditor.tsx
+var import_react25 = __toESM(require_react(), 1);
+var import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
+function FavoritesEditor({
+  favorites,
+  onUpdate,
+  onEditFavorite,
+  onAddFavorite,
+  onBack,
+  breadcrumbs
+}) {
+  const [selectedIndex, setSelectedIndex] = (0, import_react25.useState)(0);
+  const [confirmDelete, setConfirmDelete] = (0, import_react25.useState)(null);
+  const totalItems = favorites.length + 1;
+  const isOnAddNew = selectedIndex === favorites.length;
+  use_input_default((input, key) => {
+    if (confirmDelete) {
+      if (input === "y" || input === "Y") {
+        removeFavorite(confirmDelete);
+        onUpdate(favorites.filter((f) => f.id !== confirmDelete));
+        setConfirmDelete(null);
+        if (selectedIndex >= favorites.length - 1) {
+          setSelectedIndex(Math.max(0, favorites.length - 2));
+        }
+      } else if (input === "n" || input === "N" || key.escape) {
+        setConfirmDelete(null);
+      }
+      return;
+    }
+    if (key.upArrow) {
+      setSelectedIndex((prev) => prev > 0 ? prev - 1 : totalItems - 1);
+      return;
+    }
+    if (key.downArrow) {
+      setSelectedIndex((prev) => prev < totalItems - 1 ? prev + 1 : 0);
+      return;
+    }
+    if (key.return) {
+      if (isOnAddNew) {
+        onAddFavorite();
+      } else {
+        onEditFavorite(favorites[selectedIndex].id);
+      }
+      return;
+    }
+    if (key.ctrl && input === "d") {
+      if (!isOnAddNew && favorites.length > 0) {
+        setConfirmDelete(favorites[selectedIndex].id);
+      }
+      return;
+    }
+    if (key.escape || key.tab) {
+      onBack();
+      return;
+    }
+  });
+  return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { flexDirection: "column", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Breadcrumb, { items: breadcrumbs }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Favorites \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
+    favorites.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { color: "gray", dimColor: true, children: [
+      "  ",
+      "No favorites yet"
+    ] }) }),
+    favorites.map((fav, idx) => {
+      const isSelected = idx === selectedIndex;
+      const isDeleting = confirmDelete === fav.id;
+      return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { color: isSelected ? "#FFD700" : void 0, bold: isSelected, children: [
+          isSelected ? "> " : "  ",
+          fav.name
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { dimColor: true, children: [
+          " [",
+          fav.shortcut,
+          "]"
+        ] }),
+        isDeleting && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "red", children: " Delete? (y/n)" })
+      ] }, fav.id);
+    }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { marginTop: favorites.length > 0 ? 1 : 0, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+      Text,
+      {
+        color: isOnAddNew ? "#FFD700" : "cyan",
+        bold: isOnAddNew,
+        children: [
+          isOnAddNew ? "> " : "  ",
+          "[Add new favorite]"
+        ]
+      }
+    ) }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { dimColor: true, children: [
+      "enter edit ",
+      favorites.length > 0 ? "\u2022 ^D delete " : "",
+      "\u2022 esc/tab back"
+    ] }) })
+  ] });
+}
+
+// src/components/FavoriteEdit.tsx
+var import_react26 = __toESM(require_react(), 1);
+var import_jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
+function FavoriteEdit({
+  favorite,
+  allFavorites,
+  onSave,
+  onBack,
+  breadcrumbs
+}) {
+  const [name, setName] = (0, import_react26.useState)(favorite.name);
+  const [shortcut, setShortcut] = (0, import_react26.useState)(favorite.shortcut);
+  const [caseSensitive, setCaseSensitive] = (0, import_react26.useState)(favorite.caseSensitive);
+  const [commands, setCommands] = (0, import_react26.useState)([...favorite.command]);
+  const [selectedIndex, setSelectedIndex] = (0, import_react26.useState)(0);
+  const [editingField, setEditingField] = (0, import_react26.useState)(null);
+  const [editValue, setEditValue] = (0, import_react26.useState)("");
+  const [error, setError] = (0, import_react26.useState)(null);
+  const fields = [
+    { key: "name", label: "Name", type: "text" },
+    { key: "shortcut", label: "Shortcut", type: "text" },
+    { key: "caseSensitive", label: "Case Sensitive", type: "toggle" },
+    ...commands.map((_, i) => ({
+      key: `cmd-${i}`,
+      label: `Command ${i + 1}`,
+      type: "text"
+    })),
+    { key: "add-line", label: "[Add line]", type: "action" }
+  ];
+  const totalItems = fields.length;
+  const currentField = fields[selectedIndex];
+  (0, import_react26.useEffect)(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 3e3);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+  const getValue = (key) => {
+    if (key === "name") return name;
+    if (key === "shortcut") return shortcut;
+    if (key === "caseSensitive") return caseSensitive ? "Yes" : "No";
+    if (key.startsWith("cmd-")) {
+      const idx = parseInt(key.split("-")[1], 10);
+      return commands[idx] ?? "";
+    }
+    return "";
+  };
+  const setValue = (key, value) => {
+    if (key === "name") setName(value);
+    if (key === "shortcut") setShortcut(value);
+    if (key.startsWith("cmd-")) {
+      const idx = parseInt(key.split("-")[1], 10);
+      setCommands((prev) => {
+        const updated = [...prev];
+        updated[idx] = value;
+        return updated;
+      });
+    }
+  };
+  const startEditing = (field) => {
+    if (field.type === "toggle") {
+      setCaseSensitive((prev) => !prev);
+      return;
+    }
+    if (field.type === "action") {
+      setCommands((prev) => [...prev, ""]);
+      setSelectedIndex(fields.length - 1);
+      return;
+    }
+    setEditingField(field.key);
+    setEditValue(getValue(field.key));
+  };
+  const commitEdit = () => {
+    if (editingField) {
+      setValue(editingField, editValue);
+      setEditingField(null);
+      setEditValue("");
+    }
+  };
+  const cancelEdit = () => {
+    setEditingField(null);
+    setEditValue("");
+  };
+  const deleteCommandLine = () => {
+    if (!currentField.key.startsWith("cmd-")) return;
+    if (commands.length <= 1) {
+      setError("Cannot delete - at least one command required");
+      return;
+    }
+    const idx = parseInt(currentField.key.split("-")[1], 10);
+    setCommands((prev) => prev.filter((_, i) => i !== idx));
+    if (selectedIndex >= 3 + commands.length - 1) {
+      setSelectedIndex((prev) => prev - 1);
+    }
+  };
+  const saveAndExit = () => {
+    const validation = validateShortcut(shortcut, caseSensitive, favorite.id);
+    if (!validation.valid) {
+      setError(validation.error || "Invalid shortcut");
+      return;
+    }
+    if (!name.trim()) {
+      setError("Name cannot be empty");
+      return;
+    }
+    const nonEmptyCommands = commands.filter((c) => c.trim() !== "");
+    if (nonEmptyCommands.length === 0) {
+      setError("At least one command is required");
+      return;
+    }
+    try {
+      const updated = updateFavorite(favorite.id, {
+        name: name.trim(),
+        shortcut,
+        caseSensitive,
+        command: nonEmptyCommands
+      });
+      onSave(updated);
+      onBack();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save");
+    }
+  };
+  use_input_default((input, key) => {
+    if (editingField) {
+      if (key.escape) {
+        cancelEdit();
+        return;
+      }
+      if (key.return) {
+        commitEdit();
+        return;
+      }
+      if (key.backspace || key.delete) {
+        setEditValue((prev) => prev.slice(0, -1));
+        return;
+      }
+      if (input && input.length === 1 && !key.ctrl && !key.meta) {
+        setEditValue((prev) => prev + input);
+      }
+      return;
+    }
+    if (key.upArrow) {
+      setSelectedIndex((prev) => prev > 0 ? prev - 1 : totalItems - 1);
+      return;
+    }
+    if (key.downArrow) {
+      setSelectedIndex((prev) => prev < totalItems - 1 ? prev + 1 : 0);
+      return;
+    }
+    if (key.return) {
+      startEditing(currentField);
+      return;
+    }
+    if (key.ctrl && input === "d") {
+      deleteCommandLine();
+      return;
+    }
+    if (key.escape || key.tab) {
+      saveAndExit();
+      return;
+    }
+  });
+  return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { flexDirection: "column", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Breadcrumb, { items: breadcrumbs }),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Edit Favorite \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
+        Text,
+        {
+          color: selectedIndex === 0 ? "#FFD700" : void 0,
+          bold: selectedIndex === 0,
+          children: [
+            selectedIndex === 0 ? "> " : "  ",
+            "Name:"
+          ]
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { children: " " }),
+      editingField === "name" ? /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_jsx_runtime4.Fragment, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "cyan", children: editValue }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "cyan", children: "\u258C" })
+      ] }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: selectedIndex === 0 ? "#FFD700" : "white", children: name })
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
+        Text,
+        {
+          color: selectedIndex === 1 ? "#FFD700" : void 0,
+          bold: selectedIndex === 1,
+          children: [
+            selectedIndex === 1 ? "> " : "  ",
+            "Shortcut:"
+          ]
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { children: " " }),
+      editingField === "shortcut" ? /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_jsx_runtime4.Fragment, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "cyan", children: editValue }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "cyan", children: "\u258C" })
+      ] }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: selectedIndex === 1 ? "#FFD700" : "white", children: shortcut })
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
+        Text,
+        {
+          color: selectedIndex === 2 ? "#FFD700" : void 0,
+          bold: selectedIndex === 2,
+          children: [
+            selectedIndex === 2 ? "> " : "  ",
+            "Case Sensitive:"
+          ]
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { children: " " }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: selectedIndex === 2 ? "#FFD700" : "white", children: caseSensitive ? "Yes" : "No" })
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Commands \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
+    commands.map((cmd, idx) => {
+      const fieldIdx = 3 + idx;
+      const isSelected = selectedIndex === fieldIdx;
+      const isEditing = editingField === `cmd-${idx}`;
+      return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+          Text,
+          {
+            color: isSelected ? "#FFD700" : void 0,
+            bold: isSelected,
+            children: isSelected ? "> " : "  "
+          }
+        ),
+        isEditing ? /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_jsx_runtime4.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "cyan", children: editValue }),
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "cyan", children: "\u258C" })
+        ] }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: isSelected ? "#FFD700" : cmd ? "white" : "gray", children: cmd || "(empty)" })
+      ] }, `cmd-${idx}`);
+    }),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
+      Text,
+      {
+        color: selectedIndex === fields.length - 1 ? "#FFD700" : "cyan",
+        bold: selectedIndex === fields.length - 1,
+        children: [
+          selectedIndex === fields.length - 1 ? "> " : "  ",
+          "[Add line]"
+        ]
+      }
+    ) }),
+    error && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "red", children: error }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { dimColor: true, children: "enter edit \u2022 ^D delete line \u2022 esc/tab save & back" }) })
   ] });
 }
 
 // src/scanner.ts
 var import_fast_glob = __toESM(require_out4(), 1);
-import { existsSync as existsSync5, readFileSync as readFileSync4 } from "fs";
-import { join as join5, dirname, relative, resolve } from "path";
+import { existsSync as existsSync6, readFileSync as readFileSync5 } from "fs";
+import { join as join6, dirname, relative, resolve } from "path";
 
 // src/logger.ts
-import { appendFileSync, mkdirSync as mkdirSync3, existsSync as existsSync4, writeFileSync as writeFileSync3 } from "fs";
-import { join as join4 } from "path";
-import { homedir as homedir4 } from "os";
-var CONFIG_DIR3 = join4(homedir4(), ".dash-cli");
-var LOG_FILE = join4(CONFIG_DIR3, "debug.log");
+import { appendFileSync, mkdirSync as mkdirSync4, existsSync as existsSync5, writeFileSync as writeFileSync4 } from "fs";
+import { join as join5 } from "path";
+import { homedir as homedir5 } from "os";
+var CONFIG_DIR4 = join5(homedir5(), ".dash-cli");
+var LOG_FILE = join5(CONFIG_DIR4, "debug.log");
 var debugEnabled = false;
 var startTime = null;
-function ensureConfigDir3() {
-  if (!existsSync4(CONFIG_DIR3)) {
-    mkdirSync3(CONFIG_DIR3, { recursive: true });
+function ensureConfigDir4() {
+  if (!existsSync5(CONFIG_DIR4)) {
+    mkdirSync4(CONFIG_DIR4, { recursive: true });
   }
 }
 function initLog(enabled) {
   debugEnabled = enabled;
   if (!debugEnabled) return;
-  ensureConfigDir3();
+  ensureConfigDir4();
   startTime = Date.now();
-  writeFileSync3(LOG_FILE, `=== Debug log started at ${(/* @__PURE__ */ new Date()).toISOString()} ===
+  writeFileSync4(LOG_FILE, `=== Debug log started at ${(/* @__PURE__ */ new Date()).toISOString()} ===
 `);
 }
 function log(message) {
   if (!debugEnabled) return;
-  ensureConfigDir3();
+  ensureConfigDir4();
   const elapsed = startTime ? Date.now() - startTime : 0;
   const line = `[+${elapsed.toString().padStart(6)}ms] ${message}
 `;
@@ -54980,7 +55522,7 @@ var isWSL = null;
 function detectWSL() {
   if (isWSL !== null) return isWSL;
   try {
-    const procVersion = readFileSync4("/proc/version", "utf-8").toLowerCase();
+    const procVersion = readFileSync5("/proc/version", "utf-8").toLowerCase();
     isWSL = procVersion.includes("microsoft") || procVersion.includes("wsl");
   } catch {
     isWSL = false;
@@ -55016,7 +55558,7 @@ function buildProjectTree(projectPaths, projectsDir) {
     let parentNode;
     for (let i = 0; i < segments.length; i++) {
       const segment = segments[i];
-      currentFullPath = join5(currentFullPath, segment);
+      currentFullPath = join6(currentFullPath, segment);
       const isLastSegment = i === segments.length - 1;
       let node = nodeMap.get(currentFullPath);
       if (!node) {
@@ -55066,7 +55608,7 @@ async function scanProjectsAsync(settings, signal) {
   const ignorePatterns = parseSkipPatterns(config.skipDirs);
   const abortSignal = signal ?? { aborted: false };
   log(`scanProjectsAsync: starting glob scan of ${projectsDir}, maxDepth=${maxDepth}`);
-  if (!existsSync5(projectsDir)) {
+  if (!existsSync6(projectsDir)) {
     log(`scanProjectsAsync: projectsDir does not exist`);
     return [];
   }
@@ -55087,7 +55629,7 @@ async function scanProjectsAsync(settings, signal) {
       log(`scanProjectsAsync: scan was aborted`);
       return [];
     }
-    const projectPaths = gitDirs.map((g) => join5(projectsDir, dirname(g)));
+    const projectPaths = gitDirs.map((g) => join6(projectsDir, dirname(g)));
     const projects = buildProjectTree(projectPaths, projectsDir);
     log(`scanProjectsAsync: built tree with ${projects.length} root projects`);
     return projects;
@@ -55098,15 +55640,15 @@ async function scanProjectsAsync(settings, signal) {
 }
 
 // src/cache.ts
-import { existsSync as existsSync6, readFileSync as readFileSync5, writeFileSync as writeFileSync4 } from "fs";
-import { readFile as readFile3, access as access3 } from "fs/promises";
-import { join as join6 } from "path";
-import { homedir as homedir5 } from "os";
-var CONFIG_DIR4 = join6(homedir5(), ".dash-cli");
-var CACHE_FILE = join6(CONFIG_DIR4, "cache.json");
-async function pathExists3(path2) {
+import { existsSync as existsSync7, readFileSync as readFileSync6, writeFileSync as writeFileSync5 } from "fs";
+import { readFile as readFile4, access as access4 } from "fs/promises";
+import { join as join7 } from "path";
+import { homedir as homedir6 } from "os";
+var CONFIG_DIR5 = join7(homedir6(), ".dash-cli");
+var CACHE_FILE = join7(CONFIG_DIR5, "cache.json");
+async function pathExists4(path2) {
   try {
-    await access3(path2);
+    await access4(path2);
     return true;
   } catch {
     return false;
@@ -55114,13 +55656,13 @@ async function pathExists3(path2) {
 }
 async function loadCacheAsync(projectsDir, maxDepth, skipDirs) {
   log(`loadCacheAsync: checking if cache exists at ${CACHE_FILE}`);
-  if (!await pathExists3(CACHE_FILE)) {
+  if (!await pathExists4(CACHE_FILE)) {
     log("loadCacheAsync: no cache file");
     return null;
   }
   try {
     log("loadCacheAsync: reading cache file...");
-    const content = await readFile3(CACHE_FILE, "utf-8");
+    const content = await readFile4(CACHE_FILE, "utf-8");
     log(`loadCacheAsync: read ${content.length} bytes, parsing...`);
     const cache3 = JSON.parse(content);
     log("loadCacheAsync: parsed successfully");
@@ -55148,7 +55690,7 @@ function saveCache(projects, projectsDir, maxDepth, skipDirs) {
     timestamp: Date.now()
   };
   try {
-    writeFileSync4(CACHE_FILE, JSON.stringify(cache3));
+    writeFileSync5(CACHE_FILE, JSON.stringify(cache3));
     log("saveCache: cache saved successfully");
   } catch (e) {
     log(`saveCache: error - ${e}`);
@@ -55156,7 +55698,7 @@ function saveCache(projects, projectsDir, maxDepth, skipDirs) {
 }
 
 // src/components/App.tsx
-var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
+var import_jsx_runtime5 = __toESM(require_jsx_runtime(), 1);
 var PAGE_SIZE = 10;
 function getDisplayName(path2, projectsDir) {
   const rel = relative2(projectsDir, path2);
@@ -55190,14 +55732,30 @@ function collectNestedGitProjects(project, basePath) {
 function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEntries: initialFavoriteEntries, onSelect, onSettingsSave }) {
   log("App component function called");
   const { exit } = use_app_default();
-  const [screen, setScreen] = (0, import_react24.useState)("main");
-  const [projects, setProjects] = (0, import_react24.useState)(null);
-  const [isRefreshing, setIsRefreshing] = (0, import_react24.useState)(false);
-  const [settings, setSettings] = (0, import_react24.useState)(initialSettings);
-  const [recentEntries, setRecentEntries] = (0, import_react24.useState)(initialRecentEntries);
-  const [favoriteEntries, setFavoriteEntries] = (0, import_react24.useState)(initialFavoriteEntries);
-  const scanAbortSignal = (0, import_react24.useRef)({ aborted: false });
-  (0, import_react24.useEffect)(() => {
+  const [screenStack, setScreenStack] = (0, import_react27.useState)([
+    { screen: "main" }
+  ]);
+  const currentScreen = screenStack[screenStack.length - 1];
+  const pushScreen = (screen, state) => {
+    setScreenStack((prev) => [...prev, { screen, state }]);
+  };
+  const popScreen = () => {
+    setScreenStack((prev) => prev.length > 1 ? prev.slice(0, -1) : prev);
+  };
+  const breadcrumbLabels = {
+    main: "Home",
+    settings: "Settings",
+    "favorites-editor": "Favorites",
+    "favorite-edit": "Edit"
+  };
+  const breadcrumbItems = screenStack.slice(1).map((entry) => breadcrumbLabels[entry.screen]);
+  const [projects, setProjects] = (0, import_react27.useState)(null);
+  const [isRefreshing, setIsRefreshing] = (0, import_react27.useState)(false);
+  const [settings, setSettings] = (0, import_react27.useState)(initialSettings);
+  const [recentEntries, setRecentEntries] = (0, import_react27.useState)(initialRecentEntries);
+  const [favoriteEntries, setFavoriteEntries] = (0, import_react27.useState)(initialFavoriteEntries);
+  const scanAbortSignal = (0, import_react27.useRef)({ aborted: false });
+  (0, import_react27.useEffect)(() => {
     log("useEffect: mount - starting cache/scan");
     scanAbortSignal.current = { aborted: false };
     setIsRefreshing(true);
@@ -55225,12 +55783,12 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
       scanAbortSignal.current.aborted = true;
     };
   }, []);
-  const [searchTerm, setSearchTerm] = (0, import_react24.useState)("");
-  const [nestedCache, setNestedCache] = (0, import_react24.useState)(() => /* @__PURE__ */ new Map());
-  const [navStack, setNavStack] = (0, import_react24.useState)([
+  const [searchTerm, setSearchTerm] = (0, import_react27.useState)("");
+  const [nestedCache, setNestedCache] = (0, import_react27.useState)(() => /* @__PURE__ */ new Map());
+  const [navStack, setNavStack] = (0, import_react27.useState)([
     { projects: [], parentPath: null, savedScrollOffset: 0, savedSelectedKey: null }
   ]);
-  (0, import_react24.useEffect)(() => {
+  (0, import_react27.useEffect)(() => {
     if (projects) {
       setNavStack([{ projects, parentPath: null, savedScrollOffset: 0, savedSelectedKey: null }]);
     }
@@ -55238,15 +55796,24 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
   const currentLevel = navStack[navStack.length - 1];
   const currentProjects = currentLevel.projects;
   const isAtRoot = navStack.length === 1;
-  const favoritePaths = (0, import_react24.useMemo)(
-    () => new Set(favoriteEntries.map((e) => e.path)),
-    [favoriteEntries]
-  );
-  const recentPaths = (0, import_react24.useMemo)(
+  const favoritePaths = (0, import_react27.useMemo)(() => {
+    const paths = /* @__PURE__ */ new Set();
+    for (const fav of favoriteEntries) {
+      const cdCmd = fav.command.find((c) => c.startsWith("cd "));
+      if (cdCmd) {
+        const pathMatch = cdCmd.match(/^cd\s+"?([^"]+)"?$/);
+        if (pathMatch) {
+          paths.add(pathMatch[1]);
+        }
+      }
+    }
+    return paths;
+  }, [favoriteEntries]);
+  const recentPaths = (0, import_react27.useMemo)(
     () => new Set(recentEntries.map((e) => e.path)),
     [recentEntries]
   );
-  const allProjectsMap = (0, import_react24.useMemo)(() => {
+  const allProjectsMap = (0, import_react27.useMemo)(() => {
     const map = /* @__PURE__ */ new Map();
     if (!projects) return map;
     function traverse(list) {
@@ -55258,30 +55825,44 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
     traverse(projects);
     return map;
   }, [projects]);
-  const favoriteNumbers = (0, import_react24.useMemo)(() => {
+  const shortcutsByPath = (0, import_react27.useMemo)(() => {
     const map = /* @__PURE__ */ new Map();
-    favoriteEntries.forEach((entry, i) => map.set(entry.path, i + 1));
+    for (const fav of favoriteEntries) {
+      const firstCmd = fav.command[0];
+      if (firstCmd?.startsWith("cd ")) {
+        const pathMatch = firstCmd.match(/^cd\s+"?([^"]+)"?$/);
+        if (pathMatch) {
+          const path2 = pathMatch[1];
+          const existing = map.get(path2) || [];
+          existing.push(fav.shortcut);
+          map.set(path2, existing);
+        }
+      }
+    }
     return map;
   }, [favoriteEntries]);
-  const { unfilteredItems, unfilteredKeyToIndex } = (0, import_react24.useMemo)(() => {
+  const { unfilteredItems, unfilteredKeyToIndex } = (0, import_react27.useMemo)(() => {
     const list = [];
     const keyMap = /* @__PURE__ */ new Map();
     if (isAtRoot && favoriteEntries.length > 0 && !searchTerm) {
       list.push({ type: "header", label: "Favorites" });
-      for (let i = 0; i < favoriteEntries.length; i++) {
-        const entry = favoriteEntries[i];
-        const project = allProjectsMap.get(entry.path);
-        const selectionKey = `fav-${entry.path}`;
+      for (const fav of favoriteEntries) {
+        const cdCmd = fav.command.find((c) => c.startsWith("cd "));
+        const pathMatch = cdCmd?.match(/^cd\s+"?([^"]+)"?$/);
+        const favPath = pathMatch?.[1] || "";
+        const project = favPath ? allProjectsMap.get(favPath) : void 0;
+        const selectionKey = `fav-${fav.id}`;
         const idx = list.length;
         list.push({
           type: "project",
-          label: entry.displayName,
-          path: entry.path,
+          label: fav.name,
+          path: favPath,
           selectionKey,
-          favoriteNumber: i + 1,
+          shortcuts: [fav.shortcut],
+          favoriteId: fav.id,
           project: project ?? {
-            name: basename2(entry.path),
-            path: entry.path,
+            name: fav.name,
+            path: favPath,
             isGitRepo: true
           },
           isFavorite: true,
@@ -55321,7 +55902,8 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
     const sectionLabel = isAtRoot ? "All Projects" : getDisplayName(currentLevel.parentPath || "", settings.projectsDir);
     list.push({ type: "header", label: sectionLabel });
     for (const project of currentProjects) {
-      const isFav = favoritePaths.has(project.path);
+      const shortcuts = shortcutsByPath.get(project.path);
+      const isFav = shortcuts && shortcuts.length > 0;
       const isRec = recentPaths.has(project.path) && !isFav;
       const selectionKey = project.path;
       const idx = list.length;
@@ -55333,7 +55915,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
         project,
         isFavorite: isFav,
         isRecent: isRec,
-        favoriteNumber: isFav ? favoriteNumbers.get(project.path) : void 0
+        shortcuts
       });
       keyMap.set(selectionKey, idx);
     }
@@ -55343,8 +55925,8 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
       keyMap.set("__back__", idx);
     }
     return { unfilteredItems: list, unfilteredKeyToIndex: keyMap };
-  }, [currentProjects, recentEntries, favoriteEntries, isAtRoot, recentPaths, favoritePaths, allProjectsMap, currentLevel.parentPath, settings.projectsDir, searchTerm, favoriteNumbers]);
-  const { items, keyToIndex } = (0, import_react24.useMemo)(() => {
+  }, [currentProjects, recentEntries, favoriteEntries, isAtRoot, recentPaths, favoritePaths, shortcutsByPath, allProjectsMap, currentLevel.parentPath, settings.projectsDir, searchTerm]);
+  const { items, keyToIndex } = (0, import_react27.useMemo)(() => {
     if (!searchTerm) {
       return { items: unfilteredItems, keyToIndex: unfilteredKeyToIndex };
     }
@@ -55381,19 +55963,19 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
     }
     return { items: filtered, keyToIndex: keyMap };
   }, [unfilteredItems, unfilteredKeyToIndex, searchTerm]);
-  const selectableIndices = (0, import_react24.useMemo)(
+  const selectableIndices = (0, import_react27.useMemo)(
     () => items.map((item, idx) => item.type !== "header" ? idx : -1).filter((idx) => idx !== -1),
     [items]
   );
-  const [selectedKey, setSelectedKey] = (0, import_react24.useState)(null);
-  const [scrollOffset, setScrollOffset] = (0, import_react24.useState)(0);
-  const selectedIndex = (0, import_react24.useMemo)(() => {
+  const [selectedKey, setSelectedKey] = (0, import_react27.useState)(null);
+  const [scrollOffset, setScrollOffset] = (0, import_react27.useState)(0);
+  const selectedIndex = (0, import_react27.useMemo)(() => {
     if (!selectedKey) return selectableIndices[0] ?? 0;
     const idx = keyToIndex.get(selectedKey);
     return idx !== void 0 ? idx : selectableIndices[0] ?? 0;
   }, [selectedKey, keyToIndex, selectableIndices]);
-  const prevSearchTerm = (0, import_react24.useRef)(searchTerm);
-  (0, import_react24.useEffect)(() => {
+  const prevSearchTerm = (0, import_react27.useRef)(searchTerm);
+  (0, import_react27.useEffect)(() => {
     if (searchTerm !== prevSearchTerm.current) {
       prevSearchTerm.current = searchTerm;
       if (selectableIndices.length > 0) {
@@ -55446,10 +56028,9 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
     const currentItem = items[selectedIndex];
     if (currentItem?.type !== "project" || !currentItem.path) return;
     const isInFavoritesSection = currentItem.selectionKey?.startsWith("fav-");
-    const isInRecentSection = currentItem.selectionKey?.startsWith("recent-");
-    if (currentItem.isFavorite) {
-      removeFavorite(currentItem.path);
-      setFavoriteEntries((prev) => prev.filter((f) => f.path !== currentItem.path));
+    if (currentItem.isFavorite && currentItem.favoriteId) {
+      removeFavorite(currentItem.favoriteId);
+      setFavoriteEntries((prev) => prev.filter((f) => f.id !== currentItem.favoriteId));
       if (isInFavoritesSection) {
         const currentPos = selectableIndices.indexOf(selectedIndex);
         const nextPos = currentPos + 1 < selectableIndices.length ? currentPos + 1 : currentPos - 1;
@@ -55462,11 +56043,13 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
       }
     } else {
       const displayName = getDisplayName(currentItem.path, settings.projectsDir);
-      addFavorite(currentItem.path, displayName);
-      setFavoriteEntries((prev) => [
-        ...prev,
-        { path: currentItem.path, displayName, addedAt: Date.now() }
-      ]);
+      const newFavorite = addFavorite({
+        name: displayName,
+        shortcut: generateUniqueShortcut(favoriteEntries),
+        caseSensitive: false,
+        command: generateCommand(currentItem.path)
+      });
+      setFavoriteEntries((prev) => [...prev, newFavorite]);
     }
   };
   const refreshProjects = () => {
@@ -55491,7 +56074,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
     setSettings(newSettings);
     onSettingsSave(newSettings);
     log("handleSettingsSave: onSettingsSave done");
-    setScreen("main");
+    setScreenStack([{ screen: "main" }]);
     if (needsRescan) {
       log("handleSettingsSave: starting async rescan...");
       setIsRefreshing(true);
@@ -55513,9 +56096,9 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
     }
   };
   use_input_default((input, key) => {
-    if (screen === "settings") return;
+    if (currentScreen.screen !== "main") return;
     if (key.tab) {
-      setScreen("settings");
+      pushScreen("settings");
       return;
     }
     if (key.ctrl && input === settings.refreshKey) {
@@ -55551,19 +56134,21 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
         goBack();
         return;
       }
-      if (currentItem?.type === "project" && currentItem.project) {
-        const project = currentItem.project;
-        if (project.isGitRepo) {
+      if (currentItem?.type === "project") {
+        const isInFavoritesSection = currentItem.selectionKey?.startsWith("fav-");
+        if (isInFavoritesSection && currentItem.favoriteId) {
+          const favorite = favoriteEntries.find((f) => f.id === currentItem.favoriteId);
+          if (favorite) {
+            scanAbortSignal.current.aborted = true;
+            writeLastCommand(favorite.command);
+            exit();
+            return;
+          }
+        }
+        if (currentItem.project) {
           scanAbortSignal.current.aborted = true;
-          onSelect(project.path, getDisplayName(project.path, settings.projectsDir));
-          return;
+          onSelect(currentItem.project.path, getDisplayName(currentItem.project.path, settings.projectsDir));
         }
-        if (project.hasNestedProjects) {
-          drillDown(project, currentItem.path);
-          return;
-        }
-        scanAbortSignal.current.aborted = true;
-        onSelect(project.path, getDisplayName(project.path, settings.projectsDir));
       }
       return;
     }
@@ -55642,30 +56227,77 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
   const visibleItems = items.slice(clampedScrollOffset, clampedScrollOffset + settings.visibleRows);
   const hasMoreAbove = clampedScrollOffset > 0;
   const hasMoreBelow = clampedScrollOffset + settings.visibleRows < items.length;
-  if (screen === "settings") {
-    return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+  if (currentScreen.screen === "settings") {
+    return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
       SettingsScreen,
       {
         settings,
         onSave: handleSettingsSave,
-        onCancel: () => setScreen("main"),
-        onClearFavorites: () => setFavoriteEntries([]),
-        onClearHistory: () => setRecentEntries([])
+        onCancel: () => popScreen(),
+        onClearFavorites: () => {
+          setFavoriteEntries([]);
+        },
+        onClearHistory: () => setRecentEntries([]),
+        onEditFavorites: () => pushScreen("favorites-editor"),
+        breadcrumbs: breadcrumbItems
       }
     );
   }
-  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { flexDirection: "column", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { marginTop: 1, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: "gray", children: "  " }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: searchTerm ? "white" : "gray", children: searchTerm || "Type to search..." }),
-      searchTerm && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: "white", children: "\u258C" })
+  if (currentScreen.screen === "favorites-editor") {
+    return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+      FavoritesEditor,
+      {
+        favorites: favoriteEntries,
+        onUpdate: (updated) => setFavoriteEntries(updated),
+        onEditFavorite: (id) => pushScreen("favorite-edit", { favoriteId: id }),
+        onAddFavorite: () => {
+          const newFavorite = addFavorite({
+            name: "New Favorite",
+            shortcut: generateUniqueShortcut(favoriteEntries),
+            caseSensitive: false,
+            command: ["cd ~"]
+          });
+          setFavoriteEntries((prev) => [...prev, newFavorite]);
+          pushScreen("favorite-edit", { favoriteId: newFavorite.id });
+        },
+        onBack: () => popScreen(),
+        breadcrumbs: breadcrumbItems
+      }
+    );
+  }
+  if (currentScreen.screen === "favorite-edit" && currentScreen.state?.favoriteId) {
+    const favorite = favoriteEntries.find((f) => f.id === currentScreen.state?.favoriteId);
+    if (favorite) {
+      return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+        FavoriteEdit,
+        {
+          favorite,
+          allFavorites: favoriteEntries,
+          onSave: (updated) => {
+            setFavoriteEntries(
+              (prev) => prev.map((f) => f.id === updated.id ? updated : f)
+            );
+          },
+          onBack: () => popScreen(),
+          breadcrumbs: breadcrumbItems
+        }
+      );
+    }
+    popScreen();
+    return null;
+  }
+  return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Box_default, { flexDirection: "column", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Box_default, { marginTop: 1, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: "gray", children: "  " }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: searchTerm ? "white" : "gray", children: searchTerm || "Type to search..." }),
+      searchTerm && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: "white", children: "\u258C" })
     ] }),
-    hasMoreAbove && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { dimColor: true, children: [
+    hasMoreAbove && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { dimColor: true, children: [
       "  \u2191 ",
       scrollOffset,
       " more"
     ] }) }),
-    visibleItems.length === 0 && searchTerm && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: "yellow", children: [
+    visibleItems.length === 0 && searchTerm && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: "yellow", children: [
       '  No matches for "',
       searchTerm,
       '"'
@@ -55673,7 +56305,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
     visibleItems.map((item, visibleIdx) => {
       const actualIdx = clampedScrollOffset + visibleIdx;
       if (item.type === "header") {
-        return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: "gray", dimColor: true, children: [
+        return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: "gray", dimColor: true, children: [
           "\u2500\u2500 ",
           item.label,
           " \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
@@ -55681,7 +56313,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
       }
       const isSelected = actualIdx === selectedIndex;
       if (item.type === "back") {
-        return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isSelected ? settings.selectedColor : "gray", bold: isSelected, children: [
+        return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: isSelected ? settings.selectedColor : "gray", bold: isSelected, children: [
           "< ",
           item.label
         ] }) }, "back");
@@ -55696,28 +56328,29 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
       } else if (item.isRecent) {
         color = settings.recentColor;
       }
-      return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color, bold: isSelected, children: [
+      return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Box_default, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color, bold: isSelected, children: [
           isSelected ? "> " : "  ",
           item.label
         ] }),
-        item.favoriteNumber && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { dimColor: true, children: [
-          " #",
-          item.favoriteNumber
-        ] }),
-        hasNested && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: "gray", dimColor: true, children: " \u25B6" })
+        item.shortcuts && item.shortcuts.map((s, i) => /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { dimColor: true, children: [
+          " [",
+          s,
+          "]"
+        ] }, i)),
+        hasNested && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: "gray", dimColor: true, children: " \u25B6" })
       ] }, `item-${actualIdx}`);
     }),
-    hasMoreBelow && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { dimColor: true, children: [
+    hasMoreBelow && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { dimColor: true, children: [
       "  \u2193 ",
       items.length - scrollOffset - settings.visibleRows,
       " more"
     ] }) }),
-    isRefreshing && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: "cyan", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(build_default, { type: "dots" }),
+    isRefreshing && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: "cyan", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(build_default, { type: "dots" }),
       " Refreshing..."
     ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { marginTop: isRefreshing ? 0 : 1, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { dimColor: true, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { marginTop: isRefreshing ? 0 : 1, children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { dimColor: true, children: [
       "\u2191\u2193 navigate \u2022 enter select \u2022 \u2192\u2190 drill/back \u2022 ^",
       settings.favoriteKey.toUpperCase(),
       " fav \u2022 tab settings \u2022 ^",
@@ -55728,19 +56361,19 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
 }
 
 // src/setup.ts
-import { existsSync as existsSync7, readFileSync as readFileSync6, writeFileSync as writeFileSync5, appendFileSync as appendFileSync2, mkdirSync as mkdirSync4, copyFileSync } from "fs";
-import { join as join7, dirname as dirname2, resolve as resolve2 } from "path";
-import { homedir as homedir6 } from "os";
+import { existsSync as existsSync8, readFileSync as readFileSync7, writeFileSync as writeFileSync6, appendFileSync as appendFileSync2, mkdirSync as mkdirSync5, copyFileSync } from "fs";
+import { join as join8, dirname as dirname2, resolve as resolve2 } from "path";
+import { homedir as homedir7 } from "os";
 import { createInterface } from "readline";
-var SELECTION_FILE2 = getSelectionFile();
+var COMMAND_FILE2 = getCommandFile();
 var toBashPath = (p) => p.replace(/^([a-zA-Z]):/, (_, drive) => `/${drive.toLowerCase()}`).replace(/\\/g, "/");
 function backupFile(filePath) {
-  if (!existsSync7(filePath)) {
+  if (!existsSync8(filePath)) {
     return null;
   }
   let backupPath = `${filePath}.bkp`;
   let counter = 1;
-  while (existsSync7(backupPath)) {
+  while (existsSync8(backupPath)) {
     backupPath = `${filePath}.bkp${counter}`;
     counter++;
   }
@@ -55759,7 +56392,7 @@ async function promptForPath(rl, defaultPath) {
   while (true) {
     const answer = await question("> ");
     const path2 = resolve2(answer.trim() || defaultPath);
-    if (existsSync7(path2)) {
+    if (existsSync8(path2)) {
       return path2;
     }
     console.log(`Path does not exist: ${path2}`);
@@ -55779,10 +56412,10 @@ function getBashWrapper(withAlias) {
 # Dash CLI: Navigate to projects
 dash() {
     dash-cli "$@"
-    local selected
-    selected=$(cat "${toBashPath(SELECTION_FILE2)}" 2>/dev/null)
-    if [ -n "$selected" ] && [ -d "$selected" ]; then
-        cd "$selected" || return 1
+    local cmd_file="${toBashPath(COMMAND_FILE2)}"
+    if [ -f "$cmd_file" ]; then
+        . "$cmd_file"
+        rm -f "$cmd_file"
     fi
 }
 `;
@@ -55797,12 +56430,11 @@ function getPowerShellWrapper(withAlias) {
 # Dash CLI: Navigate to projects
 function dash {
     dash-cli @args
-    $selectionFile = "${SELECTION_FILE2.replace(/\\/g, "\\\\")}"
-    if (Test-Path $selectionFile) {
-        $selected = Get-Content $selectionFile -Raw
-        if ($selected -and (Test-Path $selected.Trim())) {
-            Set-Location $selected.Trim()
-        }
+    $cmdFile = "${COMMAND_FILE2.replace(/\\/g, "\\\\")}"
+    if (Test-Path $cmdFile) {
+        $commands = Get-Content $cmdFile -Raw
+        if ($commands) { Invoke-Expression $commands }
+        Remove-Item $cmdFile -Force -ErrorAction SilentlyContinue
     }
 }
 `;
@@ -55824,36 +56456,36 @@ function detectShell() {
   return process.platform === "win32" ? "powershell" : "bash";
 }
 function getBashConfigFile() {
-  const home = homedir6();
+  const home = homedir7();
   const shell = process.env.SHELL || "";
   if (shell.includes("zsh")) {
-    const zshrc = join7(home, ".zshrc");
-    if (existsSync7(zshrc)) {
+    const zshrc = join8(home, ".zshrc");
+    if (existsSync8(zshrc)) {
       return zshrc;
     }
     return zshrc;
   }
-  const bashrc = join7(home, ".bashrc");
-  const bashProfile = join7(home, ".bash_profile");
-  if (existsSync7(bashrc)) {
+  const bashrc = join8(home, ".bashrc");
+  const bashProfile = join8(home, ".bash_profile");
+  if (existsSync8(bashrc)) {
     return bashrc;
   }
-  if (existsSync7(bashProfile)) {
+  if (existsSync8(bashProfile)) {
     return bashProfile;
   }
   return bashrc;
 }
 function getPowerShellProfile() {
-  const home = homedir6();
+  const home = homedir7();
   if (process.platform === "win32") {
-    const psCore = join7(home, "Documents", "PowerShell", "Microsoft.PowerShell_profile.ps1");
-    const psWindows = join7(home, "Documents", "WindowsPowerShell", "Microsoft.PowerShell_profile.ps1");
-    if (existsSync7(dirname2(psCore))) {
+    const psCore = join8(home, "Documents", "PowerShell", "Microsoft.PowerShell_profile.ps1");
+    const psWindows = join8(home, "Documents", "WindowsPowerShell", "Microsoft.PowerShell_profile.ps1");
+    if (existsSync8(dirname2(psCore))) {
       return psCore;
     }
     return psWindows;
   }
-  return join7(home, ".config", "powershell", "Microsoft.PowerShell_profile.ps1");
+  return join8(home, ".config", "powershell", "Microsoft.PowerShell_profile.ps1");
 }
 function removeExistingConfig(content) {
   const marker = "# Dash CLI:";
@@ -55901,11 +56533,11 @@ function setupBash(withAlias) {
   if (backupPath) {
     console.log(`  Backup created: ${toBashPath(backupPath)}`);
   }
-  if (existsSync7(configFile)) {
-    let content = readFileSync6(configFile, "utf-8");
+  if (existsSync8(configFile)) {
+    let content = readFileSync7(configFile, "utf-8");
     if (content.includes("# Dash CLI:")) {
       content = removeExistingConfig(content);
-      writeFileSync5(configFile, content);
+      writeFileSync6(configFile, content);
       isUpdate = true;
     }
   }
@@ -55922,18 +56554,18 @@ function setupPowerShell(withAlias) {
   const profilePath = getPowerShellProfile();
   let isUpdate = false;
   const profileDir = dirname2(profilePath);
-  if (!existsSync7(profileDir)) {
-    mkdirSync4(profileDir, { recursive: true });
+  if (!existsSync8(profileDir)) {
+    mkdirSync5(profileDir, { recursive: true });
   }
   const backupPath = backupFile(profilePath);
   if (backupPath) {
     console.log(`  Backup created: ${backupPath}`);
   }
-  if (existsSync7(profilePath)) {
-    let content = readFileSync6(profilePath, "utf-8");
+  if (existsSync8(profilePath)) {
+    let content = readFileSync7(profilePath, "utf-8");
     if (content.includes("# Dash CLI:")) {
       content = removeExistingConfig(content);
-      writeFileSync5(profilePath, content);
+      writeFileSync6(profilePath, content);
       isUpdate = true;
     }
   }
@@ -55991,7 +56623,7 @@ async function runSetup(shellArg, aliasArg) {
 }
 
 // src/index.tsx
-var import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
+var import_jsx_runtime6 = __toESM(require_jsx_runtime(), 1);
 async function main() {
   const args = process.argv.slice(2);
   const debugMode = args.includes("--debug");
@@ -56004,21 +56636,17 @@ async function main() {
     await runSetup(filteredArgs[1], filteredArgs[2]);
     return;
   }
-  const favoriteIndex = parseInt(filteredArgs[0], 10);
-  if (!isNaN(favoriteIndex) && favoriteIndex > 0) {
-    log(`quick favorite access: ${favoriteIndex}`);
-    const favorites = await getFavoritesAsync();
-    log(`loaded ${favorites.length} favorites`);
-    if (favoriteIndex <= favorites.length) {
-      const favorite = favorites[favoriteIndex - 1];
-      writeLastSelection(favorite.path);
+  const shortcutArg = filteredArgs[0];
+  if (shortcutArg && !shortcutArg.startsWith("--")) {
+    log(`quick favorite access: ${shortcutArg}`);
+    const favorite = await getFavoriteByShortcutAsync(shortcutArg);
+    if (favorite) {
+      log(`found favorite: ${favorite.name}`);
+      writeLastCommand(favorite.command);
       return;
-    } else {
-      console.error(
-        `Favorite #${favoriteIndex} does not exist. You have ${favorites.length} favorite(s).`
-      );
-      process.exit(1);
     }
+    console.error(`Shortcut not found: ${shortcutArg}`);
+    process.exit(1);
   }
   log("loading settings...");
   const settings = await loadSettingsAsync();
@@ -56033,7 +56661,7 @@ async function main() {
   let selectedDisplayName = null;
   log("about to render App...");
   const { waitUntilExit, unmount } = render_default(
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+    /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
       App2,
       {
         initialSettings: settings,
@@ -56056,7 +56684,7 @@ async function main() {
   log("app exited");
   if (selectedPath && selectedDisplayName) {
     addRecent(selectedPath, selectedDisplayName);
-    writeLastSelection(selectedPath);
+    writeLastCommand(generateCommand(selectedPath));
   }
 }
 main().catch((err) => {

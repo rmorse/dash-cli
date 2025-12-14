@@ -10,7 +10,8 @@
       "Bash(node -e:*)",
       "Bash(node --version)",
       "Bash(mount:*)",
-      "Skill(inwin)"
+      "Skill(inwin)",
+      "Bash(ls:*)"
     ]
   }
 }

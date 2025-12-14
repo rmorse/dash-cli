@@ -12,18 +12,30 @@ export interface HistoryEntry {
   lastUsed: number;
 }
 
-export interface FavoriteEntry {
-  path: string;
-  displayName: string;
-  addedAt: number;
-}
-
 export interface HistoryData {
   recent: HistoryEntry[];
 }
 
+// New Favorites System
+export interface Favorite {
+  id: string;
+  name: string;
+  shortcut: string;
+  caseSensitive: boolean;
+  command: string[];
+  createdAt: number;
+}
+
+export type FavoriteInput = Omit<Favorite, "id" | "createdAt">;
+export type FavoriteUpdate = Partial<FavoriteInput>;
+
+export interface ValidationResult {
+  valid: boolean;
+  error?: string;
+}
+
 export interface FavoritesData {
-  favorites: FavoriteEntry[];
+  favorites: Favorite[];
 }
 
 export interface SelectItem {

@@ -1,7 +1,8 @@
 import React from "react";
 import { render } from "ink";
 import { App } from "./components/App.js";
-import { getRecentAsync, addRecent, writeLastSelection, getFavoritesAsync } from "./history.js";
+import { getRecentAsync, addRecent, writeLastCommand } from "./history.js";
+import { getFavoritesAsync, getFavoriteByShortcutAsync, generateCommand } from "./favorites.js";
 import { loadSettingsAsync, saveSettings } from "./settings.js";
 import { runSetup } from "./setup.js";
 import { initLog, log } from "./logger.js";
@@ -24,22 +25,19 @@ async function main() {
     return;
   }
 
-  // Handle numeric argument for quick favorite access
-  const favoriteIndex = parseInt(filteredArgs[0], 10);
-  if (!isNaN(favoriteIndex) && favoriteIndex > 0) {
-    log(`quick favorite access: ${favoriteIndex}`);
-    const favorites = await getFavoritesAsync();
-    log(`loaded ${favorites.length} favorites`);
-    if (favoriteIndex <= favorites.length) {
-      const favorite = favorites[favoriteIndex - 1];
-      writeLastSelection(favorite.path);
+  // Handle shortcut argument for quick favorite access
+  const shortcutArg = filteredArgs[0];
+  if (shortcutArg && !shortcutArg.startsWith("--")) {
+    log(`quick favorite access: ${shortcutArg}`);
+    const favorite = await getFavoriteByShortcutAsync(shortcutArg);
+    if (favorite) {
+      log(`found favorite: ${favorite.name}`);
+      writeLastCommand(favorite.command);
       return;
-    } else {
-      console.error(
-        `Favorite #${favoriteIndex} does not exist. You have ${favorites.length} favorite(s).`
-      );
-      process.exit(1);
     }
+    // No match - show error and exit
+    console.error(`Shortcut not found: ${shortcutArg}`);
+    process.exit(1);
   }
 
   // Load config files asynchronously
@@ -81,7 +79,7 @@ async function main() {
 
   if (selectedPath && selectedDisplayName) {
     addRecent(selectedPath, selectedDisplayName);
-    writeLastSelection(selectedPath);
+    writeLastCommand(generateCommand(selectedPath));
   }
 }
 

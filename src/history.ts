@@ -2,12 +2,11 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { readFile, mkdir, access } from "node:fs/promises";
 import { join } from "node:path";
 import { homedir } from "node:os";
-import type { HistoryData, HistoryEntry, FavoritesData, FavoriteEntry } from "./types.js";
+import type { HistoryData, HistoryEntry } from "./types.js";
 
 const CONFIG_DIR = join(homedir(), ".dash-cli");
 const HISTORY_FILE = join(CONFIG_DIR, "history.json");
-const FAVORITES_FILE = join(CONFIG_DIR, "favorites.json");
-const SELECTION_FILE = join(CONFIG_DIR, "last-selection");
+const COMMAND_FILE = join(CONFIG_DIR, "last-command");
 const MAX_HISTORY = 20;
 
 export function getConfigDir(): string {
@@ -66,76 +65,17 @@ export function addRecent(path: string, displayName: string): void {
   saveHistory(data);
 }
 
-export function writeLastSelection(path: string): void {
+export function writeLastCommand(commands: string[]): void {
   ensureConfigDir();
-  writeFileSync(SELECTION_FILE, path);
+  writeFileSync(COMMAND_FILE, commands.join("\n"));
 }
 
 export function clearHistory(): void {
   saveHistory({ recent: [] });
 }
 
-export function getSelectionFile(): string {
-  return SELECTION_FILE;
-}
-
-// Favorites functions
-function loadFavoritesData(): FavoritesData {
-  ensureConfigDir();
-
-  if (!existsSync(FAVORITES_FILE)) {
-    return { favorites: [] };
-  }
-
-  try {
-    const content = readFileSync(FAVORITES_FILE, "utf-8");
-    return JSON.parse(content) as FavoritesData;
-  } catch {
-    return { favorites: [] };
-  }
-}
-
-function saveFavoritesData(data: FavoritesData): void {
-  ensureConfigDir();
-  writeFileSync(FAVORITES_FILE, JSON.stringify(data, null, 2));
-}
-
-export function getFavorites(): FavoriteEntry[] {
-  const data = loadFavoritesData();
-  // Sort by addedAt ascending - first added stays #1
-  return data.favorites.sort((a, b) => a.addedAt - b.addedAt);
-}
-
-export function addFavorite(path: string, displayName: string): void {
-  const data = loadFavoritesData();
-
-  // Don't add if already a favorite
-  if (data.favorites.some((f) => f.path === path)) {
-    return;
-  }
-
-  data.favorites.push({
-    path,
-    displayName,
-    addedAt: Date.now(),
-  });
-
-  saveFavoritesData(data);
-}
-
-export function removeFavorite(path: string): void {
-  const data = loadFavoritesData();
-  data.favorites = data.favorites.filter((f) => f.path !== path);
-  saveFavoritesData(data);
-}
-
-export function isFavorite(path: string): boolean {
-  const data = loadFavoritesData();
-  return data.favorites.some((f) => f.path === path);
-}
-
-export function clearFavorites(): void {
-  saveFavoritesData({ favorites: [] });
+export function getCommandFile(): string {
+  return COMMAND_FILE;
 }
 
 // Async versions for faster startup
@@ -169,30 +109,9 @@ async function loadHistoryAsync(): Promise<HistoryData> {
   }
 }
 
-async function loadFavoritesDataAsync(): Promise<FavoritesData> {
-  await ensureConfigDirAsync();
-
-  if (!await pathExists(FAVORITES_FILE)) {
-    return { favorites: [] };
-  }
-
-  try {
-    const content = await readFile(FAVORITES_FILE, "utf-8");
-    return JSON.parse(content) as FavoritesData;
-  } catch {
-    return { favorites: [] };
-  }
-}
-
 export async function getRecentAsync(limit: number = 5): Promise<HistoryEntry[]> {
   const data = await loadHistoryAsync();
   return data.recent
     .sort((a, b) => b.lastUsed - a.lastUsed)
     .slice(0, limit);
-}
-
-export async function getFavoritesAsync(): Promise<FavoriteEntry[]> {
-  const data = await loadFavoritesDataAsync();
-  // Sort by addedAt ascending - first added stays #1
-  return data.favorites.sort((a, b) => a.addedAt - b.addedAt);
 }

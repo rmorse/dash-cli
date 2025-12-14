@@ -5,7 +5,9 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 import type { Settings } from "../types.js";
 import { SETTING_FIELDS } from "../settings.js";
-import { clearHistory, clearFavorites } from "../history.js";
+import { clearHistory } from "../history.js";
+import { clearFavorites } from "../favorites.js";
+import { Breadcrumb } from "./Breadcrumb.js";
 
 const CONFIG_FILE = join(homedir(), ".dash-cli", "settings.json");
 
@@ -15,24 +17,28 @@ interface SettingsProps {
   onCancel: () => void;
   onClearFavorites: () => void;
   onClearHistory: () => void;
+  onEditFavorites: () => void;
+  breadcrumbs: string[];
 }
 
-// Total items: settings fields + 3 action items (Clear favorites, Clear history, Edit config)
-const TOTAL_ITEMS = SETTING_FIELDS.length + 3;
-const CLEAR_FAVORITES_INDEX = SETTING_FIELDS.length;
-const CLEAR_HISTORY_INDEX = SETTING_FIELDS.length + 1;
-const EDIT_CONFIG_INDEX = SETTING_FIELDS.length + 2;
+// Total items: settings fields + 4 action items (Edit favorites, Clear favorites, Clear history, Edit config)
+const TOTAL_ITEMS = SETTING_FIELDS.length + 4;
+const EDIT_FAVORITES_INDEX = SETTING_FIELDS.length;
+const CLEAR_FAVORITES_INDEX = SETTING_FIELDS.length + 1;
+const CLEAR_HISTORY_INDEX = SETTING_FIELDS.length + 2;
+const EDIT_CONFIG_INDEX = SETTING_FIELDS.length + 3;
 
-export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, onClearHistory }: SettingsProps) {
+export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, onClearHistory, onEditFavorites, breadcrumbs }: SettingsProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [editingKey, setEditingKey] = useState<keyof Settings | null>(null);
   const [editValue, setEditValue] = useState("");
   const [localSettings, setLocalSettings] = useState<Settings>({ ...settings });
 
+  const isOnEditFavorites = selectedIndex === EDIT_FAVORITES_INDEX;
   const isOnClearFavorites = selectedIndex === CLEAR_FAVORITES_INDEX;
   const isOnClearHistory = selectedIndex === CLEAR_HISTORY_INDEX;
   const isOnEditConfig = selectedIndex === EDIT_CONFIG_INDEX;
-  const isOnActionItem = isOnClearFavorites || isOnClearHistory || isOnEditConfig;
+  const isOnActionItem = isOnEditFavorites || isOnClearFavorites || isOnClearHistory || isOnEditConfig;
   const currentField = isOnActionItem ? null : SETTING_FIELDS[selectedIndex];
   const isEditing = editingKey !== null;
 
@@ -56,6 +62,10 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, o
   };
 
   const startEditing = () => {
+    if (isOnEditFavorites) {
+      onEditFavorites();
+      return;
+    }
     if (isOnClearFavorites) {
       handleClearFavorites();
       return;
@@ -234,6 +244,8 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, o
 
   return (
     <Box flexDirection="column">
+      <Breadcrumb items={breadcrumbs} />
+
       <Box marginBottom={1}>
         <Text color="gray">{"  "}Settings </Text>
         <Text dimColor>(Tab to close)</Text>
@@ -273,6 +285,14 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, o
         );
       })}
 
+      {/* Edit favorites option */}
+      <Box>
+        <Text color={isOnEditFavorites ? "#FFD700" : "gray"} bold={isOnEditFavorites}>
+          {isOnEditFavorites ? "> " : "  "}
+          {"Edit favorites..."}
+        </Text>
+      </Box>
+
       {/* Clear favorites option */}
       <Box>
         <Text color={isOnClearFavorites ? "#FFD700" : "gray"} bold={isOnClearFavorites}>
@@ -307,13 +327,15 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, o
       <Box>
         <Text dimColor>
           {"  "}
-          {isOnClearFavorites
-            ? "Remove all favorite projects"
-            : isOnClearHistory
-              ? "Remove all recent projects from history"
-              : isOnEditConfig
-                ? "Open settings.json in default editor"
-                : currentField?.description}
+          {isOnEditFavorites
+            ? "Manage favorites: edit names, shortcuts, and commands"
+            : isOnClearFavorites
+              ? "Remove all favorite projects"
+              : isOnClearHistory
+                ? "Remove all recent projects from history"
+                : isOnEditConfig
+                  ? "Open settings.json in default editor"
+                  : currentField?.description}
         </Text>
       </Box>
 

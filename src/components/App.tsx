@@ -1,12 +1,24 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Box, Text, useInput, useApp } from "ink";
 import Spinner from "ink-spinner";
-import type { Project, HistoryEntry, FavoriteEntry, Settings } from "../types.js";
+import type { Project, HistoryEntry, Favorite, Settings } from "../types.js";
 import { basename, relative } from "node:path";
 import { SettingsScreen } from "./Settings.js";
+import { FavoritesEditor } from "./FavoritesEditor.js";
+import { FavoriteEdit } from "./FavoriteEdit.js";
+import { Breadcrumb } from "./Breadcrumb.js";
 import { scanProjectsAsync, ScanAbortSignal } from "../scanner.js";
 import { loadCacheAsync, saveCache } from "../cache.js";
-import { addFavorite, removeFavorite, isFavorite } from "../history.js";
+import {
+  getFavorites,
+  addFavorite,
+  removeFavorite,
+  findFavoriteByPath,
+  generateCommand,
+  generateUniqueShortcut,
+  getFavoriteById,
+} from "../favorites.js";
+import { writeLastCommand } from "../history.js";
 import { log } from "../logger.js";
 
 const PAGE_SIZE = 10;
@@ -14,9 +26,17 @@ const PAGE_SIZE = 10;
 interface AppProps {
   initialSettings: Settings;
   recentEntries: HistoryEntry[];
-  favoriteEntries: FavoriteEntry[];
+  favoriteEntries: Favorite[];
   onSelect: (path: string, displayName: string) => void;
   onSettingsSave: (settings: Settings) => void;
+}
+
+// Screen types for navigation stack
+type ScreenType = "main" | "settings" | "favorites-editor" | "favorite-edit";
+
+interface ScreenStackEntry {
+  screen: ScreenType;
+  state?: { favoriteId?: string };
 }
 
 interface ListItem {
@@ -27,7 +47,8 @@ interface ListItem {
   project?: Project;
   isFavorite?: boolean;
   isRecent?: boolean;
-  favoriteNumber?: number;
+  shortcuts?: string[];  // All favorite shortcuts for this path
+  favoriteId?: string;  // Favorite ID (for favorites section items)
 }
 
 interface NavLevel {
@@ -80,8 +101,30 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
   log("App component function called");
   const { exit } = useApp();
 
-  // Screen state
-  const [screen, setScreen] = useState<"main" | "settings">("main");
+  // Screen navigation stack
+  const [screenStack, setScreenStack] = useState<ScreenStackEntry[]>([
+    { screen: "main" }
+  ]);
+
+  const currentScreen = screenStack[screenStack.length - 1];
+
+  const pushScreen = (screen: ScreenType, state?: { favoriteId?: string }) => {
+    setScreenStack(prev => [...prev, { screen, state }]);
+  };
+
+  const popScreen = () => {
+    setScreenStack(prev => prev.length > 1 ? prev.slice(0, -1) : prev);
+  };
+
+  // Get breadcrumb items from screen stack
+  const breadcrumbLabels: Record<ScreenType, string> = {
+    main: "Home",
+    settings: "Settings",
+    "favorites-editor": "Favorites",
+    "favorite-edit": "Edit",
+  };
+
+  const breadcrumbItems = screenStack.slice(1).map(entry => breadcrumbLabels[entry.screen]);
 
   // Projects and settings state
   const [projects, setProjects] = useState<Project[] | null>(null);
@@ -155,10 +198,20 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
   const isAtRoot = navStack.length === 1;
 
   // Track favorite and recent paths for coloring and filtering
-  const favoritePaths = useMemo(
-    () => new Set(favoriteEntries.map((e) => e.path)),
-    [favoriteEntries]
-  );
+  // Extract paths from favorite commands (looks for cd "path" pattern)
+  const favoritePaths = useMemo(() => {
+    const paths = new Set<string>();
+    for (const fav of favoriteEntries) {
+      const cdCmd = fav.command.find(c => c.startsWith('cd '));
+      if (cdCmd) {
+        const pathMatch = cdCmd.match(/^cd\s+"?([^"]+)"?$/);
+        if (pathMatch) {
+          paths.add(pathMatch[1]);
+        }
+      }
+    }
+    return paths;
+  }, [favoriteEntries]);
 
   const recentPaths = useMemo(
     () => new Set(recentEntries.map((e) => e.path)),
@@ -179,10 +232,23 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
     return map;
   }, [projects]);
 
-  // Build favorite number lookup (for showing #1, #2 etc on inline items)
-  const favoriteNumbers = useMemo(() => {
-    const map = new Map<string, number>();
-    favoriteEntries.forEach((entry, i) => map.set(entry.path, i + 1));
+  // Build shortcuts lookup by path (for showing [shortcut] tags on projects)
+  // A project can have multiple favorites pointing to it
+  const shortcutsByPath = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const fav of favoriteEntries) {
+      // Only associate if the first command is a cd to this path
+      const firstCmd = fav.command[0];
+      if (firstCmd?.startsWith('cd ')) {
+        const pathMatch = firstCmd.match(/^cd\s+"?([^"]+)"?$/);
+        if (pathMatch) {
+          const path = pathMatch[1];
+          const existing = map.get(path) || [];
+          existing.push(fav.shortcut);
+          map.set(path, existing);
+        }
+      }
+    }
     return map;
   }, [favoriteEntries]);
 
@@ -194,20 +260,24 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
     // Favorites section (only at root level, hidden when searching)
     if (isAtRoot && favoriteEntries.length > 0 && !searchTerm) {
       list.push({ type: "header", label: "Favorites" });
-      for (let i = 0; i < favoriteEntries.length; i++) {
-        const entry = favoriteEntries[i];
-        const project = allProjectsMap.get(entry.path);
-        const selectionKey = `fav-${entry.path}`;
+      for (const fav of favoriteEntries) {
+        // Extract path from cd command
+        const cdCmd = fav.command.find(c => c.startsWith('cd '));
+        const pathMatch = cdCmd?.match(/^cd\s+"?([^"]+)"?$/);
+        const favPath = pathMatch?.[1] || "";
+        const project = favPath ? allProjectsMap.get(favPath) : undefined;
+        const selectionKey = `fav-${fav.id}`;
         const idx = list.length;
         list.push({
           type: "project",
-          label: entry.displayName,
-          path: entry.path,
+          label: fav.name,
+          path: favPath,
           selectionKey,
-          favoriteNumber: i + 1,
+          shortcuts: [fav.shortcut],
+          favoriteId: fav.id,
           project: project ?? {
-            name: basename(entry.path),
-            path: entry.path,
+            name: fav.name,
+            path: favPath,
             isGitRepo: true,
           },
           isFavorite: true,
@@ -252,7 +322,8 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
     list.push({ type: "header", label: sectionLabel });
 
     for (const project of currentProjects) {
-      const isFav = favoritePaths.has(project.path);
+      const shortcuts = shortcutsByPath.get(project.path);
+      const isFav = shortcuts && shortcuts.length > 0;
       const isRec = recentPaths.has(project.path) && !isFav;
       const selectionKey = project.path;  // Main list uses plain path
       const idx = list.length;
@@ -264,7 +335,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
         project,
         isFavorite: isFav,
         isRecent: isRec,
-        favoriteNumber: isFav ? favoriteNumbers.get(project.path) : undefined,
+        shortcuts,
       });
       keyMap.set(selectionKey, idx);
     }
@@ -277,7 +348,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
     }
 
     return { unfilteredItems: list, unfilteredKeyToIndex: keyMap };
-  }, [currentProjects, recentEntries, favoriteEntries, isAtRoot, recentPaths, favoritePaths, allProjectsMap, currentLevel.parentPath, settings.projectsDir, searchTerm, favoriteNumbers]);
+  }, [currentProjects, recentEntries, favoriteEntries, isAtRoot, recentPaths, favoritePaths, shortcutsByPath, allProjectsMap, currentLevel.parentPath, settings.projectsDir, searchTerm]);
 
   // Filter items based on search term, also build keyToIndex map
   const { items, keyToIndex } = useMemo(() => {
@@ -413,12 +484,11 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
     if (currentItem?.type !== "project" || !currentItem.path) return;
 
     const isInFavoritesSection = currentItem.selectionKey?.startsWith("fav-");
-    const isInRecentSection = currentItem.selectionKey?.startsWith("recent-");
 
-    if (currentItem.isFavorite) {
-      // Remove from favorites
-      removeFavorite(currentItem.path);
-      setFavoriteEntries(prev => prev.filter(f => f.path !== currentItem.path));
+    if (currentItem.isFavorite && currentItem.favoriteId) {
+      // Remove from favorites using ID
+      removeFavorite(currentItem.favoriteId);
+      setFavoriteEntries(prev => prev.filter(f => f.id !== currentItem.favoriteId));
 
       if (isInFavoritesSection) {
         // Item will disappear from favorites section - select next item in list
@@ -435,11 +505,13 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
     } else {
       // Add to favorites
       const displayName = getDisplayName(currentItem.path!, settings.projectsDir);
-      addFavorite(currentItem.path, displayName);
-      setFavoriteEntries(prev => [
-        ...prev,
-        { path: currentItem.path!, displayName, addedAt: Date.now() },
-      ]);
+      const newFavorite = addFavorite({
+        name: displayName,
+        shortcut: generateUniqueShortcut(favoriteEntries),
+        caseSensitive: false,
+        command: generateCommand(currentItem.path!),
+      });
+      setFavoriteEntries(prev => [...prev, newFavorite]);
       // Item stays in place (main list) - key unchanged
     }
   };
@@ -475,8 +547,8 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
     onSettingsSave(newSettings);
     log("handleSettingsSave: onSettingsSave done");
 
-    // Switch to main screen immediately
-    setScreen("main");
+    // Return to main screen
+    setScreenStack([{ screen: "main" }]);
 
     if (needsRescan) {
       // Use async scan to avoid blocking UI
@@ -504,12 +576,12 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
   };
 
   useInput((input, key) => {
-    // Skip input handling when in settings screen
-    if (screen === "settings") return;
+    // Skip input handling when not on main screen
+    if (currentScreen.screen !== "main") return;
 
     // Tab - open settings
     if (key.tab) {
-      setScreen("settings");
+      pushScreen("settings");
       return;
     }
 
@@ -550,31 +622,31 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
     const currentItem = items[selectedIndex];
     const currentPos = selectableIndices.indexOf(selectedIndex);
 
-    // Enter key - select current item
+    // Enter key - behavior depends on section
     if (key.return) {
       if (currentItem?.type === "back") {
         goBack();
         return;
       }
 
-      if (currentItem?.type === "project" && currentItem.project) {
-        const project = currentItem.project;
+      if (currentItem?.type === "project") {
+        // In favorites section: execute the favorite's stored command
+        const isInFavoritesSection = currentItem.selectionKey?.startsWith("fav-");
+        if (isInFavoritesSection && currentItem.favoriteId) {
+          const favorite = favoriteEntries.find(f => f.id === currentItem.favoriteId);
+          if (favorite) {
+            scanAbortSignal.current.aborted = true;
+            writeLastCommand(favorite.command);
+            exit();
+            return;
+          }
+        }
 
-        if (project.isGitRepo) {
-          // Abort any pending scan to exit immediately
+        // In projects/recent list: always just cd to the folder
+        if (currentItem.project) {
           scanAbortSignal.current.aborted = true;
-          onSelect(project.path, getDisplayName(project.path, settings.projectsDir));
-          return;
+          onSelect(currentItem.project.path, getDisplayName(currentItem.project.path, settings.projectsDir));
         }
-
-        if (project.hasNestedProjects) {
-          drillDown(project, currentItem.path);
-          return;
-        }
-
-        // Abort any pending scan to exit immediately
-        scanAbortSignal.current.aborted = true;
-        onSelect(project.path, getDisplayName(project.path, settings.projectsDir));
       }
       return;
     }
@@ -677,17 +749,66 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
   const hasMoreAbove = clampedScrollOffset > 0;
   const hasMoreBelow = clampedScrollOffset + settings.visibleRows < items.length;
 
-  // Show settings screen
-  if (screen === "settings") {
+  // Handle non-main screens
+  if (currentScreen.screen === "settings") {
     return (
       <SettingsScreen
         settings={settings}
         onSave={handleSettingsSave}
-        onCancel={() => setScreen("main")}
-        onClearFavorites={() => setFavoriteEntries([])}
+        onCancel={() => popScreen()}
+        onClearFavorites={() => {
+          setFavoriteEntries([]);
+        }}
         onClearHistory={() => setRecentEntries([])}
+        onEditFavorites={() => pushScreen("favorites-editor")}
+        breadcrumbs={breadcrumbItems}
       />
     );
+  }
+
+  if (currentScreen.screen === "favorites-editor") {
+    return (
+      <FavoritesEditor
+        favorites={favoriteEntries}
+        onUpdate={(updated) => setFavoriteEntries(updated)}
+        onEditFavorite={(id) => pushScreen("favorite-edit", { favoriteId: id })}
+        onAddFavorite={() => {
+          // Create a new favorite with defaults
+          const newFavorite = addFavorite({
+            name: "New Favorite",
+            shortcut: generateUniqueShortcut(favoriteEntries),
+            caseSensitive: false,
+            command: ["cd ~"],
+          });
+          setFavoriteEntries(prev => [...prev, newFavorite]);
+          pushScreen("favorite-edit", { favoriteId: newFavorite.id });
+        }}
+        onBack={() => popScreen()}
+        breadcrumbs={breadcrumbItems}
+      />
+    );
+  }
+
+  if (currentScreen.screen === "favorite-edit" && currentScreen.state?.favoriteId) {
+    const favorite = favoriteEntries.find(f => f.id === currentScreen.state?.favoriteId);
+    if (favorite) {
+      return (
+        <FavoriteEdit
+          favorite={favorite}
+          allFavorites={favoriteEntries}
+          onSave={(updated) => {
+            setFavoriteEntries(prev =>
+              prev.map(f => f.id === updated.id ? updated : f)
+            );
+          }}
+          onBack={() => popScreen()}
+          breadcrumbs={breadcrumbItems}
+        />
+      );
+    }
+    // Favorite not found, go back
+    popScreen();
+    return null;
   }
 
   return (
@@ -757,9 +878,9 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
               {isSelected ? "> " : "  "}
               {item.label}
             </Text>
-            {item.favoriteNumber && (
-              <Text dimColor> #{item.favoriteNumber}</Text>
-            )}
+            {item.shortcuts && item.shortcuts.map((s, i) => (
+              <Text key={i} dimColor> [{s}]</Text>
+            ))}
             {hasNested && (
               <Text color="gray" dimColor> ▶</Text>
             )}
