@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import type { Shortcut } from "../types.js";
-import { removeShortcut } from "../shortcuts.js";
+import { removeShortcut, clearShortcuts } from "../shortcuts.js";
 
 interface ShortcutsEditorProps {
   shortcuts: Shortcut[];
@@ -26,12 +26,31 @@ export function ShortcutsEditor({
 }: ShortcutsEditorProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [confirmClearAll, setConfirmClearAll] = useState(false);
 
-  // Items: shortcuts + "Add new shortcut" action
-  const totalItems = shortcuts.length + 1;
-  const isOnAddNew = selectedIndex === shortcuts.length;
+  // Items: shortcuts + "Add new shortcut" + "Clear all" (if shortcuts exist)
+  const hasClearAll = shortcuts.length > 0;
+  const totalItems = shortcuts.length + 1 + (hasClearAll ? 1 : 0);
+  const addNewIndex = shortcuts.length;
+  const clearAllIndex = shortcuts.length + 1;
+  const isOnAddNew = selectedIndex === addNewIndex;
+  const isOnClearAll = hasClearAll && selectedIndex === clearAllIndex;
 
   useInput((input, key) => {
+    // Handle clear all confirmation
+    if (confirmClearAll) {
+      if (input === "y" || input === "Y") {
+        clearShortcuts();
+        onUpdate([]);
+        setConfirmClearAll(false);
+        setSelectedIndex(0);
+      } else {
+        // Any other key cancels
+        setConfirmClearAll(false);
+      }
+      return;
+    }
+
     // Handle delete confirmation
     if (confirmDelete) {
       if (input === "y" || input === "Y") {
@@ -42,7 +61,8 @@ export function ShortcutsEditor({
         if (selectedIndex >= shortcuts.length - 1) {
           setSelectedIndex(Math.max(0, shortcuts.length - 2));
         }
-      } else if (input === "n" || input === "N" || key.escape) {
+      } else {
+        // Any other key cancels
         setConfirmDelete(null);
       }
       return;
@@ -59,9 +79,11 @@ export function ShortcutsEditor({
       return;
     }
 
-    // Enter - edit or add
+    // Enter - edit, add, or clear all
     if (key.return) {
-      if (isOnAddNew) {
+      if (isOnClearAll) {
+        setConfirmClearAll(true);
+      } else if (isOnAddNew) {
         onAddShortcut();
       } else {
         onEditShortcut(shortcuts[selectedIndex].id);
@@ -71,7 +93,7 @@ export function ShortcutsEditor({
 
     // Ctrl+D - delete shortcut
     if (key.ctrl && input === "d") {
-      if (!isOnAddNew && shortcuts.length > 0) {
+      if (!isOnAddNew && !isOnClearAll && shortcuts.length > 0) {
         setConfirmDelete(shortcuts[selectedIndex].id);
       }
       return;
@@ -135,6 +157,20 @@ export function ShortcutsEditor({
           {isOnAddNew ? "> " : "  "}[Add new shortcut]
         </Text>
       </Box>
+
+      {hasClearAll && (
+        <Box>
+          <Text
+            color={isOnClearAll ? selectedColor : "red"}
+            bold={isOnClearAll}
+          >
+            {isOnClearAll ? "> " : "  "}[Clear all]
+          </Text>
+          {confirmClearAll && (
+            <Text color="red"> Clear all shortcuts? (y/n)</Text>
+          )}
+        </Box>
+      )}
 
       <Box>
         <Text color="gray" dimColor>

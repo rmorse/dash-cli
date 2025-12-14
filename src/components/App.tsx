@@ -799,7 +799,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
           {tabs.map((tab, idx) => (
             <React.Fragment key={idx}>
               {tab.isActive ? (
-                <Text backgroundColor={settings.selectedColor} color="#333">
+                <Text backgroundColor="#ccc" color="#333">
                   {tab.label}
                 </Text>
               ) : (
@@ -869,9 +869,6 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
       <SettingsScreen
         settings={settings}
         onSave={handleSettingsSave}
-        onClearShortcuts={() => {
-          setShortcutEntries([]);
-        }}
         onClearHistory={() => setRecentEntries([])}
         onTab={cycleTab}
         onClose={() => setCurrentTab(TAB_PROJECTS)}
@@ -903,7 +900,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
 
       {visibleItems.length === 0 && searchTerm && (
         <Box>
-          <Text color="yellow">  No matches for "{searchTerm}"</Text>
+          <Text dimColor>  No matches for "{searchTerm}"</Text>
         </Box>
       )}
 

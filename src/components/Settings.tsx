@@ -7,14 +7,12 @@ import { homedir } from "node:os";
 import type { Settings } from "../types.js";
 import { SETTING_FIELDS } from "../settings.js";
 import { clearHistory } from "../history.js";
-import { clearShortcuts } from "../shortcuts.js";
 
 const CONFIG_FILE = join(homedir(), ".dash-cli", "settings.json");
 
 interface SettingsProps {
   settings: Settings;
   onSave: (settings: Settings) => void;
-  onClearShortcuts: () => void;
   onClearHistory: () => void;
   onTab: (reverse?: boolean) => void;
   onClose: () => void;
@@ -22,7 +20,7 @@ interface SettingsProps {
 }
 
 
-export function SettingsScreen({ settings, onSave, onClearShortcuts, onClearHistory, onTab, onClose, tabBar }: SettingsProps) {
+export function SettingsScreen({ settings, onSave, onClearHistory, onTab, onClose, tabBar }: SettingsProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [editingKey, setEditingKey] = useState<keyof Settings | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -33,30 +31,21 @@ export function SettingsScreen({ settings, onSave, onClearShortcuts, onClearHist
     (field) => !field.showIf || field.showIf(localSettings)
   );
 
-  // Dynamic indices based on visible fields (3 action items: Clear shortcuts, Clear history, Edit config)
-  const totalItems = visibleFields.length + 3;
-  const clearShortcutsIndex = visibleFields.length;
-  const clearHistoryIndex = visibleFields.length + 1;
-  const editConfigIndex = visibleFields.length + 2;
+  // Dynamic indices based on visible fields (2 action items: Clear history, Edit config)
+  const totalItems = visibleFields.length + 2;
+  const clearHistoryIndex = visibleFields.length;
+  const editConfigIndex = visibleFields.length + 1;
 
-  const isOnClearShortcuts = selectedIndex === clearShortcutsIndex;
   const isOnClearHistory = selectedIndex === clearHistoryIndex;
   const isOnEditConfig = selectedIndex === editConfigIndex;
-  const isOnActionItem = isOnClearShortcuts || isOnClearHistory || isOnEditConfig;
+  const isOnActionItem = isOnClearHistory || isOnEditConfig;
   const currentField = isOnActionItem ? null : visibleFields[selectedIndex];
   const isEditing = editingKey !== null;
 
-  const [shortcutsCleared, setShortcutsCleared] = useState(false);
   const [historyCleared, setHistoryCleared] = useState(false);
 
   const openConfigFile = async () => {
     await open(CONFIG_FILE);
-  };
-
-  const handleClearShortcuts = () => {
-    clearShortcuts();
-    onClearShortcuts();
-    setShortcutsCleared(true);
   };
 
   const handleClearHistory = () => {
@@ -66,10 +55,6 @@ export function SettingsScreen({ settings, onSave, onClearShortcuts, onClearHist
   };
 
   const startEditing = () => {
-    if (isOnClearShortcuts) {
-      handleClearShortcuts();
-      return;
-    }
     if (isOnClearHistory) {
       handleClearHistory();
       return;
@@ -319,15 +304,6 @@ export function SettingsScreen({ settings, onSave, onClearShortcuts, onClearHist
         );
       })}
 
-      {/* Clear shortcuts option */}
-      <Box>
-        <Text color={isOnClearShortcuts ? localSettings.selectedColor : "gray"} bold={isOnClearShortcuts}>
-          {isOnClearShortcuts ? "> " : "  "}
-          {"Clear shortcuts..."}
-        </Text>
-        {shortcutsCleared && <Text color="green">{" "}✓</Text>}
-      </Box>
-
       {/* Clear history option */}
       <Box>
         <Text color={isOnClearHistory ? localSettings.selectedColor : "gray"} bold={isOnClearHistory}>
@@ -353,13 +329,11 @@ export function SettingsScreen({ settings, onSave, onClearShortcuts, onClearHist
       <Box>
         <Text dimColor>
           {"  "}
-          {isOnClearShortcuts
-            ? "Remove all shortcuts"
-            : isOnClearHistory
-              ? "Remove all recent projects from history"
-              : isOnEditConfig
-                ? "Open settings.json in default editor"
-                : currentField?.description}
+          {isOnClearHistory
+            ? "Remove all recent projects from history"
+            : isOnEditConfig
+              ? "Open settings.json in default editor"
+              : currentField?.description}
         </Text>
       </Box>
 

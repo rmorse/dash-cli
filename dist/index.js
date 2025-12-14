@@ -54507,8 +54507,8 @@ defineLazyProperty(apps, "safari", () => detectPlatformBinary({
 var open_default = open;
 
 // src/components/Settings.tsx
-import { join as join4 } from "path";
-import { homedir as homedir4 } from "os";
+import { join as join3 } from "path";
+import { homedir as homedir3 } from "os";
 
 // src/settings.ts
 import { existsSync as existsSync2, mkdirSync, readFileSync as readFileSync2, writeFileSync } from "fs";
@@ -54742,14 +54742,274 @@ async function getRecentAsync(limit = 5) {
   return data.recent.sort((a, b) => b.lastUsed - a.lastUsed).slice(0, limit);
 }
 
+// src/components/Settings.tsx
+var import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
+var CONFIG_FILE = join3(homedir3(), ".dash-cli", "settings.json");
+function SettingsScreen({ settings, onSave, onClearHistory, onTab, onClose, tabBar }) {
+  const [selectedIndex, setSelectedIndex] = (0, import_react24.useState)(0);
+  const [editingKey, setEditingKey] = (0, import_react24.useState)(null);
+  const [editValue, setEditValue] = (0, import_react24.useState)("");
+  const [localSettings, setLocalSettings] = (0, import_react24.useState)({ ...settings });
+  const visibleFields = SETTING_FIELDS.filter(
+    (field) => !field.showIf || field.showIf(localSettings)
+  );
+  const totalItems = visibleFields.length + 2;
+  const clearHistoryIndex = visibleFields.length;
+  const editConfigIndex = visibleFields.length + 1;
+  const isOnClearHistory = selectedIndex === clearHistoryIndex;
+  const isOnEditConfig = selectedIndex === editConfigIndex;
+  const isOnActionItem = isOnClearHistory || isOnEditConfig;
+  const currentField = isOnActionItem ? null : visibleFields[selectedIndex];
+  const isEditing = editingKey !== null;
+  const [historyCleared, setHistoryCleared] = (0, import_react24.useState)(false);
+  const openConfigFile = async () => {
+    await open_default(CONFIG_FILE);
+  };
+  const handleClearHistory = () => {
+    clearHistory();
+    onClearHistory();
+    setHistoryCleared(true);
+  };
+  const startEditing = () => {
+    if (isOnClearHistory) {
+      handleClearHistory();
+      return;
+    }
+    if (isOnEditConfig) {
+      openConfigFile();
+      return;
+    }
+    const field = visibleFields[selectedIndex];
+    const value = localSettings[field.key];
+    if (field.type === "toggle") {
+      setLocalSettings((prev) => ({
+        ...prev,
+        [field.key]: !prev[field.key]
+      }));
+      return;
+    }
+    setEditingKey(field.key);
+    setEditValue(String(value));
+  };
+  const isValidShortcutKey = (key) => {
+    return /^[a-zA-Z0-9]$/.test(key);
+  };
+  const commitEdit = () => {
+    if (!editingKey) return;
+    const field = SETTING_FIELDS.find((f) => f.key === editingKey);
+    if (!field) return;
+    let newValue = editValue;
+    if (field.type === "number") {
+      const num = parseInt(editValue, 10);
+      if (!isNaN(num)) {
+        const min = field.min ?? 1;
+        const max = field.max ?? 100;
+        newValue = Math.max(min, Math.min(max, num));
+      } else {
+        newValue = localSettings[editingKey];
+      }
+    } else if (field.type === "key") {
+      const key = editValue.toLowerCase();
+      if (isValidShortcutKey(key)) {
+        newValue = key;
+      } else {
+        newValue = localSettings[editingKey];
+      }
+    }
+    setLocalSettings((prev) => ({
+      ...prev,
+      [editingKey]: newValue
+    }));
+    setEditingKey(null);
+    setEditValue("");
+  };
+  const cancelEdit = () => {
+    setEditingKey(null);
+    setEditValue("");
+  };
+  const adjustNumber = (delta) => {
+    if (!editingKey) return;
+    const field = SETTING_FIELDS.find((f) => f.key === editingKey);
+    if (field?.type !== "number") return;
+    const current = parseInt(editValue, 10) || 0;
+    const min = field.min ?? 1;
+    const max = field.max ?? 100;
+    const newValue = Math.max(min, Math.min(max, current + delta));
+    setEditValue(String(newValue));
+  };
+  const usesTextInput = currentField && !["number", "key"].includes(currentField.type);
+  use_input_default((input, key) => {
+    if (isEditing) {
+      if (usesTextInput) {
+        if (key.escape) {
+          cancelEdit();
+        }
+        return;
+      }
+      if (key.escape) {
+        cancelEdit();
+        return;
+      }
+      if (key.return) {
+        commitEdit();
+        return;
+      }
+      if (currentField?.type === "number") {
+        if (key.upArrow || key.rightArrow) {
+          adjustNumber(1);
+          return;
+        }
+        if (key.downArrow || key.leftArrow) {
+          adjustNumber(-1);
+          return;
+        }
+      }
+      if (key.backspace || key.delete) {
+        setEditValue((prev) => prev.slice(0, -1));
+        return;
+      }
+      if (input && input.length === 1 && !key.ctrl && !key.meta) {
+        if (input.charCodeAt(0) >= 32) {
+          if (currentField?.type === "key") {
+            if (isValidShortcutKey(input)) {
+              setEditValue(input.toLowerCase());
+              setTimeout(() => {
+                setLocalSettings((prev) => ({
+                  ...prev,
+                  [editingKey]: input.toLowerCase()
+                }));
+                setEditingKey(null);
+                setEditValue("");
+              }, 0);
+            }
+            return;
+          }
+          setEditValue((prev) => prev + input);
+        }
+      }
+      return;
+    }
+    if (key.tab) {
+      onSave(localSettings);
+      onTab(key.shift);
+      return;
+    }
+    if (key.escape) {
+      onSave(localSettings);
+      onClose();
+      return;
+    }
+    if (key.return) {
+      startEditing();
+      return;
+    }
+    if (key.upArrow) {
+      setSelectedIndex(
+        (prev) => prev <= 0 ? totalItems - 1 : prev - 1
+      );
+      return;
+    }
+    if (key.downArrow) {
+      setSelectedIndex(
+        (prev) => prev >= totalItems - 1 ? 0 : prev + 1
+      );
+      return;
+    }
+  });
+  const formatValue = (field, value) => {
+    if (field.type === "toggle") {
+      return value ? "Yes" : "No";
+    }
+    const str = String(value);
+    if (field.type === "text" && str.length > 35) {
+      return str.slice(0, 32) + "...";
+    }
+    if (field.type === "path" && str.length > 35) {
+      return str.slice(0, 32) + "...";
+    }
+    if (field.type === "key") {
+      return `Ctrl+${str.toUpperCase()}`;
+    }
+    return str;
+  };
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { flexDirection: "column", children: [
+    tabBar,
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { dimColor: true, children: [
+      "  ",
+      "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
+    ] }) }),
+    visibleFields.map((field, idx) => {
+      const isSelected = idx === selectedIndex;
+      const isFieldEditing = editingKey === field.key;
+      const value = localSettings[field.key];
+      const displayValue = formatValue(field, value);
+      const useTextInputForField = !["number", "key", "toggle"].includes(field.type);
+      return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { flexDirection: "row", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isSelected ? localSettings.selectedColor : void 0, bold: isSelected, children: [
+          isSelected ? "> " : "  ",
+          field.label.padEnd(20)
+        ] }),
+        isFieldEditing && useTextInputForField ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+          build_default2,
+          {
+            value: editValue,
+            onChange: setEditValue,
+            onSubmit: commitEdit,
+            focus: true
+          }
+        ) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+            Text,
+            {
+              color: isFieldEditing ? localSettings.selectedColor : isSelected ? localSettings.selectedColor : "gray",
+              children: isFieldEditing ? editValue : displayValue
+            }
+          ),
+          isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: localSettings.selectedColor, children: "|" })
+        ] }),
+        field.type === "color" && !isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { children: "  " }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { backgroundColor: String(value), children: "    " })
+        ] })
+      ] }, field.key);
+    }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isOnClearHistory ? localSettings.selectedColor : "gray", bold: isOnClearHistory, children: [
+        isOnClearHistory ? "> " : "  ",
+        "Clear history..."
+      ] }),
+      historyCleared && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: "green", children: [
+        " ",
+        "\u2713"
+      ] })
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isOnEditConfig ? localSettings.selectedColor : "gray", bold: isOnEditConfig, children: [
+      isOnEditConfig ? "> " : "  ",
+      "Edit config file..."
+    ] }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { dimColor: true, children: [
+      "  ",
+      "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
+    ] }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { dimColor: true, children: [
+      "  ",
+      isOnClearHistory ? "Remove all recent projects from history" : isOnEditConfig ? "Open settings.json in default editor" : currentField?.description
+    ] }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { dimColor: true, children: isEditing ? currentField?.type === "number" ? "  type or \u2190\u2192\u2191\u2193 adjust \u2022 enter save \u2022 esc cancel" : "  \u2190\u2192 cursor \u2022 enter save \u2022 esc cancel" : currentField?.type === "toggle" ? "  tab/shift+tab \u2022 \u2191\u2193 navigate \u2022 enter toggle \u2022 esc close" : "  tab/shift+tab \u2022 \u2191\u2193 navigate \u2022 enter edit \u2022 esc close" }) })
+  ] });
+}
+
+// src/components/ShortcutsEditor.tsx
+var import_react25 = __toESM(require_react(), 1);
+
 // src/shortcuts.ts
 import { existsSync as existsSync4, mkdirSync as mkdirSync3, readFileSync as readFileSync4, writeFileSync as writeFileSync3 } from "fs";
 import { readFile as readFile3, mkdir as mkdir3, access as access3 } from "fs/promises";
-import { join as join3 } from "path";
-import { homedir as homedir3 } from "os";
+import { join as join4 } from "path";
+import { homedir as homedir4 } from "os";
 import { randomUUID } from "crypto";
-var CONFIG_DIR3 = join3(homedir3(), ".dash-cli");
-var SHORTCUTS_FILE = join3(CONFIG_DIR3, "shortcuts.json");
+var CONFIG_DIR3 = join4(homedir4(), ".dash-cli");
+var SHORTCUTS_FILE = join4(CONFIG_DIR3, "shortcuts.json");
 function ensureConfigDir3() {
   if (!existsSync4(CONFIG_DIR3)) {
     mkdirSync3(CONFIG_DIR3, { recursive: true });
@@ -54966,287 +55226,7 @@ async function getShortcutByTriggerAsync(trigger) {
   });
 }
 
-// src/components/Settings.tsx
-var import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
-var CONFIG_FILE = join4(homedir4(), ".dash-cli", "settings.json");
-function SettingsScreen({ settings, onSave, onClearShortcuts, onClearHistory, onTab, onClose, tabBar }) {
-  const [selectedIndex, setSelectedIndex] = (0, import_react24.useState)(0);
-  const [editingKey, setEditingKey] = (0, import_react24.useState)(null);
-  const [editValue, setEditValue] = (0, import_react24.useState)("");
-  const [localSettings, setLocalSettings] = (0, import_react24.useState)({ ...settings });
-  const visibleFields = SETTING_FIELDS.filter(
-    (field) => !field.showIf || field.showIf(localSettings)
-  );
-  const totalItems = visibleFields.length + 3;
-  const clearShortcutsIndex = visibleFields.length;
-  const clearHistoryIndex = visibleFields.length + 1;
-  const editConfigIndex = visibleFields.length + 2;
-  const isOnClearShortcuts = selectedIndex === clearShortcutsIndex;
-  const isOnClearHistory = selectedIndex === clearHistoryIndex;
-  const isOnEditConfig = selectedIndex === editConfigIndex;
-  const isOnActionItem = isOnClearShortcuts || isOnClearHistory || isOnEditConfig;
-  const currentField = isOnActionItem ? null : visibleFields[selectedIndex];
-  const isEditing = editingKey !== null;
-  const [shortcutsCleared, setShortcutsCleared] = (0, import_react24.useState)(false);
-  const [historyCleared, setHistoryCleared] = (0, import_react24.useState)(false);
-  const openConfigFile = async () => {
-    await open_default(CONFIG_FILE);
-  };
-  const handleClearShortcuts = () => {
-    clearShortcuts();
-    onClearShortcuts();
-    setShortcutsCleared(true);
-  };
-  const handleClearHistory = () => {
-    clearHistory();
-    onClearHistory();
-    setHistoryCleared(true);
-  };
-  const startEditing = () => {
-    if (isOnClearShortcuts) {
-      handleClearShortcuts();
-      return;
-    }
-    if (isOnClearHistory) {
-      handleClearHistory();
-      return;
-    }
-    if (isOnEditConfig) {
-      openConfigFile();
-      return;
-    }
-    const field = visibleFields[selectedIndex];
-    const value = localSettings[field.key];
-    if (field.type === "toggle") {
-      setLocalSettings((prev) => ({
-        ...prev,
-        [field.key]: !prev[field.key]
-      }));
-      return;
-    }
-    setEditingKey(field.key);
-    setEditValue(String(value));
-  };
-  const isValidShortcutKey = (key) => {
-    return /^[a-zA-Z0-9]$/.test(key);
-  };
-  const commitEdit = () => {
-    if (!editingKey) return;
-    const field = SETTING_FIELDS.find((f) => f.key === editingKey);
-    if (!field) return;
-    let newValue = editValue;
-    if (field.type === "number") {
-      const num = parseInt(editValue, 10);
-      if (!isNaN(num)) {
-        const min = field.min ?? 1;
-        const max = field.max ?? 100;
-        newValue = Math.max(min, Math.min(max, num));
-      } else {
-        newValue = localSettings[editingKey];
-      }
-    } else if (field.type === "key") {
-      const key = editValue.toLowerCase();
-      if (isValidShortcutKey(key)) {
-        newValue = key;
-      } else {
-        newValue = localSettings[editingKey];
-      }
-    }
-    setLocalSettings((prev) => ({
-      ...prev,
-      [editingKey]: newValue
-    }));
-    setEditingKey(null);
-    setEditValue("");
-  };
-  const cancelEdit = () => {
-    setEditingKey(null);
-    setEditValue("");
-  };
-  const adjustNumber = (delta) => {
-    if (!editingKey) return;
-    const field = SETTING_FIELDS.find((f) => f.key === editingKey);
-    if (field?.type !== "number") return;
-    const current = parseInt(editValue, 10) || 0;
-    const min = field.min ?? 1;
-    const max = field.max ?? 100;
-    const newValue = Math.max(min, Math.min(max, current + delta));
-    setEditValue(String(newValue));
-  };
-  const usesTextInput = currentField && !["number", "key"].includes(currentField.type);
-  use_input_default((input, key) => {
-    if (isEditing) {
-      if (usesTextInput) {
-        if (key.escape) {
-          cancelEdit();
-        }
-        return;
-      }
-      if (key.escape) {
-        cancelEdit();
-        return;
-      }
-      if (key.return) {
-        commitEdit();
-        return;
-      }
-      if (currentField?.type === "number") {
-        if (key.upArrow || key.rightArrow) {
-          adjustNumber(1);
-          return;
-        }
-        if (key.downArrow || key.leftArrow) {
-          adjustNumber(-1);
-          return;
-        }
-      }
-      if (key.backspace || key.delete) {
-        setEditValue((prev) => prev.slice(0, -1));
-        return;
-      }
-      if (input && input.length === 1 && !key.ctrl && !key.meta) {
-        if (input.charCodeAt(0) >= 32) {
-          if (currentField?.type === "key") {
-            if (isValidShortcutKey(input)) {
-              setEditValue(input.toLowerCase());
-              setTimeout(() => {
-                setLocalSettings((prev) => ({
-                  ...prev,
-                  [editingKey]: input.toLowerCase()
-                }));
-                setEditingKey(null);
-                setEditValue("");
-              }, 0);
-            }
-            return;
-          }
-          setEditValue((prev) => prev + input);
-        }
-      }
-      return;
-    }
-    if (key.tab) {
-      onSave(localSettings);
-      onTab(key.shift);
-      return;
-    }
-    if (key.escape) {
-      onSave(localSettings);
-      onClose();
-      return;
-    }
-    if (key.return) {
-      startEditing();
-      return;
-    }
-    if (key.upArrow) {
-      setSelectedIndex(
-        (prev) => prev <= 0 ? totalItems - 1 : prev - 1
-      );
-      return;
-    }
-    if (key.downArrow) {
-      setSelectedIndex(
-        (prev) => prev >= totalItems - 1 ? 0 : prev + 1
-      );
-      return;
-    }
-  });
-  const formatValue = (field, value) => {
-    if (field.type === "toggle") {
-      return value ? "Yes" : "No";
-    }
-    const str = String(value);
-    if (field.type === "text" && str.length > 35) {
-      return str.slice(0, 32) + "...";
-    }
-    if (field.type === "path" && str.length > 35) {
-      return str.slice(0, 32) + "...";
-    }
-    if (field.type === "key") {
-      return `Ctrl+${str.toUpperCase()}`;
-    }
-    return str;
-  };
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { flexDirection: "column", children: [
-    tabBar,
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { dimColor: true, children: [
-      "  ",
-      "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
-    ] }) }),
-    visibleFields.map((field, idx) => {
-      const isSelected = idx === selectedIndex;
-      const isFieldEditing = editingKey === field.key;
-      const value = localSettings[field.key];
-      const displayValue = formatValue(field, value);
-      const useTextInputForField = !["number", "key", "toggle"].includes(field.type);
-      return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { flexDirection: "row", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isSelected ? localSettings.selectedColor : void 0, bold: isSelected, children: [
-          isSelected ? "> " : "  ",
-          field.label.padEnd(20)
-        ] }),
-        isFieldEditing && useTextInputForField ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-          build_default2,
-          {
-            value: editValue,
-            onChange: setEditValue,
-            onSubmit: commitEdit,
-            focus: true
-          }
-        ) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-            Text,
-            {
-              color: isFieldEditing ? localSettings.selectedColor : isSelected ? localSettings.selectedColor : "gray",
-              children: isFieldEditing ? editValue : displayValue
-            }
-          ),
-          isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: localSettings.selectedColor, children: "|" })
-        ] }),
-        field.type === "color" && !isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { children: "  " }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { backgroundColor: String(value), children: "    " })
-        ] })
-      ] }, field.key);
-    }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isOnClearShortcuts ? localSettings.selectedColor : "gray", bold: isOnClearShortcuts, children: [
-        isOnClearShortcuts ? "> " : "  ",
-        "Clear shortcuts..."
-      ] }),
-      shortcutsCleared && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: "green", children: [
-        " ",
-        "\u2713"
-      ] })
-    ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isOnClearHistory ? localSettings.selectedColor : "gray", bold: isOnClearHistory, children: [
-        isOnClearHistory ? "> " : "  ",
-        "Clear history..."
-      ] }),
-      historyCleared && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: "green", children: [
-        " ",
-        "\u2713"
-      ] })
-    ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isOnEditConfig ? localSettings.selectedColor : "gray", bold: isOnEditConfig, children: [
-      isOnEditConfig ? "> " : "  ",
-      "Edit config file..."
-    ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { dimColor: true, children: [
-      "  ",
-      "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
-    ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { dimColor: true, children: [
-      "  ",
-      isOnClearShortcuts ? "Remove all shortcuts" : isOnClearHistory ? "Remove all recent projects from history" : isOnEditConfig ? "Open settings.json in default editor" : currentField?.description
-    ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { dimColor: true, children: isEditing ? currentField?.type === "number" ? "  type or \u2190\u2192\u2191\u2193 adjust \u2022 enter save \u2022 esc cancel" : "  \u2190\u2192 cursor \u2022 enter save \u2022 esc cancel" : currentField?.type === "toggle" ? "  tab/shift+tab \u2022 \u2191\u2193 navigate \u2022 enter toggle \u2022 esc close" : "  tab/shift+tab \u2022 \u2191\u2193 navigate \u2022 enter edit \u2022 esc close" }) })
-  ] });
-}
-
 // src/components/ShortcutsEditor.tsx
-var import_react25 = __toESM(require_react(), 1);
 var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
 function ShortcutsEditor({
   shortcuts,
@@ -55260,9 +55240,25 @@ function ShortcutsEditor({
 }) {
   const [selectedIndex, setSelectedIndex] = (0, import_react25.useState)(0);
   const [confirmDelete, setConfirmDelete] = (0, import_react25.useState)(null);
-  const totalItems = shortcuts.length + 1;
-  const isOnAddNew = selectedIndex === shortcuts.length;
+  const [confirmClearAll, setConfirmClearAll] = (0, import_react25.useState)(false);
+  const hasClearAll = shortcuts.length > 0;
+  const totalItems = shortcuts.length + 1 + (hasClearAll ? 1 : 0);
+  const addNewIndex = shortcuts.length;
+  const clearAllIndex = shortcuts.length + 1;
+  const isOnAddNew = selectedIndex === addNewIndex;
+  const isOnClearAll = hasClearAll && selectedIndex === clearAllIndex;
   use_input_default((input, key) => {
+    if (confirmClearAll) {
+      if (input === "y" || input === "Y") {
+        clearShortcuts();
+        onUpdate([]);
+        setConfirmClearAll(false);
+        setSelectedIndex(0);
+      } else {
+        setConfirmClearAll(false);
+      }
+      return;
+    }
     if (confirmDelete) {
       if (input === "y" || input === "Y") {
         removeShortcut(confirmDelete);
@@ -55271,7 +55267,7 @@ function ShortcutsEditor({
         if (selectedIndex >= shortcuts.length - 1) {
           setSelectedIndex(Math.max(0, shortcuts.length - 2));
         }
-      } else if (input === "n" || input === "N" || key.escape) {
+      } else {
         setConfirmDelete(null);
       }
       return;
@@ -55285,7 +55281,9 @@ function ShortcutsEditor({
       return;
     }
     if (key.return) {
-      if (isOnAddNew) {
+      if (isOnClearAll) {
+        setConfirmClearAll(true);
+      } else if (isOnAddNew) {
         onAddShortcut();
       } else {
         onEditShortcut(shortcuts[selectedIndex].id);
@@ -55293,7 +55291,7 @@ function ShortcutsEditor({
       return;
     }
     if (key.ctrl && input === "d") {
-      if (!isOnAddNew && shortcuts.length > 0) {
+      if (!isOnAddNew && !isOnClearAll && shortcuts.length > 0) {
         setConfirmDelete(shortcuts[selectedIndex].id);
       }
       return;
@@ -55341,6 +55339,20 @@ function ShortcutsEditor({
         ]
       }
     ) }),
+    hasClearAll && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+        Text,
+        {
+          color: isOnClearAll ? selectedColor : "red",
+          bold: isOnClearAll,
+          children: [
+            isOnClearAll ? "> " : "  ",
+            "[Clear all]"
+          ]
+        }
+      ),
+      confirmClearAll && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: "red", children: " Clear all shortcuts? (y/n)" })
+    ] }),
     /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
     /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { dimColor: true, children: [
       "  ",
@@ -56404,7 +56416,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
       return { label, isActive };
     });
     return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { flexDirection: "column", marginTop: 1, marginBottom: 1, marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: tabs.map((tab2, idx) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_react27.default.Fragment, { children: [
-      tab2.isActive ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { backgroundColor: settings.selectedColor, color: "#333", children: tab2.label }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", children: tab2.label }),
+      tab2.isActive ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { backgroundColor: "#ccc", color: "#333", children: tab2.label }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", children: tab2.label }),
       idx < tabs.length - 1 && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { dimColor: true, children: "\u2502" })
     ] }, idx)) }) });
   };
@@ -56460,9 +56472,6 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
       {
         settings,
         onSave: handleSettingsSave,
-        onClearShortcuts: () => {
-          setShortcutEntries([]);
-        },
         onClearHistory: () => setRecentEntries([]),
         onTab: cycleTab,
         onClose: () => setCurrentTab(TAB_PROJECTS),
@@ -56482,7 +56491,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
       scrollOffset,
       " more"
     ] }) }),
-    visibleItems.length === 0 && searchTerm && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { color: "yellow", children: [
+    visibleItems.length === 0 && searchTerm && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { dimColor: true, children: [
       '  No matches for "',
       searchTerm,
       '"'
