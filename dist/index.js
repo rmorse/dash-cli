@@ -55181,7 +55181,7 @@ function SettingsScreen({ settings, onSave, onClearShortcuts, onClearHistory, on
       const displayValue = formatValue(field, value);
       const useTextInputForField = !["number", "key", "toggle"].includes(field.type);
       return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { flexDirection: "row", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isSelected ? "#FFD700" : void 0, bold: isSelected, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isSelected ? localSettings.selectedColor : void 0, bold: isSelected, children: [
           isSelected ? "> " : "  ",
           field.label.padEnd(20)
         ] }),
@@ -55197,11 +55197,11 @@ function SettingsScreen({ settings, onSave, onClearShortcuts, onClearHistory, on
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
             Text,
             {
-              color: isFieldEditing ? "#FFD700" : isSelected ? "#FFD700" : "gray",
+              color: isFieldEditing ? localSettings.selectedColor : isSelected ? localSettings.selectedColor : "gray",
               children: isFieldEditing ? editValue : displayValue
             }
           ),
-          isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: "#FFD700", children: "|" })
+          isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: localSettings.selectedColor, children: "|" })
         ] }),
         field.type === "color" && !isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { children: "  " }),
@@ -55210,7 +55210,7 @@ function SettingsScreen({ settings, onSave, onClearShortcuts, onClearHistory, on
       ] }, field.key);
     }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isOnClearShortcuts ? "#FFD700" : "gray", bold: isOnClearShortcuts, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isOnClearShortcuts ? localSettings.selectedColor : "gray", bold: isOnClearShortcuts, children: [
         isOnClearShortcuts ? "> " : "  ",
         "Clear shortcuts..."
       ] }),
@@ -55220,7 +55220,7 @@ function SettingsScreen({ settings, onSave, onClearShortcuts, onClearHistory, on
       ] })
     ] }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isOnClearHistory ? "#FFD700" : "gray", bold: isOnClearHistory, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isOnClearHistory ? localSettings.selectedColor : "gray", bold: isOnClearHistory, children: [
         isOnClearHistory ? "> " : "  ",
         "Clear history..."
       ] }),
@@ -55229,7 +55229,7 @@ function SettingsScreen({ settings, onSave, onClearShortcuts, onClearHistory, on
         "\u2713"
       ] })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isOnEditConfig ? "#FFD700" : "gray", bold: isOnEditConfig, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isOnEditConfig ? localSettings.selectedColor : "gray", bold: isOnEditConfig, children: [
       isOnEditConfig ? "> " : "  ",
       "Edit config file..."
     ] }) }),
@@ -55255,6 +55255,7 @@ function ShortcutsEditor({
   onAddShortcut,
   onTab,
   onClose,
+  selectedColor,
   tabBar
 }) {
   const [selectedIndex, setSelectedIndex] = (0, import_react25.useState)(0);
@@ -55317,7 +55318,7 @@ function ShortcutsEditor({
       const isSelected = idx === selectedIndex;
       const isDeleting = confirmDelete === sc.id;
       return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isSelected ? "#FFD700" : void 0, bold: isSelected, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isSelected ? selectedColor : void 0, bold: isSelected, children: [
           isSelected ? "> " : "  ",
           sc.name
         ] }),
@@ -55332,7 +55333,7 @@ function ShortcutsEditor({
     /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
       Text,
       {
-        color: isOnAddNew ? "#FFD700" : "cyan",
+        color: isOnAddNew ? selectedColor : "cyan",
         bold: isOnAddNew,
         children: [
           isOnAddNew ? "> " : "  ",
@@ -55359,6 +55360,7 @@ function ShortcutEdit({
   onSave,
   onBack,
   onTab,
+  selectedColor,
   tabBar
 }) {
   const [name, setName] = (0, import_react26.useState)(shortcut.name);
@@ -55532,7 +55534,7 @@ function ShortcutEdit({
       /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
         Text,
         {
-          color: isSelected ? "#FFD700" : void 0,
+          color: isSelected ? "selectedColor" : void 0,
           bold: isSelected,
           children: [
             isSelected ? "> " : "  ",
@@ -55550,7 +55552,7 @@ function ShortcutEdit({
           onSubmit: commitEdit,
           focus: true
         }
-      ) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: isSelected ? "#FFD700" : value ? "white" : "gray", children: value || "(empty)" })
+      ) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: isSelected ? "selectedColor" : value ? "white" : "gray", children: value || "(empty)" })
     ] }, field.key);
   };
   return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { flexDirection: "column", children: [
@@ -55562,7 +55564,7 @@ function ShortcutEdit({
       /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
         Text,
         {
-          color: selectedIndex === 2 ? "#FFD700" : void 0,
+          color: selectedIndex === 2 ? "selectedColor" : void 0,
           bold: selectedIndex === 2,
           children: [
             selectedIndex === 2 ? "> " : "  ",
@@ -55571,7 +55573,7 @@ function ShortcutEdit({
         }
       ),
       /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { children: " " }),
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: selectedIndex === 2 ? "#FFD700" : "white", children: caseSensitive ? "Yes" : "No" })
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: selectedIndex === 2 ? "selectedColor" : "white", children: caseSensitive ? "Yes" : "No" })
     ] }),
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Commands \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
     commands.map((cmd, idx) => {
@@ -55583,7 +55585,7 @@ function ShortcutEdit({
         /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
           Text,
           {
-            color: isSelected ? "#FFD700" : void 0,
+            color: isSelected ? "selectedColor" : void 0,
             bold: isSelected,
             children: isSelected ? "> " : "  "
           }
@@ -55596,13 +55598,13 @@ function ShortcutEdit({
             onSubmit: commitEdit,
             focus: true
           }
-        ) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: isSelected ? "#FFD700" : cmd ? "white" : "gray", children: cmd || "(empty)" })
+        ) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: isSelected ? "selectedColor" : cmd ? "white" : "gray", children: cmd || "(empty)" })
       ] }, `cmd-${idx}`);
     }),
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
       Text,
       {
-        color: selectedIndex === fields.length - 1 ? "#FFD700" : "cyan",
+        color: selectedIndex === fields.length - 1 ? "selectedColor" : "cyan",
         bold: selectedIndex === fields.length - 1,
         children: [
           selectedIndex === fields.length - 1 ? "> " : "  ",
@@ -56401,9 +56403,8 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
       const isActive = idx === currentTab;
       return { label, isActive };
     });
-    const tabsContent = tabs.map((t) => t.label).join(" \u2502 ");
     return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { flexDirection: "column", marginTop: 1, marginBottom: 1, marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: tabs.map((tab2, idx) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_react27.default.Fragment, { children: [
-      tab2.isActive ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { backgroundColor: "#FFD700", color: "#333", children: tab2.label }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", children: tab2.label }),
+      tab2.isActive ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { backgroundColor: settings.selectedColor, color: "#333", children: tab2.label }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", children: tab2.label }),
       idx < tabs.length - 1 && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { dimColor: true, children: "\u2502" })
     ] }, idx)) }) });
   };
@@ -56423,6 +56424,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
             },
             onBack: () => setEditingShortcutId(null),
             onTab: cycleTab,
+            selectedColor: settings.selectedColor,
             tabBar: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(TabBar, {})
           }
         );
@@ -56447,6 +56449,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
         },
         onTab: cycleTab,
         onClose: () => setCurrentTab(TAB_PROJECTS),
+        selectedColor: settings.selectedColor,
         tabBar: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(TabBar, {})
       }
     );

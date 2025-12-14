@@ -10,6 +10,7 @@ interface ShortcutsEditorProps {
   onAddShortcut: () => void;
   onTab: (reverse?: boolean) => void;
   onClose: () => void;
+  selectedColor: string;
   tabBar: React.ReactNode;
 }
 
@@ -20,6 +21,7 @@ export function ShortcutsEditor({
   onAddShortcut,
   onTab,
   onClose,
+  selectedColor,
   tabBar,
 }: ShortcutsEditorProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -113,7 +115,7 @@ export function ShortcutsEditor({
 
         return (
           <Box key={sc.id}>
-            <Text color={isSelected ? "#FFD700" : undefined} bold={isSelected}>
+            <Text color={isSelected ? selectedColor : undefined} bold={isSelected}>
               {isSelected ? "> " : "  "}
               {sc.name}
             </Text>
@@ -127,7 +129,7 @@ export function ShortcutsEditor({
 
       <Box>
         <Text
-          color={isOnAddNew ? "#FFD700" : "cyan"}
+          color={isOnAddNew ? selectedColor : "cyan"}
           bold={isOnAddNew}
         >
           {isOnAddNew ? "> " : "  "}[Add new shortcut]

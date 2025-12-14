@@ -10,6 +10,7 @@ interface ShortcutEditProps {
   onSave: (updated: Shortcut) => void;
   onBack: () => void;
   onTab: (reverse?: boolean) => void;
+  selectedColor: string;
   tabBar: React.ReactNode;
 }
 
@@ -27,6 +28,7 @@ export function ShortcutEdit({
   onSave,
   onBack,
   onTab,
+  selectedColor,
   tabBar,
 }: ShortcutEditProps) {
   // Local state for editing
@@ -231,7 +233,7 @@ export function ShortcutEdit({
     return (
       <Box key={field.key}>
         <Text
-          color={isSelected ? "#FFD700" : undefined}
+          color={isSelected ? "selectedColor" : undefined}
           bold={isSelected}
         >
           {isSelected ? "> " : "  "}
@@ -246,7 +248,7 @@ export function ShortcutEdit({
             focus={true}
           />
         ) : (
-          <Text color={isSelected ? "#FFD700" : value ? "white" : "gray"}>
+          <Text color={isSelected ? "selectedColor" : value ? "white" : "gray"}>
             {value || "(empty)"}
           </Text>
         )}
@@ -274,14 +276,14 @@ export function ShortcutEdit({
       {/* Case Sensitive toggle */}
       <Box>
         <Text
-          color={selectedIndex === 2 ? "#FFD700" : undefined}
+          color={selectedIndex === 2 ? "selectedColor" : undefined}
           bold={selectedIndex === 2}
         >
           {selectedIndex === 2 ? "> " : "  "}
           Case Sensitive:
         </Text>
         <Text> </Text>
-        <Text color={selectedIndex === 2 ? "#FFD700" : "white"}>
+        <Text color={selectedIndex === 2 ? "selectedColor" : "white"}>
           {caseSensitive ? "Yes" : "No"}
         </Text>
       </Box>
@@ -302,7 +304,7 @@ export function ShortcutEdit({
         return (
           <Box key={`cmd-${idx}`}>
             <Text
-              color={isSelected ? "#FFD700" : undefined}
+              color={isSelected ? "selectedColor" : undefined}
               bold={isSelected}
             >
               {isSelected ? "> " : "  "}
@@ -315,7 +317,7 @@ export function ShortcutEdit({
                 focus={true}
               />
             ) : (
-              <Text color={isSelected ? "#FFD700" : cmd ? "white" : "gray"}>
+              <Text color={isSelected ? "selectedColor" : cmd ? "white" : "gray"}>
                 {cmd || "(empty)"}
               </Text>
             )}
@@ -326,7 +328,7 @@ export function ShortcutEdit({
       {/* Add line action */}
       <Box>
         <Text
-          color={selectedIndex === fields.length - 1 ? "#FFD700" : "cyan"}
+          color={selectedIndex === fields.length - 1 ? "selectedColor" : "cyan"}
           bold={selectedIndex === fields.length - 1}
         >
           {selectedIndex === fields.length - 1 ? "> " : "  "}[Add line]

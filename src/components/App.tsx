@@ -786,15 +786,12 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
   const hasMoreAbove = clampedScrollOffset > 0;
   const hasMoreBelow = clampedScrollOffset + settings.visibleRows < items.length;
 
-  // TabBar component with border and inverted active tab
+  // TabBar component with inverted active tab
   const TabBar = () => {
     const tabs = TAB_LABELS.map((label, idx) => {
       const isActive = idx === currentTab;
       return { label, isActive };
     });
-
-    // Calculate total width for border
-    const tabsContent = tabs.map(t => t.label).join(" │ ");
 
     return (
       <Box flexDirection="column" marginTop={1} marginBottom={1} marginLeft={2}>
@@ -802,7 +799,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
           {tabs.map((tab, idx) => (
             <React.Fragment key={idx}>
               {tab.isActive ? (
-                <Text backgroundColor="#FFD700" color="#333">
+                <Text backgroundColor={settings.selectedColor} color="#333">
                   {tab.label}
                 </Text>
               ) : (
@@ -833,6 +830,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
             }}
             onBack={() => setEditingShortcutId(null)}
             onTab={cycleTab}
+            selectedColor={settings.selectedColor}
             tabBar={<TabBar />}
           />
         );
@@ -859,6 +857,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
         }}
         onTab={cycleTab}
         onClose={() => setCurrentTab(TAB_PROJECTS)}
+        selectedColor={settings.selectedColor}
         tabBar={<TabBar />}
       />
     );

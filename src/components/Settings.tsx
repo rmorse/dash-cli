@@ -288,7 +288,7 @@ export function SettingsScreen({ settings, onSave, onClearShortcuts, onClearHist
 
         return (
           <Box key={field.key} flexDirection="row">
-            <Text color={isSelected ? "#FFD700" : undefined} bold={isSelected}>
+            <Text color={isSelected ? localSettings.selectedColor : undefined} bold={isSelected}>
               {isSelected ? "> " : "  "}
               {field.label.padEnd(20)}
             </Text>
@@ -302,11 +302,11 @@ export function SettingsScreen({ settings, onSave, onClearShortcuts, onClearHist
             ) : (
               <>
                 <Text
-                  color={isFieldEditing ? "#FFD700" : isSelected ? "#FFD700" : "gray"}
+                  color={isFieldEditing ? localSettings.selectedColor : isSelected ? localSettings.selectedColor : "gray"}
                 >
                   {isFieldEditing ? editValue : displayValue}
                 </Text>
-                {isFieldEditing && <Text color="#FFD700">|</Text>}
+                {isFieldEditing && <Text color={localSettings.selectedColor}>|</Text>}
               </>
             )}
             {field.type === "color" && !isFieldEditing && (
@@ -321,7 +321,7 @@ export function SettingsScreen({ settings, onSave, onClearShortcuts, onClearHist
 
       {/* Clear shortcuts option */}
       <Box>
-        <Text color={isOnClearShortcuts ? "#FFD700" : "gray"} bold={isOnClearShortcuts}>
+        <Text color={isOnClearShortcuts ? localSettings.selectedColor : "gray"} bold={isOnClearShortcuts}>
           {isOnClearShortcuts ? "> " : "  "}
           {"Clear shortcuts..."}
         </Text>
@@ -330,7 +330,7 @@ export function SettingsScreen({ settings, onSave, onClearShortcuts, onClearHist
 
       {/* Clear history option */}
       <Box>
-        <Text color={isOnClearHistory ? "#FFD700" : "gray"} bold={isOnClearHistory}>
+        <Text color={isOnClearHistory ? localSettings.selectedColor : "gray"} bold={isOnClearHistory}>
           {isOnClearHistory ? "> " : "  "}
           {"Clear history..."}
         </Text>
@@ -339,7 +339,7 @@ export function SettingsScreen({ settings, onSave, onClearShortcuts, onClearHist
 
       {/* Edit config file option */}
       <Box>
-        <Text color={isOnEditConfig ? "#FFD700" : "gray"} bold={isOnEditConfig}>
+        <Text color={isOnEditConfig ? localSettings.selectedColor : "gray"} bold={isOnEditConfig}>
           {isOnEditConfig ? "> " : "  "}
           {"Edit config file..."}
         </Text>
