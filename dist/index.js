@@ -54524,9 +54524,9 @@ var DEFAULT_SETTINGS = {
   recentCount: 5,
   visibleRows: 12,
   selectedColor: "#FFD700",
-  favoriteColor: "#69FFBE",
+  shortcutColor: "#69FFBE",
   recentColor: "#6495ED",
-  favoriteKey: "f",
+  shortcutToggleKey: "t",
   refreshKey: "r"
 };
 var SETTING_FIELDS = [
@@ -54573,10 +54573,10 @@ var SETTING_FIELDS = [
     description: "Highlight color for selected item (hex)"
   },
   {
-    key: "favoriteColor",
-    label: "Favorite Color",
+    key: "shortcutColor",
+    label: "Shortcut Color",
     type: "color",
-    description: "Highlight color for favorite items (hex)"
+    description: "Highlight color for shortcut items (hex)"
   },
   {
     key: "recentColor",
@@ -54585,10 +54585,10 @@ var SETTING_FIELDS = [
     description: "Highlight color for recent items (hex)"
   },
   {
-    key: "favoriteKey",
-    label: "Favorite Shortcut",
+    key: "shortcutToggleKey",
+    label: "Shortcut Toggle Key",
     type: "key",
-    description: "Key for Ctrl+? to toggle favorite (letter or number)"
+    description: "Key for Ctrl+? to toggle shortcut (letter or number)"
   },
   {
     key: "refreshKey",
@@ -54727,70 +54727,70 @@ async function getRecentAsync(limit = 5) {
   return data.recent.sort((a, b) => b.lastUsed - a.lastUsed).slice(0, limit);
 }
 
-// src/favorites.ts
+// src/shortcuts.ts
 import { existsSync as existsSync4, mkdirSync as mkdirSync3, readFileSync as readFileSync4, writeFileSync as writeFileSync3 } from "fs";
 import { readFile as readFile3, mkdir as mkdir3, access as access3 } from "fs/promises";
 import { join as join3 } from "path";
 import { homedir as homedir3 } from "os";
 import { randomUUID } from "crypto";
 var CONFIG_DIR3 = join3(homedir3(), ".dash-cli");
-var FAVORITES_FILE = join3(CONFIG_DIR3, "favorites.json");
+var SHORTCUTS_FILE = join3(CONFIG_DIR3, "shortcuts.json");
 function ensureConfigDir3() {
   if (!existsSync4(CONFIG_DIR3)) {
     mkdirSync3(CONFIG_DIR3, { recursive: true });
   }
 }
-function loadFavoritesData() {
+function loadShortcutsData() {
   ensureConfigDir3();
-  if (!existsSync4(FAVORITES_FILE)) {
-    return { favorites: [] };
+  if (!existsSync4(SHORTCUTS_FILE)) {
+    return { shortcuts: [] };
   }
   try {
-    const content = readFileSync4(FAVORITES_FILE, "utf-8");
+    const content = readFileSync4(SHORTCUTS_FILE, "utf-8");
     return JSON.parse(content);
   } catch {
-    return { favorites: [] };
+    return { shortcuts: [] };
   }
 }
-function saveFavoritesData(data) {
+function saveShortcutsData(data) {
   ensureConfigDir3();
-  writeFileSync3(FAVORITES_FILE, JSON.stringify(data, null, 2));
+  writeFileSync3(SHORTCUTS_FILE, JSON.stringify(data, null, 2));
 }
-function shortcutsCollide(shortcut1, caseSensitive1, shortcut2, caseSensitive2) {
+function triggersCollide(trigger1, caseSensitive1, trigger2, caseSensitive2) {
   if (caseSensitive1 && caseSensitive2) {
-    return shortcut1 === shortcut2;
+    return trigger1 === trigger2;
   }
-  return shortcut1.toLowerCase() === shortcut2.toLowerCase();
+  return trigger1.toLowerCase() === trigger2.toLowerCase();
 }
-function validateShortcutFormat(shortcut) {
-  if (!shortcut || shortcut.trim() === "") {
-    return { valid: false, error: "Shortcut cannot be empty" };
+function validateTriggerFormat(trigger) {
+  if (!trigger || trigger.trim() === "") {
+    return { valid: false, error: "Trigger cannot be empty" };
   }
-  if (shortcut.includes(" ")) {
-    return { valid: false, error: "Shortcut cannot contain spaces" };
+  if (trigger.includes(" ")) {
+    return { valid: false, error: "Trigger cannot contain spaces" };
   }
   return { valid: true };
 }
-function validateShortcut(shortcut, caseSensitive, excludeId) {
-  const formatResult = validateShortcutFormat(shortcut);
+function validateTrigger(trigger, caseSensitive, excludeId) {
+  const formatResult = validateTriggerFormat(trigger);
   if (!formatResult.valid) {
     return formatResult;
   }
-  const data = loadFavoritesData();
-  for (const favorite of data.favorites) {
-    if (excludeId && favorite.id === excludeId) {
+  const data = loadShortcutsData();
+  for (const shortcut of data.shortcuts) {
+    if (excludeId && shortcut.id === excludeId) {
       continue;
     }
-    if (shortcutsCollide(
-      shortcut,
+    if (triggersCollide(
+      trigger,
       caseSensitive,
-      favorite.shortcut,
-      favorite.caseSensitive
+      shortcut.trigger,
+      shortcut.caseSensitive
     )) {
-      const sensitivity = favorite.caseSensitive ? "case-sensitive" : "case-insensitive";
+      const sensitivity = shortcut.caseSensitive ? "case-sensitive" : "case-insensitive";
       return {
         valid: false,
-        error: `Shortcut "${shortcut}" collides with "${favorite.shortcut}" (${sensitivity}) on "${favorite.name}"`
+        error: `Trigger "${trigger}" collides with "${shortcut.trigger}" (${sensitivity}) on "${shortcut.name}"`
       };
     }
   }
@@ -54812,17 +54812,17 @@ function validateCommand(command) {
   }
   return { valid: true };
 }
-function validateFavoriteInput(input, excludeId) {
+function validateShortcutInput(input, excludeId) {
   if (!input.name || input.name.trim() === "") {
     return { valid: false, error: "Name cannot be empty" };
   }
-  const shortcutResult = validateShortcut(
-    input.shortcut,
+  const triggerResult = validateTrigger(
+    input.trigger,
     input.caseSensitive,
     excludeId
   );
-  if (!shortcutResult.valid) {
-    return shortcutResult;
+  if (!triggerResult.valid) {
+    return triggerResult;
   }
   const commandResult = validateCommand(input.command);
   if (!commandResult.valid) {
@@ -54830,71 +54830,71 @@ function validateFavoriteInput(input, excludeId) {
   }
   return { valid: true };
 }
-function addFavorite(input) {
-  const validation = validateFavoriteInput(input);
+function addShortcut(input) {
+  const validation = validateShortcutInput(input);
   if (!validation.valid) {
     throw new Error(validation.error);
   }
-  const data = loadFavoritesData();
-  const newFavorite = {
+  const data = loadShortcutsData();
+  const newShortcut = {
     id: randomUUID(),
     name: input.name.trim(),
-    shortcut: input.shortcut,
+    trigger: input.trigger,
     caseSensitive: input.caseSensitive,
     command: input.command.filter((cmd) => cmd.trim() !== ""),
     createdAt: Date.now()
   };
-  data.favorites.push(newFavorite);
-  saveFavoritesData(data);
-  return newFavorite;
+  data.shortcuts.push(newShortcut);
+  saveShortcutsData(data);
+  return newShortcut;
 }
-function updateFavorite(id, updates) {
-  const data = loadFavoritesData();
-  const index = data.favorites.findIndex((f) => f.id === id);
+function updateShortcut(id, updates) {
+  const data = loadShortcutsData();
+  const index = data.shortcuts.findIndex((s) => s.id === id);
   if (index === -1) {
-    throw new Error(`Favorite with ID "${id}" not found`);
+    throw new Error(`Shortcut with ID "${id}" not found`);
   }
-  const existing = data.favorites[index];
+  const existing = data.shortcuts[index];
   const merged = {
     name: updates.name ?? existing.name,
-    shortcut: updates.shortcut ?? existing.shortcut,
+    trigger: updates.trigger ?? existing.trigger,
     caseSensitive: updates.caseSensitive ?? existing.caseSensitive,
     command: updates.command ?? existing.command
   };
-  const validation = validateFavoriteInput(merged, id);
+  const validation = validateShortcutInput(merged, id);
   if (!validation.valid) {
     throw new Error(validation.error);
   }
   const updated = {
     ...existing,
     name: merged.name.trim(),
-    shortcut: merged.shortcut,
+    trigger: merged.trigger,
     caseSensitive: merged.caseSensitive,
     command: merged.command.filter((cmd) => cmd.trim() !== "")
   };
-  data.favorites[index] = updated;
-  saveFavoritesData(data);
+  data.shortcuts[index] = updated;
+  saveShortcutsData(data);
   return updated;
 }
-function removeFavorite(id) {
-  const data = loadFavoritesData();
-  const initialLength = data.favorites.length;
-  data.favorites = data.favorites.filter((f) => f.id !== id);
-  if (data.favorites.length < initialLength) {
-    saveFavoritesData(data);
+function removeShortcut(id) {
+  const data = loadShortcutsData();
+  const initialLength = data.shortcuts.length;
+  data.shortcuts = data.shortcuts.filter((s) => s.id !== id);
+  if (data.shortcuts.length < initialLength) {
+    saveShortcutsData(data);
     return true;
   }
   return false;
 }
-function clearFavorites() {
-  saveFavoritesData({ favorites: [] });
+function clearShortcuts() {
+  saveShortcutsData({ shortcuts: [] });
 }
 function generateCommand(path2) {
   const escapedPath = path2.replace(/"/g, '\\"');
   return [`cd "${escapedPath}"`];
 }
-function generateUniqueShortcut(favorites) {
-  const existing = new Set(favorites.map((f) => f.shortcut.toLowerCase()));
+function generateUniqueTrigger(shortcuts) {
+  const existing = new Set(shortcuts.map((s) => s.trigger.toLowerCase()));
   let num = 1;
   while (existing.has(String(num))) {
     num++;
@@ -54914,30 +54914,30 @@ async function ensureConfigDirAsync3() {
     await mkdir3(CONFIG_DIR3, { recursive: true });
   }
 }
-async function loadFavoritesDataAsync() {
+async function loadShortcutsDataAsync() {
   await ensureConfigDirAsync3();
-  if (!await pathExists3(FAVORITES_FILE)) {
-    return { favorites: [] };
+  if (!await pathExists3(SHORTCUTS_FILE)) {
+    return { shortcuts: [] };
   }
   try {
-    const content = await readFile3(FAVORITES_FILE, "utf-8");
+    const content = await readFile3(SHORTCUTS_FILE, "utf-8");
     return JSON.parse(content);
   } catch {
-    return { favorites: [] };
+    return { shortcuts: [] };
   }
 }
-async function getFavoritesAsync() {
-  const data = await loadFavoritesDataAsync();
-  return data.favorites.sort((a, b) => a.createdAt - b.createdAt);
+async function getShortcutsAsync() {
+  const data = await loadShortcutsDataAsync();
+  return data.shortcuts.sort((a, b) => a.createdAt - b.createdAt);
 }
-async function getFavoriteByShortcutAsync(shortcut) {
-  const data = await loadFavoritesDataAsync();
-  const lowerShortcut = shortcut.toLowerCase();
-  return data.favorites.find((favorite) => {
-    if (favorite.caseSensitive) {
-      return favorite.shortcut === shortcut;
+async function getShortcutByTriggerAsync(trigger) {
+  const data = await loadShortcutsDataAsync();
+  const lowerTrigger = trigger.toLowerCase();
+  return data.shortcuts.find((shortcut) => {
+    if (shortcut.caseSensitive) {
+      return shortcut.trigger === trigger;
     } else {
-      return favorite.shortcut.toLowerCase() === lowerShortcut;
+      return shortcut.trigger.toLowerCase() === lowerTrigger;
     }
   });
 }
@@ -54962,31 +54962,31 @@ function Breadcrumb({ items }) {
 var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
 var CONFIG_FILE = join4(homedir4(), ".dash-cli", "settings.json");
 var TOTAL_ITEMS = SETTING_FIELDS.length + 4;
-var EDIT_FAVORITES_INDEX = SETTING_FIELDS.length;
-var CLEAR_FAVORITES_INDEX = SETTING_FIELDS.length + 1;
+var EDIT_SHORTCUTS_INDEX = SETTING_FIELDS.length;
+var CLEAR_SHORTCUTS_INDEX = SETTING_FIELDS.length + 1;
 var CLEAR_HISTORY_INDEX = SETTING_FIELDS.length + 2;
 var EDIT_CONFIG_INDEX = SETTING_FIELDS.length + 3;
-function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, onClearHistory, onEditFavorites, breadcrumbs }) {
+function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, onClearHistory, onEditShortcuts, breadcrumbs }) {
   const [selectedIndex, setSelectedIndex] = (0, import_react25.useState)(0);
   const [editingKey, setEditingKey] = (0, import_react25.useState)(null);
   const [editValue, setEditValue] = (0, import_react25.useState)("");
   const [localSettings, setLocalSettings] = (0, import_react25.useState)({ ...settings });
-  const isOnEditFavorites = selectedIndex === EDIT_FAVORITES_INDEX;
-  const isOnClearFavorites = selectedIndex === CLEAR_FAVORITES_INDEX;
+  const isOnEditShortcuts = selectedIndex === EDIT_SHORTCUTS_INDEX;
+  const isOnClearShortcuts = selectedIndex === CLEAR_SHORTCUTS_INDEX;
   const isOnClearHistory = selectedIndex === CLEAR_HISTORY_INDEX;
   const isOnEditConfig = selectedIndex === EDIT_CONFIG_INDEX;
-  const isOnActionItem = isOnEditFavorites || isOnClearFavorites || isOnClearHistory || isOnEditConfig;
+  const isOnActionItem = isOnEditShortcuts || isOnClearShortcuts || isOnClearHistory || isOnEditConfig;
   const currentField = isOnActionItem ? null : SETTING_FIELDS[selectedIndex];
   const isEditing = editingKey !== null;
-  const [favoritesCleared, setFavoritesCleared] = (0, import_react25.useState)(false);
+  const [shortcutsCleared, setShortcutsCleared] = (0, import_react25.useState)(false);
   const [historyCleared, setHistoryCleared] = (0, import_react25.useState)(false);
   const openConfigFile = async () => {
     await open_default(CONFIG_FILE);
   };
-  const handleClearFavorites = () => {
-    clearFavorites();
-    onClearFavorites();
-    setFavoritesCleared(true);
+  const handleClearShortcuts = () => {
+    clearShortcuts();
+    onClearShortcuts();
+    setShortcutsCleared(true);
   };
   const handleClearHistory = () => {
     clearHistory();
@@ -54994,12 +54994,12 @@ function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, onClearH
     setHistoryCleared(true);
   };
   const startEditing = () => {
-    if (isOnEditFavorites) {
-      onEditFavorites();
+    if (isOnEditShortcuts) {
+      onEditShortcuts();
       return;
     }
-    if (isOnClearFavorites) {
-      handleClearFavorites();
+    if (isOnClearShortcuts) {
+      handleClearShortcuts();
       return;
     }
     if (isOnClearHistory) {
@@ -55199,16 +55199,16 @@ function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, onClearH
         ] })
       ] }, field.key);
     }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isOnEditFavorites ? "#FFD700" : "gray", bold: isOnEditFavorites, children: [
-      isOnEditFavorites ? "> " : "  ",
-      "Edit favorites..."
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isOnEditShortcuts ? "#FFD700" : "gray", bold: isOnEditShortcuts, children: [
+      isOnEditShortcuts ? "> " : "  ",
+      "Edit shortcuts..."
     ] }) }),
     /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isOnClearFavorites ? "#FFD700" : "gray", bold: isOnClearFavorites, children: [
-        isOnClearFavorites ? "> " : "  ",
-        "Clear favorites..."
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isOnClearShortcuts ? "#FFD700" : "gray", bold: isOnClearShortcuts, children: [
+        isOnClearShortcuts ? "> " : "  ",
+        "Clear shortcuts..."
       ] }),
-      favoritesCleared && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: "green", children: [
+      shortcutsCleared && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: "green", children: [
         " ",
         "\u2713"
       ] })
@@ -55233,35 +55233,35 @@ function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, onClearH
     ] }) }),
     /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { dimColor: true, children: [
       "  ",
-      isOnEditFavorites ? "Manage favorites: edit names, shortcuts, and commands" : isOnClearFavorites ? "Remove all favorite projects" : isOnClearHistory ? "Remove all recent projects from history" : isOnEditConfig ? "Open settings.json in default editor" : currentField?.description
+      isOnEditShortcuts ? "Manage shortcuts: edit names, triggers, and commands" : isOnClearShortcuts ? "Remove all shortcuts" : isOnClearHistory ? "Remove all recent projects from history" : isOnEditConfig ? "Open settings.json in default editor" : currentField?.description
     ] }) }),
     /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { dimColor: true, children: isEditing ? currentField?.type === "number" ? "  type or \u2190\u2192\u2191\u2193 adjust \u2022 enter save \u2022 esc cancel" : "  \u2190\u2192 cursor \u2022 enter save \u2022 esc cancel" : "  \u2191\u2193 navigate \u2022 enter edit \u2022 esc save & exit" }) })
   ] });
 }
 
-// src/components/FavoritesEditor.tsx
+// src/components/ShortcutsEditor.tsx
 var import_react26 = __toESM(require_react(), 1);
 var import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
-function FavoritesEditor({
-  favorites,
+function ShortcutsEditor({
+  shortcuts,
   onUpdate,
-  onEditFavorite,
-  onAddFavorite,
+  onEditShortcut,
+  onAddShortcut,
   onBack,
   breadcrumbs
 }) {
   const [selectedIndex, setSelectedIndex] = (0, import_react26.useState)(0);
   const [confirmDelete, setConfirmDelete] = (0, import_react26.useState)(null);
-  const totalItems = favorites.length + 1;
-  const isOnAddNew = selectedIndex === favorites.length;
+  const totalItems = shortcuts.length + 1;
+  const isOnAddNew = selectedIndex === shortcuts.length;
   use_input_default((input, key) => {
     if (confirmDelete) {
       if (input === "y" || input === "Y") {
-        removeFavorite(confirmDelete);
-        onUpdate(favorites.filter((f) => f.id !== confirmDelete));
+        removeShortcut(confirmDelete);
+        onUpdate(shortcuts.filter((s) => s.id !== confirmDelete));
         setConfirmDelete(null);
-        if (selectedIndex >= favorites.length - 1) {
-          setSelectedIndex(Math.max(0, favorites.length - 2));
+        if (selectedIndex >= shortcuts.length - 1) {
+          setSelectedIndex(Math.max(0, shortcuts.length - 2));
         }
       } else if (input === "n" || input === "N" || key.escape) {
         setConfirmDelete(null);
@@ -55278,15 +55278,15 @@ function FavoritesEditor({
     }
     if (key.return) {
       if (isOnAddNew) {
-        onAddFavorite();
+        onAddShortcut();
       } else {
-        onEditFavorite(favorites[selectedIndex].id);
+        onEditShortcut(shortcuts[selectedIndex].id);
       }
       return;
     }
     if (key.ctrl && input === "d") {
-      if (!isOnAddNew && favorites.length > 0) {
-        setConfirmDelete(favorites[selectedIndex].id);
+      if (!isOnAddNew && shortcuts.length > 0) {
+        setConfirmDelete(shortcuts[selectedIndex].id);
       }
       return;
     }
@@ -55297,26 +55297,26 @@ function FavoritesEditor({
   });
   return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { flexDirection: "column", marginTop: 1, children: [
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Breadcrumb, { items: breadcrumbs }),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Favorites \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
-    favorites.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { color: "gray", dimColor: true, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Shortcuts \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
+    shortcuts.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { color: "gray", dimColor: true, children: [
       "  ",
-      "No favorites yet"
+      "No shortcuts yet"
     ] }) }),
-    favorites.map((fav, idx) => {
+    shortcuts.map((sc, idx) => {
       const isSelected = idx === selectedIndex;
-      const isDeleting = confirmDelete === fav.id;
+      const isDeleting = confirmDelete === sc.id;
       return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { children: [
         /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { color: isSelected ? "#FFD700" : void 0, bold: isSelected, children: [
           isSelected ? "> " : "  ",
-          fav.name
+          sc.name
         ] }),
         /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { dimColor: true, children: [
           " [",
-          fav.shortcut,
+          sc.trigger,
           "]"
         ] }),
         isDeleting && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "red", children: " Delete? (y/n)" })
-      ] }, fav.id);
+      ] }, sc.id);
     }),
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
       Text,
@@ -55325,39 +55325,39 @@ function FavoritesEditor({
         bold: isOnAddNew,
         children: [
           isOnAddNew ? "> " : "  ",
-          "[Add new favorite]"
+          "[Add new shortcut]"
         ]
       }
     ) }),
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { dimColor: true, children: [
       "enter edit ",
-      favorites.length > 0 ? "\u2022 ^D delete " : "",
+      shortcuts.length > 0 ? "\u2022 ^D delete " : "",
       "\u2022 esc/tab back"
     ] }) })
   ] });
 }
 
-// src/components/FavoriteEdit.tsx
+// src/components/ShortcutEdit.tsx
 var import_react27 = __toESM(require_react(), 1);
 var import_jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
-function FavoriteEdit({
-  favorite,
-  allFavorites,
+function ShortcutEdit({
+  shortcut,
+  allShortcuts,
   onSave,
   onBack,
   breadcrumbs
 }) {
-  const [name, setName] = (0, import_react27.useState)(favorite.name);
-  const [shortcut, setShortcut] = (0, import_react27.useState)(favorite.shortcut);
-  const [caseSensitive, setCaseSensitive] = (0, import_react27.useState)(favorite.caseSensitive);
-  const [commands, setCommands] = (0, import_react27.useState)([...favorite.command]);
+  const [name, setName] = (0, import_react27.useState)(shortcut.name);
+  const [trigger, setTrigger] = (0, import_react27.useState)(shortcut.trigger);
+  const [caseSensitive, setCaseSensitive] = (0, import_react27.useState)(shortcut.caseSensitive);
+  const [commands, setCommands] = (0, import_react27.useState)([...shortcut.command]);
   const [selectedIndex, setSelectedIndex] = (0, import_react27.useState)(0);
   const [editingField, setEditingField] = (0, import_react27.useState)(null);
   const [error, setError] = (0, import_react27.useState)(null);
   const fields = [
     { key: "name", label: "Name", type: "text" },
-    { key: "shortcut", label: "Shortcut", type: "text" },
+    { key: "trigger", label: "Trigger", type: "text" },
     { key: "caseSensitive", label: "Case Sensitive", type: "toggle" },
     ...commands.map((_, i) => ({
       key: `cmd-${i}`,
@@ -55376,7 +55376,7 @@ function FavoriteEdit({
   }, [error]);
   const getValue = (key) => {
     if (key === "name") return name;
-    if (key === "shortcut") return shortcut;
+    if (key === "trigger") return trigger;
     if (key === "caseSensitive") return caseSensitive ? "Yes" : "No";
     if (key.startsWith("cmd-")) {
       const idx = parseInt(key.split("-")[1], 10);
@@ -55386,7 +55386,7 @@ function FavoriteEdit({
   };
   const handleChange = (key, value) => {
     if (key === "name") setName(value);
-    if (key === "shortcut") setShortcut(value);
+    if (key === "trigger") setTrigger(value);
     if (key.startsWith("cmd-")) {
       const idx = parseInt(key.split("-")[1], 10);
       setCommands((prev) => {
@@ -55426,9 +55426,9 @@ function FavoriteEdit({
     }
   };
   const saveAndExit = () => {
-    const validation = validateShortcut(shortcut, caseSensitive, favorite.id);
+    const validation = validateTrigger(trigger, caseSensitive, shortcut.id);
     if (!validation.valid) {
-      setError(validation.error || "Invalid shortcut");
+      setError(validation.error || "Invalid trigger");
       return;
     }
     if (!name.trim()) {
@@ -55441,9 +55441,9 @@ function FavoriteEdit({
       return;
     }
     try {
-      const updated = updateFavorite(favorite.id, {
+      const updated = updateShortcut(shortcut.id, {
         name: name.trim(),
-        shortcut,
+        trigger,
         caseSensitive,
         command: nonEmptyCommands
       });
@@ -55513,7 +55513,7 @@ function FavoriteEdit({
   };
   return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { flexDirection: "column", marginTop: 1, children: [
     /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Breadcrumb, { items: breadcrumbs }),
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Edit Favorite \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Edit Shortcut \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
     renderField(fields[0], 0),
     renderField(fields[1], 1),
     /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
@@ -55821,7 +55821,7 @@ function collectNestedGitProjects(project, basePath) {
   }
   return results;
 }
-function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEntries: initialFavoriteEntries, onSelect, onSettingsSave }) {
+function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEntries: initialShortcutEntries, onSelect, onSettingsSave }) {
   log("App component function called");
   const { exit } = use_app_default();
   const [screenStack, setScreenStack] = (0, import_react28.useState)([
@@ -55837,15 +55837,15 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
   const breadcrumbLabels = {
     main: "Home",
     settings: "Settings",
-    "favorites-editor": "Favorites",
-    "favorite-edit": "Edit"
+    "shortcuts-editor": "Shortcuts",
+    "shortcut-edit": "Edit"
   };
   const breadcrumbItems = screenStack.slice(1).map((entry) => breadcrumbLabels[entry.screen]);
   const [projects, setProjects] = (0, import_react28.useState)(null);
   const [isRefreshing, setIsRefreshing] = (0, import_react28.useState)(false);
   const [settings, setSettings] = (0, import_react28.useState)(initialSettings);
   const [recentEntries, setRecentEntries] = (0, import_react28.useState)(initialRecentEntries);
-  const [favoriteEntries, setFavoriteEntries] = (0, import_react28.useState)(initialFavoriteEntries);
+  const [shortcutEntries, setShortcutEntries] = (0, import_react28.useState)(initialShortcutEntries);
   const scanAbortSignal = (0, import_react28.useRef)({ aborted: false });
   (0, import_react28.useEffect)(() => {
     log("useEffect: mount - starting cache/scan");
@@ -55888,10 +55888,10 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
   const currentLevel = navStack[navStack.length - 1];
   const currentProjects = currentLevel.projects;
   const isAtRoot = navStack.length === 1;
-  const favoritePaths = (0, import_react28.useMemo)(() => {
+  const shortcutPaths = (0, import_react28.useMemo)(() => {
     const paths = /* @__PURE__ */ new Set();
-    for (const fav of favoriteEntries) {
-      const cdCmd = fav.command.find((c) => c.startsWith("cd "));
+    for (const sc of shortcutEntries) {
+      const cdCmd = sc.command.find((c) => c.startsWith("cd "));
       if (cdCmd) {
         const pathMatch = cdCmd.match(/^cd\s+"?([^"]+)"?$/);
         if (pathMatch) {
@@ -55900,7 +55900,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
       }
     }
     return paths;
-  }, [favoriteEntries]);
+  }, [shortcutEntries]);
   const recentPaths = (0, import_react28.useMemo)(
     () => new Set(recentEntries.map((e) => e.path)),
     [recentEntries]
@@ -55917,47 +55917,47 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
     traverse(projects);
     return map;
   }, [projects]);
-  const shortcutsByPath = (0, import_react28.useMemo)(() => {
+  const triggersByPath = (0, import_react28.useMemo)(() => {
     const map = /* @__PURE__ */ new Map();
-    for (const fav of favoriteEntries) {
-      const firstCmd = fav.command[0];
+    for (const sc of shortcutEntries) {
+      const firstCmd = sc.command[0];
       if (firstCmd?.startsWith("cd ")) {
         const pathMatch = firstCmd.match(/^cd\s+"?([^"]+)"?$/);
         if (pathMatch) {
           const path2 = pathMatch[1];
           const existing = map.get(path2) || [];
-          existing.push(fav.shortcut);
+          existing.push(sc.trigger);
           map.set(path2, existing);
         }
       }
     }
     return map;
-  }, [favoriteEntries]);
+  }, [shortcutEntries]);
   const { unfilteredItems, unfilteredKeyToIndex } = (0, import_react28.useMemo)(() => {
     const list = [];
     const keyMap = /* @__PURE__ */ new Map();
-    if (isAtRoot && favoriteEntries.length > 0 && !searchTerm) {
-      list.push({ type: "header", label: "Favorites" });
-      for (const fav of favoriteEntries) {
-        const cdCmd = fav.command.find((c) => c.startsWith("cd "));
+    if (isAtRoot && shortcutEntries.length > 0 && !searchTerm) {
+      list.push({ type: "header", label: "Shortcuts" });
+      for (const sc of shortcutEntries) {
+        const cdCmd = sc.command.find((c) => c.startsWith("cd "));
         const pathMatch = cdCmd?.match(/^cd\s+"?([^"]+)"?$/);
-        const favPath = pathMatch?.[1] || "";
-        const project = favPath ? allProjectsMap.get(favPath) : void 0;
-        const selectionKey = `fav-${fav.id}`;
+        const scPath = pathMatch?.[1] || "";
+        const project = scPath ? allProjectsMap.get(scPath) : void 0;
+        const selectionKey = `sc-${sc.id}`;
         const idx = list.length;
         list.push({
           type: "project",
-          label: fav.name,
-          path: favPath,
+          label: sc.name,
+          path: scPath,
           selectionKey,
-          shortcuts: [fav.shortcut],
-          favoriteId: fav.id,
+          triggers: [sc.trigger],
+          shortcutId: sc.id,
           project: project ?? {
-            name: fav.name,
-            path: favPath,
+            name: sc.name,
+            path: scPath,
             isGitRepo: true
           },
-          isFavorite: true,
+          isShortcut: true,
           isRecent: false
         });
         keyMap.set(selectionKey, idx);
@@ -55967,7 +55967,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
       const recentHeader = list.length;
       let hasRecent = false;
       for (const entry of recentEntries) {
-        if (favoritePaths.has(entry.path)) continue;
+        if (shortcutPaths.has(entry.path)) continue;
         if (!hasRecent) {
           list.push({ type: "header", label: "Recent" });
           hasRecent = true;
@@ -55985,7 +55985,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
             path: entry.path,
             isGitRepo: true
           },
-          isFavorite: false,
+          isShortcut: false,
           isRecent: true
         });
         keyMap.set(selectionKey, idx);
@@ -55994,9 +55994,9 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
     const sectionLabel = isAtRoot ? "All Projects" : getDisplayName(currentLevel.parentPath || "", settings.projectsDir);
     list.push({ type: "header", label: sectionLabel });
     for (const project of currentProjects) {
-      const shortcuts = shortcutsByPath.get(project.path);
-      const isFav = shortcuts && shortcuts.length > 0;
-      const isRec = recentPaths.has(project.path) && !isFav;
+      const triggers = triggersByPath.get(project.path);
+      const isSc = triggers && triggers.length > 0;
+      const isRec = recentPaths.has(project.path) && !isSc;
       const selectionKey = project.path;
       const idx = list.length;
       list.push({
@@ -56005,9 +56005,9 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
         path: project.path,
         selectionKey,
         project,
-        isFavorite: isFav,
+        isShortcut: isSc,
         isRecent: isRec,
-        shortcuts
+        triggers
       });
       keyMap.set(selectionKey, idx);
     }
@@ -56017,7 +56017,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
       keyMap.set("__back__", idx);
     }
     return { unfilteredItems: list, unfilteredKeyToIndex: keyMap };
-  }, [currentProjects, recentEntries, favoriteEntries, isAtRoot, recentPaths, favoritePaths, shortcutsByPath, allProjectsMap, currentLevel.parentPath, settings.projectsDir, searchTerm]);
+  }, [currentProjects, recentEntries, shortcutEntries, isAtRoot, recentPaths, shortcutPaths, triggersByPath, allProjectsMap, currentLevel.parentPath, settings.projectsDir, searchTerm]);
   const { items, keyToIndex } = (0, import_react28.useMemo)(() => {
     if (!searchTerm) {
       return { items: unfilteredItems, keyToIndex: unfilteredKeyToIndex };
@@ -56116,14 +56116,14 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
       setSearchTerm("");
     }
   };
-  const toggleFavorite = () => {
+  const toggleShortcut = () => {
     const currentItem = items[selectedIndex];
     if (currentItem?.type !== "project" || !currentItem.path) return;
-    const isInFavoritesSection = currentItem.selectionKey?.startsWith("fav-");
-    if (currentItem.isFavorite && currentItem.favoriteId) {
-      removeFavorite(currentItem.favoriteId);
-      setFavoriteEntries((prev) => prev.filter((f) => f.id !== currentItem.favoriteId));
-      if (isInFavoritesSection) {
+    const isInShortcutsSection = currentItem.selectionKey?.startsWith("sc-");
+    if (currentItem.isShortcut && currentItem.shortcutId) {
+      removeShortcut(currentItem.shortcutId);
+      setShortcutEntries((prev) => prev.filter((s) => s.id !== currentItem.shortcutId));
+      if (isInShortcutsSection) {
         const currentPos = selectableIndices.indexOf(selectedIndex);
         const nextPos = currentPos + 1 < selectableIndices.length ? currentPos + 1 : currentPos - 1;
         if (nextPos >= 0 && nextPos < selectableIndices.length) {
@@ -56135,13 +56135,13 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
       }
     } else {
       const displayName = getDisplayName(currentItem.path, settings.projectsDir);
-      const newFavorite = addFavorite({
+      const newShortcut = addShortcut({
         name: displayName,
-        shortcut: generateUniqueShortcut(favoriteEntries),
+        trigger: generateUniqueTrigger(shortcutEntries),
         caseSensitive: false,
         command: generateCommand(currentItem.path)
       });
-      setFavoriteEntries((prev) => [...prev, newFavorite]);
+      setShortcutEntries((prev) => [...prev, newShortcut]);
     }
   };
   const refreshProjects = () => {
@@ -56197,8 +56197,8 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
       refreshProjects();
       return;
     }
-    if (key.ctrl && input === settings.favoriteKey) {
-      toggleFavorite();
+    if (key.ctrl && input === settings.shortcutToggleKey) {
+      toggleShortcut();
       return;
     }
     if (key.escape) {
@@ -56227,12 +56227,12 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
         return;
       }
       if (currentItem?.type === "project") {
-        const isInFavoritesSection = currentItem.selectionKey?.startsWith("fav-");
-        if (isInFavoritesSection && currentItem.favoriteId) {
-          const favorite = favoriteEntries.find((f) => f.id === currentItem.favoriteId);
-          if (favorite) {
+        const isInShortcutsSection = currentItem.selectionKey?.startsWith("sc-");
+        if (isInShortcutsSection && currentItem.shortcutId) {
+          const shortcut = shortcutEntries.find((s) => s.id === currentItem.shortcutId);
+          if (shortcut) {
             scanAbortSignal.current.aborted = true;
-            writeLastCommand(favorite.command);
+            writeLastCommand(shortcut.command);
             exit();
             return;
           }
@@ -56326,48 +56326,48 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
         settings,
         onSave: handleSettingsSave,
         onCancel: () => popScreen(),
-        onClearFavorites: () => {
-          setFavoriteEntries([]);
+        onClearShortcuts: () => {
+          setShortcutEntries([]);
         },
         onClearHistory: () => setRecentEntries([]),
-        onEditFavorites: () => pushScreen("favorites-editor"),
+        onEditShortcuts: () => pushScreen("shortcuts-editor"),
         breadcrumbs: breadcrumbItems
       }
     );
   }
-  if (currentScreen.screen === "favorites-editor") {
+  if (currentScreen.screen === "shortcuts-editor") {
     return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
-      FavoritesEditor,
+      ShortcutsEditor,
       {
-        favorites: favoriteEntries,
-        onUpdate: (updated) => setFavoriteEntries(updated),
-        onEditFavorite: (id) => pushScreen("favorite-edit", { favoriteId: id }),
-        onAddFavorite: () => {
-          const newFavorite = addFavorite({
-            name: "New Favorite",
-            shortcut: generateUniqueShortcut(favoriteEntries),
+        shortcuts: shortcutEntries,
+        onUpdate: (updated) => setShortcutEntries(updated),
+        onEditShortcut: (id) => pushScreen("shortcut-edit", { shortcutId: id }),
+        onAddShortcut: () => {
+          const newShortcut = addShortcut({
+            name: "New Shortcut",
+            trigger: generateUniqueTrigger(shortcutEntries),
             caseSensitive: false,
             command: ["cd ~"]
           });
-          setFavoriteEntries((prev) => [...prev, newFavorite]);
-          pushScreen("favorite-edit", { favoriteId: newFavorite.id });
+          setShortcutEntries((prev) => [...prev, newShortcut]);
+          pushScreen("shortcut-edit", { shortcutId: newShortcut.id });
         },
         onBack: () => popScreen(),
         breadcrumbs: breadcrumbItems
       }
     );
   }
-  if (currentScreen.screen === "favorite-edit" && currentScreen.state?.favoriteId) {
-    const favorite = favoriteEntries.find((f) => f.id === currentScreen.state?.favoriteId);
-    if (favorite) {
+  if (currentScreen.screen === "shortcut-edit" && currentScreen.state?.shortcutId) {
+    const shortcut = shortcutEntries.find((s) => s.id === currentScreen.state?.shortcutId);
+    if (shortcut) {
       return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
-        FavoriteEdit,
+        ShortcutEdit,
         {
-          favorite,
-          allFavorites: favoriteEntries,
+          shortcut,
+          allShortcuts: shortcutEntries,
           onSave: (updated) => {
-            setFavoriteEntries(
-              (prev) => prev.map((f) => f.id === updated.id ? updated : f)
+            setShortcutEntries(
+              (prev) => prev.map((s) => s.id === updated.id ? updated : s)
             );
           },
           onBack: () => popScreen(),
@@ -56413,11 +56413,11 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
       const project = item.project;
       const hasNested = !item.isRecent && project.hasNestedProjects;
       let color;
-      const isInFavoritesSection = item.selectionKey?.startsWith("fav-");
+      const isInShortcutsSection = item.selectionKey?.startsWith("sc-");
       if (isSelected) {
         color = settings.selectedColor;
-      } else if (isInFavoritesSection) {
-        color = settings.favoriteColor;
+      } else if (isInShortcutsSection) {
+        color = settings.shortcutColor;
       } else if (item.isRecent) {
         color = settings.recentColor;
       }
@@ -56426,9 +56426,9 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
           isSelected ? "> " : "  ",
           item.label
         ] }),
-        item.shortcuts && item.shortcuts.map((s, i) => /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { dimColor: true, children: [
+        item.triggers && item.triggers.map((t, i) => /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { dimColor: true, children: [
           " [",
-          s,
+          t,
           "]"
         ] }, i)),
         hasNested && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: "gray", dimColor: true, children: " \u25B6" })
@@ -56445,8 +56445,8 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
     ] }) }),
     /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { marginTop: isRefreshing ? 0 : 1, children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { dimColor: true, children: [
       "\u2191\u2193 navigate \u2022 enter select \u2022 \u2192\u2190 drill/back \u2022 ^",
-      settings.favoriteKey.toUpperCase(),
-      " fav \u2022 tab settings \u2022 ^",
+      settings.shortcutToggleKey.toUpperCase(),
+      " shortcut \u2022 tab settings \u2022 ^",
       settings.refreshKey.toUpperCase(),
       " refresh \u2022 esc quit"
     ] }) })
@@ -56729,18 +56729,18 @@ async function main() {
     await runSetup(filteredArgs[1], filteredArgs[2]);
     return;
   }
-  const shortcutArgs = filteredArgs.filter((arg) => !arg.startsWith("--"));
-  if (shortcutArgs.length > 0) {
-    log(`quick favorite access: ${shortcutArgs.join(" ")}`);
+  const triggerArgs = filteredArgs.filter((arg) => !arg.startsWith("--"));
+  if (triggerArgs.length > 0) {
+    log(`quick shortcut access: ${triggerArgs.join(" ")}`);
     const allCommands = [];
-    for (const shortcut of shortcutArgs) {
-      const favorite = await getFavoriteByShortcutAsync(shortcut);
-      if (!favorite) {
-        console.error(`Shortcut not found: ${shortcut}`);
+    for (const trigger of triggerArgs) {
+      const shortcut = await getShortcutByTriggerAsync(trigger);
+      if (!shortcut) {
+        console.error(`Shortcut not found: ${trigger}`);
         process.exit(1);
       }
-      log(`found favorite: ${favorite.name}`);
-      allCommands.push(...favorite.command);
+      log(`found shortcut: ${shortcut.name}`);
+      allCommands.push(...shortcut.command);
     }
     writeLastCommand(allCommands);
     return;
@@ -56748,12 +56748,12 @@ async function main() {
   log("loading settings...");
   const settings = await loadSettingsAsync();
   log(`settings loaded, projectsDir: ${settings.projectsDir}`);
-  log("loading recent and favorites...");
-  const [recentEntries, favoriteEntries] = await Promise.all([
+  log("loading recent and shortcuts...");
+  const [recentEntries, shortcutEntries] = await Promise.all([
     getRecentAsync(settings.recentCount),
-    getFavoritesAsync()
+    getShortcutsAsync()
   ]);
-  log(`loaded ${recentEntries.length} recent, ${favoriteEntries.length} favorites`);
+  log(`loaded ${recentEntries.length} recent, ${shortcutEntries.length} shortcuts`);
   let selectedPath = null;
   let selectedDisplayName = null;
   log("about to render App...");
@@ -56763,7 +56763,7 @@ async function main() {
       {
         initialSettings: settings,
         recentEntries,
-        favoriteEntries,
+        shortcutEntries,
         onSelect: (path2, displayName) => {
           selectedPath = path2;
           selectedDisplayName = displayName;

@@ -13,9 +13,9 @@ export interface Settings {
   recentCount: number;
   visibleRows: number;
   selectedColor: string;
-  favoriteColor: string;
+  shortcutColor: string;
   recentColor: string;
-  favoriteKey: string;
+  shortcutToggleKey: string;
   refreshKey: string;
 }
 
@@ -26,9 +26,9 @@ export const DEFAULT_SETTINGS: Settings = {
   recentCount: 5,
   visibleRows: 12,
   selectedColor: "#FFD700",
-  favoriteColor: "#69FFBE",
+  shortcutColor: "#69FFBE",
   recentColor: "#6495ED",
-  favoriteKey: "f",
+  shortcutToggleKey: "t",
   refreshKey: "r",
 };
 
@@ -85,10 +85,10 @@ export const SETTING_FIELDS: SettingField[] = [
     description: "Highlight color for selected item (hex)",
   },
   {
-    key: "favoriteColor",
-    label: "Favorite Color",
+    key: "shortcutColor",
+    label: "Shortcut Color",
     type: "color",
-    description: "Highlight color for favorite items (hex)",
+    description: "Highlight color for shortcut items (hex)",
   },
   {
     key: "recentColor",
@@ -97,10 +97,10 @@ export const SETTING_FIELDS: SettingField[] = [
     description: "Highlight color for recent items (hex)",
   },
   {
-    key: "favoriteKey",
-    label: "Favorite Shortcut",
+    key: "shortcutToggleKey",
+    label: "Shortcut Toggle Key",
     type: "key",
-    description: "Key for Ctrl+? to toggle favorite (letter or number)",
+    description: "Key for Ctrl+? to toggle shortcut (letter or number)",
   },
   {
     key: "refreshKey",

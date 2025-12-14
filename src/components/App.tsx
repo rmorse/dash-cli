@@ -1,23 +1,23 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Box, Text, useInput, useApp } from "ink";
 import Spinner from "ink-spinner";
-import type { Project, HistoryEntry, Favorite, Settings } from "../types.js";
+import type { Project, HistoryEntry, Shortcut, Settings } from "../types.js";
 import { basename, relative } from "node:path";
 import { SettingsScreen } from "./Settings.js";
-import { FavoritesEditor } from "./FavoritesEditor.js";
-import { FavoriteEdit } from "./FavoriteEdit.js";
+import { ShortcutsEditor } from "./ShortcutsEditor.js";
+import { ShortcutEdit } from "./ShortcutEdit.js";
 import { Breadcrumb } from "./Breadcrumb.js";
 import { scanProjectsAsync, ScanAbortSignal } from "../scanner.js";
 import { loadCacheAsync, saveCache } from "../cache.js";
 import {
-  getFavorites,
-  addFavorite,
-  removeFavorite,
-  findFavoriteByPath,
+  getShortcuts,
+  addShortcut,
+  removeShortcut,
+  findShortcutByPath,
   generateCommand,
-  generateUniqueShortcut,
-  getFavoriteById,
-} from "../favorites.js";
+  generateUniqueTrigger,
+  getShortcutById,
+} from "../shortcuts.js";
 import { writeLastCommand } from "../history.js";
 import { log } from "../logger.js";
 
@@ -26,29 +26,29 @@ const PAGE_SIZE = 10;
 interface AppProps {
   initialSettings: Settings;
   recentEntries: HistoryEntry[];
-  favoriteEntries: Favorite[];
+  shortcutEntries: Shortcut[];
   onSelect: (path: string, displayName: string) => void;
   onSettingsSave: (settings: Settings) => void;
 }
 
 // Screen types for navigation stack
-type ScreenType = "main" | "settings" | "favorites-editor" | "favorite-edit";
+type ScreenType = "main" | "settings" | "shortcuts-editor" | "shortcut-edit";
 
 interface ScreenStackEntry {
   screen: ScreenType;
-  state?: { favoriteId?: string };
+  state?: { shortcutId?: string };
 }
 
 interface ListItem {
   type: "header" | "project" | "back";
   label: string;
   path?: string;
-  selectionKey?: string;  // Unique key for selection tracking (fav-path, recent-path, path, __back__)
+  selectionKey?: string;  // Unique key for selection tracking (sc-path, recent-path, path, __back__)
   project?: Project;
-  isFavorite?: boolean;
+  isShortcut?: boolean;
   isRecent?: boolean;
-  shortcuts?: string[];  // All favorite shortcuts for this path
-  favoriteId?: string;  // Favorite ID (for favorites section items)
+  triggers?: string[];  // All shortcut triggers for this path
+  shortcutId?: string;  // Shortcut ID (for shortcuts section items)
 }
 
 interface NavLevel {
@@ -97,7 +97,7 @@ function collectNestedGitProjects(project: Project, basePath: string): Project[]
   return results;
 }
 
-export function App({ initialSettings, recentEntries: initialRecentEntries, favoriteEntries: initialFavoriteEntries, onSelect, onSettingsSave }: AppProps) {
+export function App({ initialSettings, recentEntries: initialRecentEntries, shortcutEntries: initialShortcutEntries, onSelect, onSettingsSave }: AppProps) {
   log("App component function called");
   const { exit } = useApp();
 
@@ -108,7 +108,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
 
   const currentScreen = screenStack[screenStack.length - 1];
 
-  const pushScreen = (screen: ScreenType, state?: { favoriteId?: string }) => {
+  const pushScreen = (screen: ScreenType, state?: { shortcutId?: string }) => {
     setScreenStack(prev => [...prev, { screen, state }]);
   };
 
@@ -120,8 +120,8 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
   const breadcrumbLabels: Record<ScreenType, string> = {
     main: "Home",
     settings: "Settings",
-    "favorites-editor": "Favorites",
-    "favorite-edit": "Edit",
+    "shortcuts-editor": "Shortcuts",
+    "shortcut-edit": "Edit",
   };
 
   const breadcrumbItems = screenStack.slice(1).map(entry => breadcrumbLabels[entry.screen]);
@@ -131,7 +131,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [settings, setSettings] = useState(initialSettings);
   const [recentEntries, setRecentEntries] = useState(initialRecentEntries);
-  const [favoriteEntries, setFavoriteEntries] = useState(initialFavoriteEntries);
+  const [shortcutEntries, setShortcutEntries] = useState(initialShortcutEntries);
 
   // Abort signal for cancelling scans early (e.g., when user selects before scan completes)
   const scanAbortSignal = useRef<ScanAbortSignal>({ aborted: false });
@@ -197,12 +197,12 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
   const currentProjects = currentLevel.projects;
   const isAtRoot = navStack.length === 1;
 
-  // Track favorite and recent paths for coloring and filtering
-  // Extract paths from favorite commands (looks for cd "path" pattern)
-  const favoritePaths = useMemo(() => {
+  // Track shortcut and recent paths for coloring and filtering
+  // Extract paths from shortcut commands (looks for cd "path" pattern)
+  const shortcutPaths = useMemo(() => {
     const paths = new Set<string>();
-    for (const fav of favoriteEntries) {
-      const cdCmd = fav.command.find(c => c.startsWith('cd '));
+    for (const sc of shortcutEntries) {
+      const cdCmd = sc.command.find(c => c.startsWith('cd '));
       if (cdCmd) {
         const pathMatch = cdCmd.match(/^cd\s+"?([^"]+)"?$/);
         if (pathMatch) {
@@ -211,7 +211,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
       }
     }
     return paths;
-  }, [favoriteEntries]);
+  }, [shortcutEntries]);
 
   const recentPaths = useMemo(
     () => new Set(recentEntries.map((e) => e.path)),
@@ -232,55 +232,55 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
     return map;
   }, [projects]);
 
-  // Build shortcuts lookup by path (for showing [shortcut] tags on projects)
-  // A project can have multiple favorites pointing to it
-  const shortcutsByPath = useMemo(() => {
+  // Build triggers lookup by path (for showing [trigger] tags on projects)
+  // A project can have multiple shortcuts pointing to it
+  const triggersByPath = useMemo(() => {
     const map = new Map<string, string[]>();
-    for (const fav of favoriteEntries) {
+    for (const sc of shortcutEntries) {
       // Only associate if the first command is a cd to this path
-      const firstCmd = fav.command[0];
+      const firstCmd = sc.command[0];
       if (firstCmd?.startsWith('cd ')) {
         const pathMatch = firstCmd.match(/^cd\s+"?([^"]+)"?$/);
         if (pathMatch) {
           const path = pathMatch[1];
           const existing = map.get(path) || [];
-          existing.push(fav.shortcut);
+          existing.push(sc.trigger);
           map.set(path, existing);
         }
       }
     }
     return map;
-  }, [favoriteEntries]);
+  }, [shortcutEntries]);
 
   // Build list with sections and keyToIndex map (before filtering)
   const { unfilteredItems, unfilteredKeyToIndex } = useMemo(() => {
     const list: ListItem[] = [];
     const keyMap = new Map<string, number>();
 
-    // Favorites section (only at root level, hidden when searching)
-    if (isAtRoot && favoriteEntries.length > 0 && !searchTerm) {
-      list.push({ type: "header", label: "Favorites" });
-      for (const fav of favoriteEntries) {
+    // Shortcuts section (only at root level, hidden when searching)
+    if (isAtRoot && shortcutEntries.length > 0 && !searchTerm) {
+      list.push({ type: "header", label: "Shortcuts" });
+      for (const sc of shortcutEntries) {
         // Extract path from cd command
-        const cdCmd = fav.command.find(c => c.startsWith('cd '));
+        const cdCmd = sc.command.find(c => c.startsWith('cd '));
         const pathMatch = cdCmd?.match(/^cd\s+"?([^"]+)"?$/);
-        const favPath = pathMatch?.[1] || "";
-        const project = favPath ? allProjectsMap.get(favPath) : undefined;
-        const selectionKey = `fav-${fav.id}`;
+        const scPath = pathMatch?.[1] || "";
+        const project = scPath ? allProjectsMap.get(scPath) : undefined;
+        const selectionKey = `sc-${sc.id}`;
         const idx = list.length;
         list.push({
           type: "project",
-          label: fav.name,
-          path: favPath,
+          label: sc.name,
+          path: scPath,
           selectionKey,
-          shortcuts: [fav.shortcut],
-          favoriteId: fav.id,
+          triggers: [sc.trigger],
+          shortcutId: sc.id,
           project: project ?? {
-            name: fav.name,
-            path: favPath,
+            name: sc.name,
+            path: scPath,
             isGitRepo: true,
           },
-          isFavorite: true,
+          isShortcut: true,
           isRecent: false,
         });
         keyMap.set(selectionKey, idx);
@@ -292,7 +292,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
       const recentHeader = list.length;
       let hasRecent = false;
       for (const entry of recentEntries) {
-        if (favoritePaths.has(entry.path)) continue;
+        if (shortcutPaths.has(entry.path)) continue;
         if (!hasRecent) {
           list.push({ type: "header", label: "Recent" });
           hasRecent = true;
@@ -310,7 +310,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
             path: entry.path,
             isGitRepo: true,
           },
-          isFavorite: false,
+          isShortcut: false,
           isRecent: true,
         });
         keyMap.set(selectionKey, idx);
@@ -322,9 +322,9 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
     list.push({ type: "header", label: sectionLabel });
 
     for (const project of currentProjects) {
-      const shortcuts = shortcutsByPath.get(project.path);
-      const isFav = shortcuts && shortcuts.length > 0;
-      const isRec = recentPaths.has(project.path) && !isFav;
+      const triggers = triggersByPath.get(project.path);
+      const isSc = triggers && triggers.length > 0;
+      const isRec = recentPaths.has(project.path) && !isSc;
       const selectionKey = project.path;  // Main list uses plain path
       const idx = list.length;
       list.push({
@@ -333,9 +333,9 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
         path: project.path,
         selectionKey,
         project,
-        isFavorite: isFav,
+        isShortcut: isSc,
         isRecent: isRec,
-        shortcuts,
+        triggers,
       });
       keyMap.set(selectionKey, idx);
     }
@@ -348,7 +348,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
     }
 
     return { unfilteredItems: list, unfilteredKeyToIndex: keyMap };
-  }, [currentProjects, recentEntries, favoriteEntries, isAtRoot, recentPaths, favoritePaths, shortcutsByPath, allProjectsMap, currentLevel.parentPath, settings.projectsDir, searchTerm]);
+  }, [currentProjects, recentEntries, shortcutEntries, isAtRoot, recentPaths, shortcutPaths, triggersByPath, allProjectsMap, currentLevel.parentPath, settings.projectsDir, searchTerm]);
 
   // Filter items based on search term, also build keyToIndex map
   const { items, keyToIndex } = useMemo(() => {
@@ -479,19 +479,19 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
     }
   };
 
-  const toggleFavorite = () => {
+  const toggleShortcut = () => {
     const currentItem = items[selectedIndex];
     if (currentItem?.type !== "project" || !currentItem.path) return;
 
-    const isInFavoritesSection = currentItem.selectionKey?.startsWith("fav-");
+    const isInShortcutsSection = currentItem.selectionKey?.startsWith("sc-");
 
-    if (currentItem.isFavorite && currentItem.favoriteId) {
-      // Remove from favorites using ID
-      removeFavorite(currentItem.favoriteId);
-      setFavoriteEntries(prev => prev.filter(f => f.id !== currentItem.favoriteId));
+    if (currentItem.isShortcut && currentItem.shortcutId) {
+      // Remove shortcut using ID
+      removeShortcut(currentItem.shortcutId);
+      setShortcutEntries(prev => prev.filter(s => s.id !== currentItem.shortcutId));
 
-      if (isInFavoritesSection) {
-        // Item will disappear from favorites section - select next item in list
+      if (isInShortcutsSection) {
+        // Item will disappear from shortcuts section - select next item in list
         const currentPos = selectableIndices.indexOf(selectedIndex);
         const nextPos = currentPos + 1 < selectableIndices.length ? currentPos + 1 : currentPos - 1;
         if (nextPos >= 0 && nextPos < selectableIndices.length) {
@@ -501,17 +501,17 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
           setSelectedKey(null); // Fall back to first item
         }
       }
-      // If in main list, item stays (just loses favorite color) - key unchanged
+      // If in main list, item stays (just loses shortcut color) - key unchanged
     } else {
-      // Add to favorites
+      // Add shortcut
       const displayName = getDisplayName(currentItem.path!, settings.projectsDir);
-      const newFavorite = addFavorite({
+      const newShortcut = addShortcut({
         name: displayName,
-        shortcut: generateUniqueShortcut(favoriteEntries),
+        trigger: generateUniqueTrigger(shortcutEntries),
         caseSensitive: false,
         command: generateCommand(currentItem.path!),
       });
-      setFavoriteEntries(prev => [...prev, newFavorite]);
+      setShortcutEntries(prev => [...prev, newShortcut]);
       // Item stays in place (main list) - key unchanged
     }
   };
@@ -591,9 +591,9 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
       return;
     }
 
-    // Ctrl+F (or custom key) - toggle favorite
-    if (key.ctrl && input === settings.favoriteKey) {
-      toggleFavorite();
+    // Ctrl+E (or custom key) - toggle shortcut
+    if (key.ctrl && input === settings.shortcutToggleKey) {
+      toggleShortcut();
       return;
     }
 
@@ -630,13 +630,13 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
       }
 
       if (currentItem?.type === "project") {
-        // In favorites section: execute the favorite's stored command
-        const isInFavoritesSection = currentItem.selectionKey?.startsWith("fav-");
-        if (isInFavoritesSection && currentItem.favoriteId) {
-          const favorite = favoriteEntries.find(f => f.id === currentItem.favoriteId);
-          if (favorite) {
+        // In shortcuts section: execute the shortcut's stored command
+        const isInShortcutsSection = currentItem.selectionKey?.startsWith("sc-");
+        if (isInShortcutsSection && currentItem.shortcutId) {
+          const shortcut = shortcutEntries.find(s => s.id === currentItem.shortcutId);
+          if (shortcut) {
             scanAbortSignal.current.aborted = true;
-            writeLastCommand(favorite.command);
+            writeLastCommand(shortcut.command);
             exit();
             return;
           }
@@ -756,32 +756,32 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
         settings={settings}
         onSave={handleSettingsSave}
         onCancel={() => popScreen()}
-        onClearFavorites={() => {
-          setFavoriteEntries([]);
+        onClearShortcuts={() => {
+          setShortcutEntries([]);
         }}
         onClearHistory={() => setRecentEntries([])}
-        onEditFavorites={() => pushScreen("favorites-editor")}
+        onEditShortcuts={() => pushScreen("shortcuts-editor")}
         breadcrumbs={breadcrumbItems}
       />
     );
   }
 
-  if (currentScreen.screen === "favorites-editor") {
+  if (currentScreen.screen === "shortcuts-editor") {
     return (
-      <FavoritesEditor
-        favorites={favoriteEntries}
-        onUpdate={(updated) => setFavoriteEntries(updated)}
-        onEditFavorite={(id) => pushScreen("favorite-edit", { favoriteId: id })}
-        onAddFavorite={() => {
-          // Create a new favorite with defaults
-          const newFavorite = addFavorite({
-            name: "New Favorite",
-            shortcut: generateUniqueShortcut(favoriteEntries),
+      <ShortcutsEditor
+        shortcuts={shortcutEntries}
+        onUpdate={(updated) => setShortcutEntries(updated)}
+        onEditShortcut={(id) => pushScreen("shortcut-edit", { shortcutId: id })}
+        onAddShortcut={() => {
+          // Create a new shortcut with defaults
+          const newShortcut = addShortcut({
+            name: "New Shortcut",
+            trigger: generateUniqueTrigger(shortcutEntries),
             caseSensitive: false,
             command: ["cd ~"],
           });
-          setFavoriteEntries(prev => [...prev, newFavorite]);
-          pushScreen("favorite-edit", { favoriteId: newFavorite.id });
+          setShortcutEntries(prev => [...prev, newShortcut]);
+          pushScreen("shortcut-edit", { shortcutId: newShortcut.id });
         }}
         onBack={() => popScreen()}
         breadcrumbs={breadcrumbItems}
@@ -789,16 +789,16 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
     );
   }
 
-  if (currentScreen.screen === "favorite-edit" && currentScreen.state?.favoriteId) {
-    const favorite = favoriteEntries.find(f => f.id === currentScreen.state?.favoriteId);
-    if (favorite) {
+  if (currentScreen.screen === "shortcut-edit" && currentScreen.state?.shortcutId) {
+    const shortcut = shortcutEntries.find(s => s.id === currentScreen.state?.shortcutId);
+    if (shortcut) {
       return (
-        <FavoriteEdit
-          favorite={favorite}
-          allFavorites={favoriteEntries}
+        <ShortcutEdit
+          shortcut={shortcut}
+          allShortcuts={shortcutEntries}
           onSave={(updated) => {
-            setFavoriteEntries(prev =>
-              prev.map(f => f.id === updated.id ? updated : f)
+            setShortcutEntries(prev =>
+              prev.map(s => s.id === updated.id ? updated : s)
             );
           }}
           onBack={() => popScreen()}
@@ -806,7 +806,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
         />
       );
     }
-    // Favorite not found, go back
+    // Shortcut not found, go back
     popScreen();
     return null;
   }
@@ -864,16 +864,16 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
         const hasNested = !item.isRecent && project.hasNestedProjects;
 
         let color: string | undefined;
-        const isInFavoritesSection = item.selectionKey?.startsWith("fav-");
+        const isInShortcutsSection = item.selectionKey?.startsWith("sc-");
         if (isSelected) {
           color = settings.selectedColor;
-        } else if (isInFavoritesSection) {
-          // Only color favorites green when in the actual Favorites section
-          color = settings.favoriteColor;
+        } else if (isInShortcutsSection) {
+          // Only color shortcuts green when in the actual Shortcuts section
+          color = settings.shortcutColor;
         } else if (item.isRecent) {
           color = settings.recentColor;
         }
-        // Note: projects in All Projects section with shortcuts show normal text + [shortcut] tags
+        // Note: projects in All Projects section with triggers show normal text + [trigger] tags
 
         return (
           <Box key={`item-${actualIdx}`}>
@@ -881,8 +881,8 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
               {isSelected ? "> " : "  "}
               {item.label}
             </Text>
-            {item.shortcuts && item.shortcuts.map((s, i) => (
-              <Text key={i} dimColor> [{s}]</Text>
+            {item.triggers && item.triggers.map((t, i) => (
+              <Text key={i} dimColor> [{t}]</Text>
             ))}
             {hasNested && (
               <Text color="gray" dimColor> ▶</Text>
@@ -907,7 +907,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, favo
 
       <Box marginTop={isRefreshing ? 0 : 1}>
         <Text dimColor>
-          ↑↓ navigate • enter select • →← drill/back • ^{settings.favoriteKey.toUpperCase()} fav • tab settings • ^{settings.refreshKey.toUpperCase()} refresh • esc quit
+          ↑↓ navigate • enter select • →← drill/back • ^{settings.shortcutToggleKey.toUpperCase()} shortcut • tab settings • ^{settings.refreshKey.toUpperCase()} refresh • esc quit
         </Text>
       </Box>
     </Box>

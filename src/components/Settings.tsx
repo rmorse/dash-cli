@@ -7,7 +7,7 @@ import { homedir } from "node:os";
 import type { Settings } from "../types.js";
 import { SETTING_FIELDS } from "../settings.js";
 import { clearHistory } from "../history.js";
-import { clearFavorites } from "../favorites.js";
+import { clearShortcuts } from "../shortcuts.js";
 import { Breadcrumb } from "./Breadcrumb.js";
 
 const CONFIG_FILE = join(homedir(), ".dash-cli", "settings.json");
@@ -16,44 +16,44 @@ interface SettingsProps {
   settings: Settings;
   onSave: (settings: Settings) => void;
   onCancel: () => void;
-  onClearFavorites: () => void;
+  onClearShortcuts: () => void;
   onClearHistory: () => void;
-  onEditFavorites: () => void;
+  onEditShortcuts: () => void;
   breadcrumbs: string[];
 }
 
-// Total items: settings fields + 4 action items (Edit favorites, Clear favorites, Clear history, Edit config)
+// Total items: settings fields + 4 action items (Edit shortcuts, Clear shortcuts, Clear history, Edit config)
 const TOTAL_ITEMS = SETTING_FIELDS.length + 4;
-const EDIT_FAVORITES_INDEX = SETTING_FIELDS.length;
-const CLEAR_FAVORITES_INDEX = SETTING_FIELDS.length + 1;
+const EDIT_SHORTCUTS_INDEX = SETTING_FIELDS.length;
+const CLEAR_SHORTCUTS_INDEX = SETTING_FIELDS.length + 1;
 const CLEAR_HISTORY_INDEX = SETTING_FIELDS.length + 2;
 const EDIT_CONFIG_INDEX = SETTING_FIELDS.length + 3;
 
-export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, onClearHistory, onEditFavorites, breadcrumbs }: SettingsProps) {
+export function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, onClearHistory, onEditShortcuts, breadcrumbs }: SettingsProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [editingKey, setEditingKey] = useState<keyof Settings | null>(null);
   const [editValue, setEditValue] = useState("");
   const [localSettings, setLocalSettings] = useState<Settings>({ ...settings });
 
-  const isOnEditFavorites = selectedIndex === EDIT_FAVORITES_INDEX;
-  const isOnClearFavorites = selectedIndex === CLEAR_FAVORITES_INDEX;
+  const isOnEditShortcuts = selectedIndex === EDIT_SHORTCUTS_INDEX;
+  const isOnClearShortcuts = selectedIndex === CLEAR_SHORTCUTS_INDEX;
   const isOnClearHistory = selectedIndex === CLEAR_HISTORY_INDEX;
   const isOnEditConfig = selectedIndex === EDIT_CONFIG_INDEX;
-  const isOnActionItem = isOnEditFavorites || isOnClearFavorites || isOnClearHistory || isOnEditConfig;
+  const isOnActionItem = isOnEditShortcuts || isOnClearShortcuts || isOnClearHistory || isOnEditConfig;
   const currentField = isOnActionItem ? null : SETTING_FIELDS[selectedIndex];
   const isEditing = editingKey !== null;
 
-  const [favoritesCleared, setFavoritesCleared] = useState(false);
+  const [shortcutsCleared, setShortcutsCleared] = useState(false);
   const [historyCleared, setHistoryCleared] = useState(false);
 
   const openConfigFile = async () => {
     await open(CONFIG_FILE);
   };
 
-  const handleClearFavorites = () => {
-    clearFavorites();
-    onClearFavorites();
-    setFavoritesCleared(true);
+  const handleClearShortcuts = () => {
+    clearShortcuts();
+    onClearShortcuts();
+    setShortcutsCleared(true);
   };
 
   const handleClearHistory = () => {
@@ -63,12 +63,12 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, o
   };
 
   const startEditing = () => {
-    if (isOnEditFavorites) {
-      onEditFavorites();
+    if (isOnEditShortcuts) {
+      onEditShortcuts();
       return;
     }
-    if (isOnClearFavorites) {
-      handleClearFavorites();
+    if (isOnClearShortcuts) {
+      handleClearShortcuts();
       return;
     }
     if (isOnClearHistory) {
@@ -308,21 +308,21 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, o
         );
       })}
 
-      {/* Edit favorites option */}
+      {/* Edit shortcuts option */}
       <Box>
-        <Text color={isOnEditFavorites ? "#FFD700" : "gray"} bold={isOnEditFavorites}>
-          {isOnEditFavorites ? "> " : "  "}
-          {"Edit favorites..."}
+        <Text color={isOnEditShortcuts ? "#FFD700" : "gray"} bold={isOnEditShortcuts}>
+          {isOnEditShortcuts ? "> " : "  "}
+          {"Edit shortcuts..."}
         </Text>
       </Box>
 
-      {/* Clear favorites option */}
+      {/* Clear shortcuts option */}
       <Box>
-        <Text color={isOnClearFavorites ? "#FFD700" : "gray"} bold={isOnClearFavorites}>
-          {isOnClearFavorites ? "> " : "  "}
-          {"Clear favorites..."}
+        <Text color={isOnClearShortcuts ? "#FFD700" : "gray"} bold={isOnClearShortcuts}>
+          {isOnClearShortcuts ? "> " : "  "}
+          {"Clear shortcuts..."}
         </Text>
-        {favoritesCleared && <Text color="green">{" "}✓</Text>}
+        {shortcutsCleared && <Text color="green">{" "}✓</Text>}
       </Box>
 
       {/* Clear history option */}
@@ -350,10 +350,10 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, o
       <Box>
         <Text dimColor>
           {"  "}
-          {isOnEditFavorites
-            ? "Manage favorites: edit names, shortcuts, and commands"
-            : isOnClearFavorites
-              ? "Remove all favorite projects"
+          {isOnEditShortcuts
+            ? "Manage shortcuts: edit names, triggers, and commands"
+            : isOnClearShortcuts
+              ? "Remove all shortcuts"
               : isOnClearHistory
                 ? "Remove all recent projects from history"
                 : isOnEditConfig

@@ -2,7 +2,7 @@ import React from "react";
 import { render } from "ink";
 import { App } from "./components/App.js";
 import { getRecentAsync, addRecent, writeLastCommand } from "./history.js";
-import { getFavoritesAsync, getFavoriteByShortcutAsync, generateCommand } from "./favorites.js";
+import { getShortcutsAsync, getShortcutByTriggerAsync, generateCommand } from "./shortcuts.js";
 import { loadSettingsAsync, saveSettings } from "./settings.js";
 import { runSetup } from "./setup.js";
 import { initLog, log } from "./logger.js";
@@ -25,20 +25,20 @@ async function main() {
     return;
   }
 
-  // Handle shortcut arguments for quick favorite access (supports chaining)
-  const shortcutArgs = filteredArgs.filter(arg => !arg.startsWith("--"));
-  if (shortcutArgs.length > 0) {
-    log(`quick favorite access: ${shortcutArgs.join(" ")}`);
+  // Handle trigger arguments for quick shortcut access (supports chaining)
+  const triggerArgs = filteredArgs.filter(arg => !arg.startsWith("--"));
+  if (triggerArgs.length > 0) {
+    log(`quick shortcut access: ${triggerArgs.join(" ")}`);
     const allCommands: string[] = [];
 
-    for (const shortcut of shortcutArgs) {
-      const favorite = await getFavoriteByShortcutAsync(shortcut);
-      if (!favorite) {
-        console.error(`Shortcut not found: ${shortcut}`);
+    for (const trigger of triggerArgs) {
+      const shortcut = await getShortcutByTriggerAsync(trigger);
+      if (!shortcut) {
+        console.error(`Shortcut not found: ${trigger}`);
         process.exit(1);
       }
-      log(`found favorite: ${favorite.name}`);
-      allCommands.push(...favorite.command);
+      log(`found shortcut: ${shortcut.name}`);
+      allCommands.push(...shortcut.command);
     }
 
     writeLastCommand(allCommands);
@@ -50,12 +50,12 @@ async function main() {
   const settings = await loadSettingsAsync();
   log(`settings loaded, projectsDir: ${settings.projectsDir}`);
 
-  log("loading recent and favorites...");
-  const [recentEntries, favoriteEntries] = await Promise.all([
+  log("loading recent and shortcuts...");
+  const [recentEntries, shortcutEntries] = await Promise.all([
     getRecentAsync(settings.recentCount),
-    getFavoritesAsync(),
+    getShortcutsAsync(),
   ]);
-  log(`loaded ${recentEntries.length} recent, ${favoriteEntries.length} favorites`);
+  log(`loaded ${recentEntries.length} recent, ${shortcutEntries.length} shortcuts`);
 
   let selectedPath: string | null = null;
   let selectedDisplayName: string | null = null;
@@ -65,7 +65,7 @@ async function main() {
     <App
       initialSettings={settings}
       recentEntries={recentEntries}
-      favoriteEntries={favoriteEntries}
+      shortcutEntries={shortcutEntries}
       onSelect={(path, displayName) => {
         selectedPath = path;
         selectedDisplayName = displayName;

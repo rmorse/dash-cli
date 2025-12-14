@@ -1,43 +1,43 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
-import type { Favorite } from "../types.js";
-import { removeFavorite } from "../favorites.js";
+import type { Shortcut } from "../types.js";
+import { removeShortcut } from "../shortcuts.js";
 import { Breadcrumb } from "./Breadcrumb.js";
 
-interface FavoritesEditorProps {
-  favorites: Favorite[];
-  onUpdate: (favorites: Favorite[]) => void;
-  onEditFavorite: (id: string) => void;
-  onAddFavorite: () => void;
+interface ShortcutsEditorProps {
+  shortcuts: Shortcut[];
+  onUpdate: (shortcuts: Shortcut[]) => void;
+  onEditShortcut: (id: string) => void;
+  onAddShortcut: () => void;
   onBack: () => void;
   breadcrumbs: string[];
 }
 
-export function FavoritesEditor({
-  favorites,
+export function ShortcutsEditor({
+  shortcuts,
   onUpdate,
-  onEditFavorite,
-  onAddFavorite,
+  onEditShortcut,
+  onAddShortcut,
   onBack,
   breadcrumbs,
-}: FavoritesEditorProps) {
+}: ShortcutsEditorProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
-  // Items: favorites + "Add new favorite" action
-  const totalItems = favorites.length + 1;
-  const isOnAddNew = selectedIndex === favorites.length;
+  // Items: shortcuts + "Add new shortcut" action
+  const totalItems = shortcuts.length + 1;
+  const isOnAddNew = selectedIndex === shortcuts.length;
 
   useInput((input, key) => {
     // Handle delete confirmation
     if (confirmDelete) {
       if (input === "y" || input === "Y") {
-        removeFavorite(confirmDelete);
-        onUpdate(favorites.filter((f) => f.id !== confirmDelete));
+        removeShortcut(confirmDelete);
+        onUpdate(shortcuts.filter((s) => s.id !== confirmDelete));
         setConfirmDelete(null);
         // Adjust selection if needed
-        if (selectedIndex >= favorites.length - 1) {
-          setSelectedIndex(Math.max(0, favorites.length - 2));
+        if (selectedIndex >= shortcuts.length - 1) {
+          setSelectedIndex(Math.max(0, shortcuts.length - 2));
         }
       } else if (input === "n" || input === "N" || key.escape) {
         setConfirmDelete(null);
@@ -59,17 +59,17 @@ export function FavoritesEditor({
     // Enter - edit or add
     if (key.return) {
       if (isOnAddNew) {
-        onAddFavorite();
+        onAddShortcut();
       } else {
-        onEditFavorite(favorites[selectedIndex].id);
+        onEditShortcut(shortcuts[selectedIndex].id);
       }
       return;
     }
 
-    // Ctrl+D - delete favorite
+    // Ctrl+D - delete shortcut
     if (key.ctrl && input === "d") {
-      if (!isOnAddNew && favorites.length > 0) {
-        setConfirmDelete(favorites[selectedIndex].id);
+      if (!isOnAddNew && shortcuts.length > 0) {
+        setConfirmDelete(shortcuts[selectedIndex].id);
       }
       return;
     }
@@ -87,29 +87,29 @@ export function FavoritesEditor({
 
       <Box>
         <Text color="gray" dimColor>
-          ── Favorites ──────────────────
+          ── Shortcuts ──────────────────
         </Text>
       </Box>
 
-      {favorites.length === 0 && (
+      {shortcuts.length === 0 && (
         <Box>
           <Text color="gray" dimColor>
-            {"  "}No favorites yet
+            {"  "}No shortcuts yet
           </Text>
         </Box>
       )}
 
-      {favorites.map((fav, idx) => {
+      {shortcuts.map((sc, idx) => {
         const isSelected = idx === selectedIndex;
-        const isDeleting = confirmDelete === fav.id;
+        const isDeleting = confirmDelete === sc.id;
 
         return (
-          <Box key={fav.id}>
+          <Box key={sc.id}>
             <Text color={isSelected ? "#FFD700" : undefined} bold={isSelected}>
               {isSelected ? "> " : "  "}
-              {fav.name}
+              {sc.name}
             </Text>
-            <Text dimColor> [{fav.shortcut}]</Text>
+            <Text dimColor> [{sc.trigger}]</Text>
             {isDeleting && (
               <Text color="red"> Delete? (y/n)</Text>
             )}
@@ -122,7 +122,7 @@ export function FavoritesEditor({
           color={isOnAddNew ? "#FFD700" : "cyan"}
           bold={isOnAddNew}
         >
-          {isOnAddNew ? "> " : "  "}[Add new favorite]
+          {isOnAddNew ? "> " : "  "}[Add new shortcut]
         </Text>
       </Box>
 
@@ -133,7 +133,7 @@ export function FavoritesEditor({
       </Box>
       <Box>
         <Text dimColor>
-          enter edit {favorites.length > 0 ? "• ^D delete " : ""}• esc/tab back
+          enter edit {shortcuts.length > 0 ? "• ^D delete " : ""}• esc/tab back
         </Text>
       </Box>
     </Box>

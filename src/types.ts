@@ -16,26 +16,26 @@ export interface HistoryData {
   recent: HistoryEntry[];
 }
 
-// New Favorites System
-export interface Favorite {
+// Shortcuts System
+export interface Shortcut {
   id: string;
   name: string;
-  shortcut: string;
+  trigger: string;
   caseSensitive: boolean;
   command: string[];
   createdAt: number;
 }
 
-export type FavoriteInput = Omit<Favorite, "id" | "createdAt">;
-export type FavoriteUpdate = Partial<FavoriteInput>;
+export type ShortcutInput = Omit<Shortcut, "id" | "createdAt">;
+export type ShortcutUpdate = Partial<ShortcutInput>;
 
 export interface ValidationResult {
   valid: boolean;
   error?: string;
 }
 
-export interface FavoritesData {
-  favorites: Favorite[];
+export interface ShortcutsData {
+  shortcuts: Shortcut[];
 }
 
 export interface SelectItem {

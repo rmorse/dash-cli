@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
-import type { Favorite } from "../types.js";
-import { updateFavorite, validateShortcut } from "../favorites.js";
+import type { Shortcut } from "../types.js";
+import { updateShortcut, validateTrigger } from "../shortcuts.js";
 import { Breadcrumb } from "./Breadcrumb.js";
 
-interface FavoriteEditProps {
-  favorite: Favorite;
-  allFavorites: Favorite[];
-  onSave: (updated: Favorite) => void;
+interface ShortcutEditProps {
+  shortcut: Shortcut;
+  allShortcuts: Shortcut[];
+  onSave: (updated: Shortcut) => void;
   onBack: () => void;
   breadcrumbs: string[];
 }
 
-type FieldKey = "name" | "shortcut" | "caseSensitive" | `cmd-${number}` | "add-line";
+type FieldKey = "name" | "trigger" | "caseSensitive" | `cmd-${number}` | "add-line";
 
 interface Field {
   key: FieldKey;
@@ -21,18 +21,18 @@ interface Field {
   type: "text" | "toggle" | "action";
 }
 
-export function FavoriteEdit({
-  favorite,
-  allFavorites,
+export function ShortcutEdit({
+  shortcut,
+  allShortcuts,
   onSave,
   onBack,
   breadcrumbs,
-}: FavoriteEditProps) {
+}: ShortcutEditProps) {
   // Local state for editing
-  const [name, setName] = useState(favorite.name);
-  const [shortcut, setShortcut] = useState(favorite.shortcut);
-  const [caseSensitive, setCaseSensitive] = useState(favorite.caseSensitive);
-  const [commands, setCommands] = useState([...favorite.command]);
+  const [name, setName] = useState(shortcut.name);
+  const [trigger, setTrigger] = useState(shortcut.trigger);
+  const [caseSensitive, setCaseSensitive] = useState(shortcut.caseSensitive);
+  const [commands, setCommands] = useState([...shortcut.command]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [editingField, setEditingField] = useState<FieldKey | null>(null);
@@ -41,7 +41,7 @@ export function FavoriteEdit({
   // Build dynamic field list
   const fields: Field[] = [
     { key: "name", label: "Name", type: "text" },
-    { key: "shortcut", label: "Shortcut", type: "text" },
+    { key: "trigger", label: "Trigger", type: "text" },
     { key: "caseSensitive", label: "Case Sensitive", type: "toggle" },
     ...commands.map((_, i) => ({
       key: `cmd-${i}` as FieldKey,
@@ -64,7 +64,7 @@ export function FavoriteEdit({
 
   const getValue = (key: FieldKey): string => {
     if (key === "name") return name;
-    if (key === "shortcut") return shortcut;
+    if (key === "trigger") return trigger;
     if (key === "caseSensitive") return caseSensitive ? "Yes" : "No";
     if (key.startsWith("cmd-")) {
       const idx = parseInt(key.split("-")[1], 10);
@@ -75,7 +75,7 @@ export function FavoriteEdit({
 
   const handleChange = (key: FieldKey, value: string) => {
     if (key === "name") setName(value);
-    if (key === "shortcut") setShortcut(value);
+    if (key === "trigger") setTrigger(value);
     if (key.startsWith("cmd-")) {
       const idx = parseInt(key.split("-")[1], 10);
       setCommands((prev) => {
@@ -120,9 +120,9 @@ export function FavoriteEdit({
   };
 
   const saveAndExit = () => {
-    const validation = validateShortcut(shortcut, caseSensitive, favorite.id);
+    const validation = validateTrigger(trigger, caseSensitive, shortcut.id);
     if (!validation.valid) {
-      setError(validation.error || "Invalid shortcut");
+      setError(validation.error || "Invalid trigger");
       return;
     }
 
@@ -138,9 +138,9 @@ export function FavoriteEdit({
     }
 
     try {
-      const updated = updateFavorite(favorite.id, {
+      const updated = updateShortcut(shortcut.id, {
         name: name.trim(),
-        shortcut,
+        trigger,
         caseSensitive,
         command: nonEmptyCommands,
       });
@@ -226,14 +226,14 @@ export function FavoriteEdit({
 
       <Box>
         <Text color="gray" dimColor>
-          ── Edit Favorite ───────────────
+          ── Edit Shortcut ───────────────
         </Text>
       </Box>
 
       {/* Name field */}
       {renderField(fields[0], 0)}
 
-      {/* Shortcut field */}
+      {/* Trigger field */}
       {renderField(fields[1], 1)}
 
       {/* Case Sensitive toggle */}
