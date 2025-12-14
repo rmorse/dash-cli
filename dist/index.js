@@ -54521,6 +54521,8 @@ var DEFAULT_SETTINGS = {
   projectsDir: "",
   maxDepth: 4,
   skipDirs: "node_modules,vendor,dist,build,.next,__pycache__,target,.svn,.expo,.gradle,wp-admin,wp-includes,wp-content,*.app,release,incremental,pristine,tags",
+  showShortcuts: true,
+  showRecent: true,
   recentCount: 5,
   visibleRows: 12,
   selectedColor: "#FFD700",
@@ -54551,12 +54553,25 @@ var SETTING_FIELDS = [
     description: "Comma-separated patterns (supports globs like *.test)"
   },
   {
+    key: "showShortcuts",
+    label: "Show Shortcuts",
+    type: "toggle",
+    description: "Show shortcuts section in the main list"
+  },
+  {
+    key: "showRecent",
+    label: "Show Recent",
+    type: "toggle",
+    description: "Show recent projects section in the main list"
+  },
+  {
     key: "recentCount",
     label: "Recent Count",
     type: "number",
     min: 1,
     max: 50,
-    description: "Number of recent projects to show"
+    description: "Number of recent projects to show",
+    showIf: (s) => s.showRecent
   },
   {
     key: "visibleRows",
@@ -54830,6 +54845,10 @@ function validateShortcutInput(input, excludeId) {
   }
   return { valid: true };
 }
+function getShortcuts() {
+  const data = loadShortcutsData();
+  return data.shortcuts.sort((a, b) => a.createdAt - b.createdAt);
+}
 function addShortcut(input) {
   const validation = validateShortcutInput(input);
   if (!validation.valid) {
@@ -54901,6 +54920,11 @@ function generateUniqueTrigger(shortcuts) {
   }
   return String(num);
 }
+function findShortcutByPath(path2) {
+  const shortcuts = getShortcuts();
+  const expectedCmd = generateCommand(path2)[0];
+  return shortcuts.find((s) => s.command.some((cmd) => cmd === expectedCmd));
+}
 async function pathExists3(p) {
   try {
     await access3(p);
@@ -54961,22 +54985,25 @@ function Breadcrumb({ items }) {
 // src/components/Settings.tsx
 var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
 var CONFIG_FILE = join4(homedir4(), ".dash-cli", "settings.json");
-var TOTAL_ITEMS = SETTING_FIELDS.length + 4;
-var EDIT_SHORTCUTS_INDEX = SETTING_FIELDS.length;
-var CLEAR_SHORTCUTS_INDEX = SETTING_FIELDS.length + 1;
-var CLEAR_HISTORY_INDEX = SETTING_FIELDS.length + 2;
-var EDIT_CONFIG_INDEX = SETTING_FIELDS.length + 3;
 function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, onClearHistory, onEditShortcuts, breadcrumbs }) {
   const [selectedIndex, setSelectedIndex] = (0, import_react25.useState)(0);
   const [editingKey, setEditingKey] = (0, import_react25.useState)(null);
   const [editValue, setEditValue] = (0, import_react25.useState)("");
   const [localSettings, setLocalSettings] = (0, import_react25.useState)({ ...settings });
-  const isOnEditShortcuts = selectedIndex === EDIT_SHORTCUTS_INDEX;
-  const isOnClearShortcuts = selectedIndex === CLEAR_SHORTCUTS_INDEX;
-  const isOnClearHistory = selectedIndex === CLEAR_HISTORY_INDEX;
-  const isOnEditConfig = selectedIndex === EDIT_CONFIG_INDEX;
+  const visibleFields = SETTING_FIELDS.filter(
+    (field) => !field.showIf || field.showIf(localSettings)
+  );
+  const totalItems = visibleFields.length + 4;
+  const editShortcutsIndex = visibleFields.length;
+  const clearShortcutsIndex = visibleFields.length + 1;
+  const clearHistoryIndex = visibleFields.length + 2;
+  const editConfigIndex = visibleFields.length + 3;
+  const isOnEditShortcuts = selectedIndex === editShortcutsIndex;
+  const isOnClearShortcuts = selectedIndex === clearShortcutsIndex;
+  const isOnClearHistory = selectedIndex === clearHistoryIndex;
+  const isOnEditConfig = selectedIndex === editConfigIndex;
   const isOnActionItem = isOnEditShortcuts || isOnClearShortcuts || isOnClearHistory || isOnEditConfig;
-  const currentField = isOnActionItem ? null : SETTING_FIELDS[selectedIndex];
+  const currentField = isOnActionItem ? null : visibleFields[selectedIndex];
   const isEditing = editingKey !== null;
   const [shortcutsCleared, setShortcutsCleared] = (0, import_react25.useState)(false);
   const [historyCleared, setHistoryCleared] = (0, import_react25.useState)(false);
@@ -55010,8 +55037,15 @@ function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, onClearH
       openConfigFile();
       return;
     }
-    const field = SETTING_FIELDS[selectedIndex];
+    const field = visibleFields[selectedIndex];
     const value = localSettings[field.key];
+    if (field.type === "toggle") {
+      setLocalSettings((prev) => ({
+        ...prev,
+        [field.key]: !prev[field.key]
+      }));
+      return;
+    }
     setEditingKey(field.key);
     setEditValue(String(value));
   };
@@ -55127,18 +55161,21 @@ function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, onClearH
     }
     if (key.upArrow) {
       setSelectedIndex(
-        (prev) => prev <= 0 ? TOTAL_ITEMS - 1 : prev - 1
+        (prev) => prev <= 0 ? totalItems - 1 : prev - 1
       );
       return;
     }
     if (key.downArrow) {
       setSelectedIndex(
-        (prev) => prev >= TOTAL_ITEMS - 1 ? 0 : prev + 1
+        (prev) => prev >= totalItems - 1 ? 0 : prev + 1
       );
       return;
     }
   });
   const formatValue = (field, value) => {
+    if (field.type === "toggle") {
+      return value ? "Yes" : "No";
+    }
     const str = String(value);
     if (field.type === "text" && str.length > 35) {
       return str.slice(0, 32) + "...";
@@ -55164,12 +55201,12 @@ function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, onClearH
       "  ",
       "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
     ] }) }),
-    SETTING_FIELDS.map((field, idx) => {
+    visibleFields.map((field, idx) => {
       const isSelected = idx === selectedIndex;
       const isFieldEditing = editingKey === field.key;
       const value = localSettings[field.key];
       const displayValue = formatValue(field, value);
-      const useTextInputForField = !["number", "key"].includes(field.type);
+      const useTextInputForField = !["number", "key", "toggle"].includes(field.type);
       return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { flexDirection: "row", children: [
         /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isSelected ? "#FFD700" : void 0, bold: isSelected, children: [
           isSelected ? "> " : "  ",
@@ -55235,7 +55272,7 @@ function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, onClearH
       "  ",
       isOnEditShortcuts ? "Manage shortcuts: edit names, triggers, and commands" : isOnClearShortcuts ? "Remove all shortcuts" : isOnClearHistory ? "Remove all recent projects from history" : isOnEditConfig ? "Open settings.json in default editor" : currentField?.description
     ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { dimColor: true, children: isEditing ? currentField?.type === "number" ? "  type or \u2190\u2192\u2191\u2193 adjust \u2022 enter save \u2022 esc cancel" : "  \u2190\u2192 cursor \u2022 enter save \u2022 esc cancel" : "  \u2191\u2193 navigate \u2022 enter edit \u2022 esc save & exit" }) })
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { dimColor: true, children: isEditing ? currentField?.type === "number" ? "  type or \u2190\u2192\u2191\u2193 adjust \u2022 enter save \u2022 esc cancel" : "  \u2190\u2192 cursor \u2022 enter save \u2022 esc cancel" : currentField?.type === "toggle" ? "  \u2191\u2193 navigate \u2022 enter toggle \u2022 esc save & exit" : "  \u2191\u2193 navigate \u2022 enter edit \u2022 esc save & exit" }) })
   ] });
 }
 
@@ -55846,6 +55883,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
   const [settings, setSettings] = (0, import_react28.useState)(initialSettings);
   const [recentEntries, setRecentEntries] = (0, import_react28.useState)(initialRecentEntries);
   const [shortcutEntries, setShortcutEntries] = (0, import_react28.useState)(initialShortcutEntries);
+  const [confirmDeleteId, setConfirmDeleteId] = (0, import_react28.useState)(null);
   const scanAbortSignal = (0, import_react28.useRef)({ aborted: false });
   (0, import_react28.useEffect)(() => {
     log("useEffect: mount - starting cache/scan");
@@ -55888,12 +55926,12 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
   const currentLevel = navStack[navStack.length - 1];
   const currentProjects = currentLevel.projects;
   const isAtRoot = navStack.length === 1;
-  const shortcutPaths = (0, import_react28.useMemo)(() => {
+  const exactShortcutPaths = (0, import_react28.useMemo)(() => {
     const paths = /* @__PURE__ */ new Set();
     for (const sc of shortcutEntries) {
-      const cdCmd = sc.command.find((c) => c.startsWith("cd "));
-      if (cdCmd) {
-        const pathMatch = cdCmd.match(/^cd\s+"?([^"]+)"?$/);
+      if (sc.command.length === 1) {
+        const cmd = sc.command[0];
+        const pathMatch = cmd.match(/^cd\s+"([^"]+)"$/);
         if (pathMatch) {
           paths.add(pathMatch[1]);
         }
@@ -55936,7 +55974,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
   const { unfilteredItems, unfilteredKeyToIndex } = (0, import_react28.useMemo)(() => {
     const list = [];
     const keyMap = /* @__PURE__ */ new Map();
-    if (isAtRoot && shortcutEntries.length > 0 && !searchTerm) {
+    if (isAtRoot && settings.showShortcuts && shortcutEntries.length > 0 && !searchTerm) {
       list.push({ type: "header", label: "Shortcuts" });
       for (const sc of shortcutEntries) {
         const cdCmd = sc.command.find((c) => c.startsWith("cd "));
@@ -55963,11 +56001,11 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
         keyMap.set(selectionKey, idx);
       }
     }
-    if (isAtRoot && recentEntries.length > 0 && !searchTerm) {
+    if (isAtRoot && settings.showRecent && recentEntries.length > 0 && !searchTerm) {
       const recentHeader = list.length;
       let hasRecent = false;
       for (const entry of recentEntries) {
-        if (shortcutPaths.has(entry.path)) continue;
+        if (exactShortcutPaths.has(entry.path)) continue;
         if (!hasRecent) {
           list.push({ type: "header", label: "Recent" });
           hasRecent = true;
@@ -56017,7 +56055,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
       keyMap.set("__back__", idx);
     }
     return { unfilteredItems: list, unfilteredKeyToIndex: keyMap };
-  }, [currentProjects, recentEntries, shortcutEntries, isAtRoot, recentPaths, shortcutPaths, triggersByPath, allProjectsMap, currentLevel.parentPath, settings.projectsDir, searchTerm]);
+  }, [currentProjects, recentEntries, shortcutEntries, isAtRoot, recentPaths, exactShortcutPaths, triggersByPath, allProjectsMap, currentLevel.parentPath, settings.projectsDir, settings.showShortcuts, settings.showRecent, searchTerm]);
   const { items, keyToIndex } = (0, import_react28.useMemo)(() => {
     if (!searchTerm) {
       return { items: unfilteredItems, keyToIndex: unfilteredKeyToIndex };
@@ -56116,33 +56154,54 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
       setSearchTerm("");
     }
   };
-  const toggleShortcut = () => {
+  const handleAddShortcut = () => {
     const currentItem = items[selectedIndex];
     if (currentItem?.type !== "project" || !currentItem.path) return;
     const isInShortcutsSection = currentItem.selectionKey?.startsWith("sc-");
-    if (currentItem.isShortcut && currentItem.shortcutId) {
-      removeShortcut(currentItem.shortcutId);
-      setShortcutEntries((prev) => prev.filter((s) => s.id !== currentItem.shortcutId));
-      if (isInShortcutsSection) {
-        const currentPos = selectableIndices.indexOf(selectedIndex);
-        const nextPos = currentPos + 1 < selectableIndices.length ? currentPos + 1 : currentPos - 1;
-        if (nextPos >= 0 && nextPos < selectableIndices.length) {
-          const nextIndex = selectableIndices[nextPos];
-          setSelectedKey(items[nextIndex]?.selectionKey ?? null);
-        } else {
-          setSelectedKey(null);
-        }
+    const isInRecentSection = currentItem.selectionKey?.startsWith("recent-");
+    if (isInShortcutsSection) return;
+    const existingShortcut = findShortcutByPath(currentItem.path);
+    if (existingShortcut) return;
+    const displayName = getDisplayName(currentItem.path, settings.projectsDir);
+    const newShortcut = addShortcut({
+      name: displayName,
+      trigger: generateUniqueTrigger(shortcutEntries),
+      caseSensitive: false,
+      command: generateCommand(currentItem.path)
+    });
+    setShortcutEntries((prev) => [...prev, newShortcut]);
+    if (isInRecentSection) {
+      const currentPos = selectableIndices.indexOf(selectedIndex);
+      const nextPos = currentPos + 1 < selectableIndices.length ? currentPos + 1 : currentPos - 1;
+      if (nextPos >= 0 && nextPos < selectableIndices.length) {
+        const nextIndex = selectableIndices[nextPos];
+        setSelectedKey(items[nextIndex]?.selectionKey ?? null);
       }
-    } else {
-      const displayName = getDisplayName(currentItem.path, settings.projectsDir);
-      const newShortcut = addShortcut({
-        name: displayName,
-        trigger: generateUniqueTrigger(shortcutEntries),
-        caseSensitive: false,
-        command: generateCommand(currentItem.path)
-      });
-      setShortcutEntries((prev) => [...prev, newShortcut]);
     }
+  };
+  const handleDeleteShortcut = () => {
+    const currentItem = items[selectedIndex];
+    if (currentItem?.type !== "project") return;
+    const isInShortcutsSection = currentItem.selectionKey?.startsWith("sc-");
+    if (!isInShortcutsSection || !currentItem.shortcutId) return;
+    setConfirmDeleteId(currentItem.shortcutId);
+  };
+  const confirmDelete = () => {
+    if (!confirmDeleteId) return;
+    removeShortcut(confirmDeleteId);
+    setShortcutEntries((prev) => prev.filter((s) => s.id !== confirmDeleteId));
+    setConfirmDeleteId(null);
+    const currentPos = selectableIndices.indexOf(selectedIndex);
+    const nextPos = currentPos + 1 < selectableIndices.length ? currentPos + 1 : currentPos - 1;
+    if (nextPos >= 0 && nextPos < selectableIndices.length) {
+      const nextIndex = selectableIndices[nextPos];
+      setSelectedKey(items[nextIndex]?.selectionKey ?? null);
+    } else {
+      setSelectedKey(null);
+    }
+  };
+  const cancelDelete = () => {
+    setConfirmDeleteId(null);
   };
   const refreshProjects = () => {
     if (isRefreshing) return;
@@ -56189,6 +56248,14 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
   };
   use_input_default((input, key) => {
     if (currentScreen.screen !== "main") return;
+    if (confirmDeleteId) {
+      if (input === "y" || input === "Y") {
+        confirmDelete();
+      } else {
+        cancelDelete();
+      }
+      return;
+    }
     if (key.tab) {
       pushScreen("settings");
       return;
@@ -56198,7 +56265,11 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
       return;
     }
     if (key.ctrl && input === settings.shortcutToggleKey) {
-      toggleShortcut();
+      handleAddShortcut();
+      return;
+    }
+    if (key.ctrl && input === "d") {
+      handleDeleteShortcut();
       return;
     }
     if (key.escape) {
@@ -56421,6 +56492,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
       } else if (item.isRecent) {
         color = settings.recentColor;
       }
+      const isDeleting = item.shortcutId && confirmDeleteId === item.shortcutId;
       return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Box_default, { children: [
         /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color, bold: isSelected, children: [
           isSelected ? "> " : "  ",
@@ -56431,7 +56503,8 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
           t,
           "]"
         ] }, i)),
-        hasNested && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: "gray", dimColor: true, children: " \u25B6" })
+        hasNested && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: "gray", dimColor: true, children: " \u25B6" }),
+        isDeleting && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: "red", children: " Delete? (y/n)" })
       ] }, `item-${actualIdx}`);
     }),
     hasMoreBelow && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { dimColor: true, children: [
@@ -56446,7 +56519,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
     /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { marginTop: isRefreshing ? 0 : 1, children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { dimColor: true, children: [
       "\u2191\u2193 navigate \u2022 enter select \u2022 \u2192\u2190 drill/back \u2022 ^",
       settings.shortcutToggleKey.toUpperCase(),
-      " shortcut \u2022 tab settings \u2022 ^",
+      " add shortcut \u2022 ^D delete \u2022 tab settings \u2022 ^",
       settings.refreshKey.toUpperCase(),
       " refresh \u2022 esc quit"
     ] }) })

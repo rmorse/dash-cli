@@ -133,6 +133,9 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
   const [recentEntries, setRecentEntries] = useState(initialRecentEntries);
   const [shortcutEntries, setShortcutEntries] = useState(initialShortcutEntries);
 
+  // Delete confirmation state for shortcuts on main screen
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
   // Abort signal for cancelling scans early (e.g., when user selects before scan completes)
   const scanAbortSignal = useRef<ScanAbortSignal>({ aborted: false });
 
@@ -197,14 +200,15 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
   const currentProjects = currentLevel.projects;
   const isAtRoot = navStack.length === 1;
 
-  // Track shortcut and recent paths for coloring and filtering
-  // Extract paths from shortcut commands (looks for cd "path" pattern)
-  const shortcutPaths = useMemo(() => {
+  // Track paths that have EXACT shortcut matches (single cd command only)
+  // Only these should hide recent items - modified shortcuts shouldn't hide them
+  const exactShortcutPaths = useMemo(() => {
     const paths = new Set<string>();
     for (const sc of shortcutEntries) {
-      const cdCmd = sc.command.find(c => c.startsWith('cd '));
-      if (cdCmd) {
-        const pathMatch = cdCmd.match(/^cd\s+"?([^"]+)"?$/);
+      // Only exact match: single command that is just cd "/path"
+      if (sc.command.length === 1) {
+        const cmd = sc.command[0];
+        const pathMatch = cmd.match(/^cd\s+"([^"]+)"$/);
         if (pathMatch) {
           paths.add(pathMatch[1]);
         }
@@ -257,8 +261,8 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
     const list: ListItem[] = [];
     const keyMap = new Map<string, number>();
 
-    // Shortcuts section (only at root level, hidden when searching)
-    if (isAtRoot && shortcutEntries.length > 0 && !searchTerm) {
+    // Shortcuts section (only at root level, hidden when searching, respects showShortcuts setting)
+    if (isAtRoot && settings.showShortcuts && shortcutEntries.length > 0 && !searchTerm) {
       list.push({ type: "header", label: "Shortcuts" });
       for (const sc of shortcutEntries) {
         // Extract path from cd command
@@ -287,12 +291,13 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
       }
     }
 
-    // Recent section (only at root level, hidden when searching)
-    if (isAtRoot && recentEntries.length > 0 && !searchTerm) {
+    // Recent section (only at root level, hidden when searching, respects showRecent setting)
+    if (isAtRoot && settings.showRecent && recentEntries.length > 0 && !searchTerm) {
       const recentHeader = list.length;
       let hasRecent = false;
       for (const entry of recentEntries) {
-        if (shortcutPaths.has(entry.path)) continue;
+        // Only hide if there's an EXACT shortcut match (single cd command)
+        if (exactShortcutPaths.has(entry.path)) continue;
         if (!hasRecent) {
           list.push({ type: "header", label: "Recent" });
           hasRecent = true;
@@ -348,7 +353,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
     }
 
     return { unfilteredItems: list, unfilteredKeyToIndex: keyMap };
-  }, [currentProjects, recentEntries, shortcutEntries, isAtRoot, recentPaths, shortcutPaths, triggersByPath, allProjectsMap, currentLevel.parentPath, settings.projectsDir, searchTerm]);
+  }, [currentProjects, recentEntries, shortcutEntries, isAtRoot, recentPaths, exactShortcutPaths, triggersByPath, allProjectsMap, currentLevel.parentPath, settings.projectsDir, settings.showShortcuts, settings.showRecent, searchTerm]);
 
   // Filter items based on search term, also build keyToIndex map
   const { items, keyToIndex } = useMemo(() => {
@@ -479,41 +484,74 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
     }
   };
 
-  const toggleShortcut = () => {
+  const handleAddShortcut = () => {
     const currentItem = items[selectedIndex];
     if (currentItem?.type !== "project" || !currentItem.path) return;
 
     const isInShortcutsSection = currentItem.selectionKey?.startsWith("sc-");
+    const isInRecentSection = currentItem.selectionKey?.startsWith("recent-");
 
-    if (currentItem.isShortcut && currentItem.shortcutId) {
-      // Remove shortcut using ID
-      removeShortcut(currentItem.shortcutId);
-      setShortcutEntries(prev => prev.filter(s => s.id !== currentItem.shortcutId));
+    // Don't add from shortcuts section - use Ctrl+D to delete instead
+    if (isInShortcutsSection) return;
 
-      if (isInShortcutsSection) {
-        // Item will disappear from shortcuts section - select next item in list
-        const currentPos = selectableIndices.indexOf(selectedIndex);
-        const nextPos = currentPos + 1 < selectableIndices.length ? currentPos + 1 : currentPos - 1;
-        if (nextPos >= 0 && nextPos < selectableIndices.length) {
-          const nextIndex = selectableIndices[nextPos];
-          setSelectedKey(items[nextIndex]?.selectionKey ?? null);
-        } else {
-          setSelectedKey(null); // Fall back to first item
-        }
+    // Check if this path already has an exact shortcut - don't add duplicates
+    const existingShortcut = findShortcutByPath(currentItem.path);
+    if (existingShortcut) return;
+
+    // Add new shortcut
+    const displayName = getDisplayName(currentItem.path!, settings.projectsDir);
+    const newShortcut = addShortcut({
+      name: displayName,
+      trigger: generateUniqueTrigger(shortcutEntries),
+      caseSensitive: false,
+      command: generateCommand(currentItem.path!),
+    });
+    setShortcutEntries(prev => [...prev, newShortcut]);
+
+    // If adding from Recent section, the item will disappear (exact match)
+    // Pre-select the next item to avoid jumping to shortcuts
+    if (isInRecentSection) {
+      const currentPos = selectableIndices.indexOf(selectedIndex);
+      const nextPos = currentPos + 1 < selectableIndices.length ? currentPos + 1 : currentPos - 1;
+      if (nextPos >= 0 && nextPos < selectableIndices.length) {
+        const nextIndex = selectableIndices[nextPos];
+        setSelectedKey(items[nextIndex]?.selectionKey ?? null);
       }
-      // If in main list, item stays (just loses shortcut color) - key unchanged
-    } else {
-      // Add shortcut
-      const displayName = getDisplayName(currentItem.path!, settings.projectsDir);
-      const newShortcut = addShortcut({
-        name: displayName,
-        trigger: generateUniqueTrigger(shortcutEntries),
-        caseSensitive: false,
-        command: generateCommand(currentItem.path!),
-      });
-      setShortcutEntries(prev => [...prev, newShortcut]);
-      // Item stays in place (main list) - key unchanged
     }
+  };
+
+  const handleDeleteShortcut = () => {
+    const currentItem = items[selectedIndex];
+    if (currentItem?.type !== "project") return;
+
+    // Only allow delete from shortcuts section
+    const isInShortcutsSection = currentItem.selectionKey?.startsWith("sc-");
+    if (!isInShortcutsSection || !currentItem.shortcutId) return;
+
+    // Show confirmation
+    setConfirmDeleteId(currentItem.shortcutId);
+  };
+
+  const confirmDelete = () => {
+    if (!confirmDeleteId) return;
+
+    removeShortcut(confirmDeleteId);
+    setShortcutEntries(prev => prev.filter(s => s.id !== confirmDeleteId));
+    setConfirmDeleteId(null);
+
+    // Select next item in list
+    const currentPos = selectableIndices.indexOf(selectedIndex);
+    const nextPos = currentPos + 1 < selectableIndices.length ? currentPos + 1 : currentPos - 1;
+    if (nextPos >= 0 && nextPos < selectableIndices.length) {
+      const nextIndex = selectableIndices[nextPos];
+      setSelectedKey(items[nextIndex]?.selectionKey ?? null);
+    } else {
+      setSelectedKey(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setConfirmDeleteId(null);
   };
 
   const refreshProjects = () => {
@@ -579,6 +617,17 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
     // Skip input handling when not on main screen
     if (currentScreen.screen !== "main") return;
 
+    // Handle delete confirmation mode
+    if (confirmDeleteId) {
+      if (input === "y" || input === "Y") {
+        confirmDelete();
+      } else {
+        // Any other key cancels (including n, N, Escape, etc.)
+        cancelDelete();
+      }
+      return;
+    }
+
     // Tab - open settings
     if (key.tab) {
       pushScreen("settings");
@@ -591,9 +640,15 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
       return;
     }
 
-    // Ctrl+E (or custom key) - toggle shortcut
+    // Ctrl+T (or custom key) - add shortcut (from Recent or All Projects only)
     if (key.ctrl && input === settings.shortcutToggleKey) {
-      toggleShortcut();
+      handleAddShortcut();
+      return;
+    }
+
+    // Ctrl+D - delete shortcut (from Shortcuts section only, with confirmation)
+    if (key.ctrl && input === "d") {
+      handleDeleteShortcut();
       return;
     }
 
@@ -875,6 +930,8 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
         }
         // Note: projects in All Projects section with triggers show normal text + [trigger] tags
 
+        const isDeleting = item.shortcutId && confirmDeleteId === item.shortcutId;
+
         return (
           <Box key={`item-${actualIdx}`}>
             <Text color={color} bold={isSelected}>
@@ -886,6 +943,9 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
             ))}
             {hasNested && (
               <Text color="gray" dimColor> ▶</Text>
+            )}
+            {isDeleting && (
+              <Text color="red"> Delete? (y/n)</Text>
             )}
           </Box>
         );
@@ -907,7 +967,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
 
       <Box marginTop={isRefreshing ? 0 : 1}>
         <Text dimColor>
-          ↑↓ navigate • enter select • →← drill/back • ^{settings.shortcutToggleKey.toUpperCase()} shortcut • tab settings • ^{settings.refreshKey.toUpperCase()} refresh • esc quit
+          ↑↓ navigate • enter select • →← drill/back • ^{settings.shortcutToggleKey.toUpperCase()} add shortcut • ^D delete • tab settings • ^{settings.refreshKey.toUpperCase()} refresh • esc quit
         </Text>
       </Box>
     </Box>

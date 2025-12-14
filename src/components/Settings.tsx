@@ -22,12 +22,6 @@ interface SettingsProps {
   breadcrumbs: string[];
 }
 
-// Total items: settings fields + 4 action items (Edit shortcuts, Clear shortcuts, Clear history, Edit config)
-const TOTAL_ITEMS = SETTING_FIELDS.length + 4;
-const EDIT_SHORTCUTS_INDEX = SETTING_FIELDS.length;
-const CLEAR_SHORTCUTS_INDEX = SETTING_FIELDS.length + 1;
-const CLEAR_HISTORY_INDEX = SETTING_FIELDS.length + 2;
-const EDIT_CONFIG_INDEX = SETTING_FIELDS.length + 3;
 
 export function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, onClearHistory, onEditShortcuts, breadcrumbs }: SettingsProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -35,12 +29,24 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, o
   const [editValue, setEditValue] = useState("");
   const [localSettings, setLocalSettings] = useState<Settings>({ ...settings });
 
-  const isOnEditShortcuts = selectedIndex === EDIT_SHORTCUTS_INDEX;
-  const isOnClearShortcuts = selectedIndex === CLEAR_SHORTCUTS_INDEX;
-  const isOnClearHistory = selectedIndex === CLEAR_HISTORY_INDEX;
-  const isOnEditConfig = selectedIndex === EDIT_CONFIG_INDEX;
+  // Filter fields based on showIf condition
+  const visibleFields = SETTING_FIELDS.filter(
+    (field) => !field.showIf || field.showIf(localSettings)
+  );
+
+  // Dynamic indices based on visible fields
+  const totalItems = visibleFields.length + 4;
+  const editShortcutsIndex = visibleFields.length;
+  const clearShortcutsIndex = visibleFields.length + 1;
+  const clearHistoryIndex = visibleFields.length + 2;
+  const editConfigIndex = visibleFields.length + 3;
+
+  const isOnEditShortcuts = selectedIndex === editShortcutsIndex;
+  const isOnClearShortcuts = selectedIndex === clearShortcutsIndex;
+  const isOnClearHistory = selectedIndex === clearHistoryIndex;
+  const isOnEditConfig = selectedIndex === editConfigIndex;
   const isOnActionItem = isOnEditShortcuts || isOnClearShortcuts || isOnClearHistory || isOnEditConfig;
-  const currentField = isOnActionItem ? null : SETTING_FIELDS[selectedIndex];
+  const currentField = isOnActionItem ? null : visibleFields[selectedIndex];
   const isEditing = editingKey !== null;
 
   const [shortcutsCleared, setShortcutsCleared] = useState(false);
@@ -79,8 +85,18 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, o
       openConfigFile();
       return;
     }
-    const field = SETTING_FIELDS[selectedIndex];
+    const field = visibleFields[selectedIndex];
     const value = localSettings[field.key];
+
+    // Toggle type: immediately flip the boolean value
+    if (field.type === "toggle") {
+      setLocalSettings((prev) => ({
+        ...prev,
+        [field.key]: !prev[field.key],
+      }));
+      return;
+    }
+
     setEditingKey(field.key);
     setEditValue(String(value));
   };
@@ -228,20 +244,23 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, o
 
     if (key.upArrow) {
       setSelectedIndex((prev) =>
-        prev <= 0 ? TOTAL_ITEMS - 1 : prev - 1
+        prev <= 0 ? totalItems - 1 : prev - 1
       );
       return;
     }
 
     if (key.downArrow) {
       setSelectedIndex((prev) =>
-        prev >= TOTAL_ITEMS - 1 ? 0 : prev + 1
+        prev >= totalItems - 1 ? 0 : prev + 1
       );
       return;
     }
   });
 
-  const formatValue = (field: (typeof SETTING_FIELDS)[0], value: string | number): string => {
+  const formatValue = (field: (typeof SETTING_FIELDS)[0], value: string | number | boolean): string => {
+    if (field.type === "toggle") {
+      return value ? "Yes" : "No";
+    }
     const str = String(value);
     if (field.type === "text" && str.length > 35) {
       return str.slice(0, 32) + "...";
@@ -268,12 +287,12 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, o
         <Text dimColor>{"  "}───────────────────────────────────────</Text>
       </Box>
 
-      {SETTING_FIELDS.map((field, idx) => {
+      {visibleFields.map((field, idx) => {
         const isSelected = idx === selectedIndex;
         const isFieldEditing = editingKey === field.key;
         const value = localSettings[field.key];
         const displayValue = formatValue(field, value);
-        const useTextInputForField = !["number", "key"].includes(field.type);
+        const useTextInputForField = !["number", "key", "toggle"].includes(field.type);
 
         return (
           <Box key={field.key} flexDirection="row">
@@ -368,7 +387,9 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, o
             ? currentField?.type === "number"
               ? "  type or ←→↑↓ adjust • enter save • esc cancel"
               : "  ←→ cursor • enter save • esc cancel"
-            : "  ↑↓ navigate • enter edit • esc save & exit"}
+            : currentField?.type === "toggle"
+              ? "  ↑↓ navigate • enter toggle • esc save & exit"
+              : "  ↑↓ navigate • enter edit • esc save & exit"}
         </Text>
       </Box>
     </Box>

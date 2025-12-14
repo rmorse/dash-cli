@@ -10,6 +10,8 @@ export interface Settings {
   projectsDir: string;
   maxDepth: number;
   skipDirs: string;
+  showShortcuts: boolean;
+  showRecent: boolean;
   recentCount: number;
   visibleRows: number;
   selectedColor: string;
@@ -23,6 +25,8 @@ export const DEFAULT_SETTINGS: Settings = {
   projectsDir: "",
   maxDepth: 4,
   skipDirs: "node_modules,vendor,dist,build,.next,__pycache__,target,.svn,.expo,.gradle,wp-admin,wp-includes,wp-content,*.app,release,incremental,pristine,tags",
+  showShortcuts: true,
+  showRecent: true,
   recentCount: 5,
   visibleRows: 12,
   selectedColor: "#FFD700",
@@ -35,10 +39,11 @@ export const DEFAULT_SETTINGS: Settings = {
 export interface SettingField {
   key: keyof Settings;
   label: string;
-  type: "path" | "number" | "text" | "color" | "key";
+  type: "path" | "number" | "text" | "color" | "key" | "toggle";
   min?: number;
   max?: number;
   description: string;
+  showIf?: (settings: Settings) => boolean;
 }
 
 export const SETTING_FIELDS: SettingField[] = [
@@ -63,12 +68,25 @@ export const SETTING_FIELDS: SettingField[] = [
     description: "Comma-separated patterns (supports globs like *.test)",
   },
   {
+    key: "showShortcuts",
+    label: "Show Shortcuts",
+    type: "toggle",
+    description: "Show shortcuts section in the main list",
+  },
+  {
+    key: "showRecent",
+    label: "Show Recent",
+    type: "toggle",
+    description: "Show recent projects section in the main list",
+  },
+  {
     key: "recentCount",
     label: "Recent Count",
     type: "number",
     min: 1,
     max: 50,
     description: "Number of recent projects to show",
+    showIf: (s) => s.showRecent,
   },
   {
     key: "visibleRows",

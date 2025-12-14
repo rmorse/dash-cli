@@ -67,12 +67,14 @@ Commands:
 
 ### Quick Add
 
-Press `Ctrl+T` on any project to quickly add it as a shortcut. This creates a shortcut with:
+Press `Ctrl+T` on any project or recent item to quickly add it as a shortcut. This creates a shortcut with:
 - Name: the project path
 - Trigger: next available number (1, 2, 3...)
 - Command: `cd "/path/to/project"`
 
-Edit the shortcut later to customize the trigger or add more commands.
+To delete a shortcut, select it in the Shortcuts section and press `Ctrl+D` (confirm with y/n).
+
+Edit shortcuts via **Settings > Edit shortcuts** to customize triggers or add more commands.
 
 ## Controls
 
@@ -83,7 +85,8 @@ Edit the shortcut later to customize the trigger or add more commands.
 | `→` / `←` | Drill into / back from nested projects |
 | `PgUp` / `PgDn` | Page navigation |
 | Type | Filter projects |
-| `Ctrl+T` | Toggle shortcut (customizable) |
+| `Ctrl+T` | Add shortcut (customizable) |
+| `Ctrl+D` | Delete shortcut (in Shortcuts section) |
 | `Ctrl+R` | Refresh projects list (customizable) |
 | `Esc` | Clear filter / go back / quit |
 | `Tab` | Open settings |
@@ -97,12 +100,14 @@ Press `Tab` to open the settings screen, or edit `~/.dash-cli/settings.json`:
 | `projectsDir` | `D:\projects` | Root directory to scan |
 | `maxDepth` | `4` | How deep to scan for nested repos |
 | `skipDirs` | `node_modules,...` | Comma-separated patterns to skip (supports globs like `*.test`) |
-| `recentCount` | `5` | Number of recent projects to show |
+| `showShortcuts` | `true` | Show shortcuts section in the main list |
+| `showRecent` | `true` | Show recent projects section in the main list |
+| `recentCount` | `5` | Number of recent projects to show (only visible when `showRecent` is true) |
 | `visibleRows` | `12` | Viewport height |
 | `selectedColor` | `#FFD700` | Highlight color for selected item |
 | `shortcutColor` | `#69FFBE` | Color for shortcut items |
 | `recentColor` | `#6495ED` | Color for recent items |
-| `shortcutToggleKey` | `t` | Key for Ctrl+? to toggle shortcut |
+| `shortcutToggleKey` | `t` | Key for Ctrl+? to add shortcut |
 | `refreshKey` | `r` | Key for Ctrl+? to refresh projects |
 
 ## Installation
