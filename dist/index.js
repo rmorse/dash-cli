@@ -1372,7 +1372,7 @@ var require_react_development = __commonJS({
           }
           return dispatcher.useContext(Context);
         }
-        function useState7(initialState) {
+        function useState8(initialState) {
           var dispatcher = resolveDispatcher();
           return dispatcher.useState(initialState);
         }
@@ -1384,7 +1384,7 @@ var require_react_development = __commonJS({
           var dispatcher = resolveDispatcher();
           return dispatcher.useRef(initialValue);
         }
-        function useEffect6(create2, deps) {
+        function useEffect7(create2, deps) {
           var dispatcher = resolveDispatcher();
           return dispatcher.useEffect(create2, deps);
         }
@@ -2167,7 +2167,7 @@ var require_react_development = __commonJS({
         exports.useContext = useContext7;
         exports.useDebugValue = useDebugValue;
         exports.useDeferredValue = useDeferredValue;
-        exports.useEffect = useEffect6;
+        exports.useEffect = useEffect7;
         exports.useId = useId;
         exports.useImperativeHandle = useImperativeHandle;
         exports.useInsertionEffect = useInsertionEffect;
@@ -2175,7 +2175,7 @@ var require_react_development = __commonJS({
         exports.useMemo = useMemo4;
         exports.useReducer = useReducer;
         exports.useRef = useRef2;
-        exports.useState = useState7;
+        exports.useState = useState8;
         exports.useSyncExternalStore = useSyncExternalStore;
         exports.useTransition = useTransition;
         exports.version = ReactVersion;
@@ -7870,9 +7870,9 @@ var require_react_reconciler_development = __commonJS({
       module.exports = function $$$reconciler($$$hostConfig) {
         var exports2 = {};
         "use strict";
-        var React16 = require_react();
+        var React17 = require_react();
         var Scheduler = require_scheduler();
-        var ReactSharedInternals = React16.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+        var ReactSharedInternals = React17.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
         var suppressWarning = false;
         function setSuppressWarning(newSuppressWarning) {
           {
@@ -26861,7 +26861,7 @@ var require_backend = __commonJS({
                     });
                     return a._currentValue;
                   },
-                  useEffect: function useEffect6(a) {
+                  useEffect: function useEffect7(a) {
                     C();
                     x.push({
                       primitive: "Effect",
@@ -26938,7 +26938,7 @@ var require_backend = __commonJS({
                     });
                     return a;
                   },
-                  useState: function useState7(a) {
+                  useState: function useState8(a) {
                     var b = C();
                     a = null !== b ? b.memoizedState : "function" === typeof a ? a() : a;
                     x.push({
@@ -41831,7 +41831,7 @@ var require_react_jsx_runtime_development = __commonJS({
     if (process.env.NODE_ENV !== "production") {
       (function() {
         "use strict";
-        var React16 = require_react();
+        var React17 = require_react();
         var REACT_ELEMENT_TYPE = /* @__PURE__ */ Symbol.for("react.element");
         var REACT_PORTAL_TYPE = /* @__PURE__ */ Symbol.for("react.portal");
         var REACT_FRAGMENT_TYPE = /* @__PURE__ */ Symbol.for("react.fragment");
@@ -41857,7 +41857,7 @@ var require_react_jsx_runtime_development = __commonJS({
           }
           return null;
         }
-        var ReactSharedInternals = React16.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+        var ReactSharedInternals = React17.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
         function error(format) {
           {
             {
@@ -53787,7 +53787,7 @@ var import_react20 = __toESM(require_react(), 1);
 var import_react21 = __toESM(require_react(), 1);
 
 // src/components/App.tsx
-var import_react27 = __toESM(require_react(), 1);
+var import_react28 = __toESM(require_react(), 1);
 
 // node_modules/ink-spinner/build/index.js
 var import_react22 = __toESM(require_react(), 1);
@@ -53814,7 +53814,97 @@ var build_default = Spinner;
 import { basename as basename2, relative as relative2 } from "path";
 
 // src/components/Settings.tsx
-var import_react24 = __toESM(require_react(), 1);
+var import_react25 = __toESM(require_react(), 1);
+
+// node_modules/ink-text-input/build/index.js
+var import_react23 = __toESM(require_react(), 1);
+function TextInput({ value: originalValue, placeholder = "", focus = true, mask, highlightPastedText = false, showCursor = true, onChange, onSubmit }) {
+  const [state, setState] = (0, import_react23.useState)({
+    cursorOffset: (originalValue || "").length,
+    cursorWidth: 0
+  });
+  const { cursorOffset, cursorWidth } = state;
+  (0, import_react23.useEffect)(() => {
+    setState((previousState) => {
+      if (!focus || !showCursor) {
+        return previousState;
+      }
+      const newValue = originalValue || "";
+      if (previousState.cursorOffset > newValue.length - 1) {
+        return {
+          cursorOffset: newValue.length,
+          cursorWidth: 0
+        };
+      }
+      return previousState;
+    });
+  }, [originalValue, focus, showCursor]);
+  const cursorActualWidth = highlightPastedText ? cursorWidth : 0;
+  const value = mask ? mask.repeat(originalValue.length) : originalValue;
+  let renderedValue = value;
+  let renderedPlaceholder = placeholder ? source_default.grey(placeholder) : void 0;
+  if (showCursor && focus) {
+    renderedPlaceholder = placeholder.length > 0 ? source_default.inverse(placeholder[0]) + source_default.grey(placeholder.slice(1)) : source_default.inverse(" ");
+    renderedValue = value.length > 0 ? "" : source_default.inverse(" ");
+    let i = 0;
+    for (const char of value) {
+      renderedValue += i >= cursorOffset - cursorActualWidth && i <= cursorOffset ? source_default.inverse(char) : char;
+      i++;
+    }
+    if (value.length > 0 && cursorOffset === value.length) {
+      renderedValue += source_default.inverse(" ");
+    }
+  }
+  use_input_default((input, key) => {
+    if (key.upArrow || key.downArrow || key.ctrl && input === "c" || key.tab || key.shift && key.tab) {
+      return;
+    }
+    if (key.return) {
+      if (onSubmit) {
+        onSubmit(originalValue);
+      }
+      return;
+    }
+    let nextCursorOffset = cursorOffset;
+    let nextValue = originalValue;
+    let nextCursorWidth = 0;
+    if (key.leftArrow) {
+      if (showCursor) {
+        nextCursorOffset--;
+      }
+    } else if (key.rightArrow) {
+      if (showCursor) {
+        nextCursorOffset++;
+      }
+    } else if (key.backspace || key.delete) {
+      if (cursorOffset > 0) {
+        nextValue = originalValue.slice(0, cursorOffset - 1) + originalValue.slice(cursorOffset, originalValue.length);
+        nextCursorOffset--;
+      }
+    } else {
+      nextValue = originalValue.slice(0, cursorOffset) + input + originalValue.slice(cursorOffset, originalValue.length);
+      nextCursorOffset += input.length;
+      if (input.length > 1) {
+        nextCursorWidth = input.length;
+      }
+    }
+    if (cursorOffset < 0) {
+      nextCursorOffset = 0;
+    }
+    if (cursorOffset > originalValue.length) {
+      nextCursorOffset = originalValue.length;
+    }
+    setState({
+      cursorOffset: nextCursorOffset,
+      cursorWidth: nextCursorWidth
+    });
+    if (nextValue !== originalValue) {
+      onChange(nextValue);
+    }
+  }, { isActive: focus });
+  return import_react23.default.createElement(Text, null, placeholder ? value.length > 0 ? renderedValue : renderedPlaceholder : renderedValue);
+}
+var build_default2 = TextInput;
 
 // node_modules/open/index.js
 import process19 from "process";
@@ -54853,7 +54943,7 @@ async function getFavoriteByShortcutAsync(shortcut) {
 }
 
 // src/components/Breadcrumb.tsx
-var import_react23 = __toESM(require_react(), 1);
+var import_react24 = __toESM(require_react(), 1);
 var import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
 function Breadcrumb({ items }) {
   if (items.length === 0) {
@@ -54861,7 +54951,7 @@ function Breadcrumb({ items }) {
   }
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { children: [
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { dimColor: true, children: "  " }),
-    items.map((item, idx) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_react23.default.Fragment, { children: [
+    items.map((item, idx) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_react24.default.Fragment, { children: [
       idx > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { dimColor: true, children: " > " }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: idx === items.length - 1 ? "white" : "gray", children: item })
     ] }, idx))
@@ -54877,10 +54967,10 @@ var CLEAR_FAVORITES_INDEX = SETTING_FIELDS.length + 1;
 var CLEAR_HISTORY_INDEX = SETTING_FIELDS.length + 2;
 var EDIT_CONFIG_INDEX = SETTING_FIELDS.length + 3;
 function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, onClearHistory, onEditFavorites, breadcrumbs }) {
-  const [selectedIndex, setSelectedIndex] = (0, import_react24.useState)(0);
-  const [editingKey, setEditingKey] = (0, import_react24.useState)(null);
-  const [editValue, setEditValue] = (0, import_react24.useState)("");
-  const [localSettings, setLocalSettings] = (0, import_react24.useState)({ ...settings });
+  const [selectedIndex, setSelectedIndex] = (0, import_react25.useState)(0);
+  const [editingKey, setEditingKey] = (0, import_react25.useState)(null);
+  const [editValue, setEditValue] = (0, import_react25.useState)("");
+  const [localSettings, setLocalSettings] = (0, import_react25.useState)({ ...settings });
   const isOnEditFavorites = selectedIndex === EDIT_FAVORITES_INDEX;
   const isOnClearFavorites = selectedIndex === CLEAR_FAVORITES_INDEX;
   const isOnClearHistory = selectedIndex === CLEAR_HISTORY_INDEX;
@@ -54888,8 +54978,8 @@ function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, onClearH
   const isOnActionItem = isOnEditFavorites || isOnClearFavorites || isOnClearHistory || isOnEditConfig;
   const currentField = isOnActionItem ? null : SETTING_FIELDS[selectedIndex];
   const isEditing = editingKey !== null;
-  const [favoritesCleared, setFavoritesCleared] = (0, import_react24.useState)(false);
-  const [historyCleared, setHistoryCleared] = (0, import_react24.useState)(false);
+  const [favoritesCleared, setFavoritesCleared] = (0, import_react25.useState)(false);
+  const [historyCleared, setHistoryCleared] = (0, import_react25.useState)(false);
   const openConfigFile = async () => {
     await open_default(CONFIG_FILE);
   };
@@ -54971,8 +55061,15 @@ function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, onClearH
     const newValue = Math.max(min, Math.min(max, current + delta));
     setEditValue(String(newValue));
   };
+  const usesTextInput = currentField && !["number", "key"].includes(currentField.type);
   use_input_default((input, key) => {
     if (isEditing) {
+      if (usesTextInput) {
+        if (key.escape) {
+          cancelEdit();
+        }
+        return;
+      }
       if (key.escape) {
         cancelEdit();
         return;
@@ -55071,22 +55168,35 @@ function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, onClearH
       const isSelected = idx === selectedIndex;
       const isFieldEditing = editingKey === field.key;
       const value = localSettings[field.key];
-      const displayValue = isFieldEditing ? editValue : formatValue(field, value);
+      const displayValue = formatValue(field, value);
+      const useTextInputForField = !["number", "key"].includes(field.type);
       return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { flexDirection: "row", children: [
         /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isSelected ? "#FFD700" : void 0, bold: isSelected, children: [
           isSelected ? "> " : "  ",
           field.label.padEnd(20)
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
-          Text,
+        isFieldEditing && useTextInputForField ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+          build_default2,
           {
-            color: isFieldEditing ? "#FFD700" : isSelected ? "#FFD700" : "gray",
-            children: displayValue
+            value: editValue,
+            onChange: setEditValue,
+            onSubmit: commitEdit,
+            focus: true
           }
-        ),
-        isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: "#FFD700", children: "|" }),
-        field.type === "color" && !isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { children: "  " }),
-        field.type === "color" && !isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { backgroundColor: String(value), children: "    " })
+        ) : /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+            Text,
+            {
+              color: isFieldEditing ? "#FFD700" : isSelected ? "#FFD700" : "gray",
+              children: isFieldEditing ? editValue : displayValue
+            }
+          ),
+          isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: "#FFD700", children: "|" })
+        ] }),
+        field.type === "color" && !isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { children: "  " }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { backgroundColor: String(value), children: "    " })
+        ] })
       ] }, field.key);
     }),
     /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isOnEditFavorites ? "#FFD700" : "gray", bold: isOnEditFavorites, children: [
@@ -55125,12 +55235,12 @@ function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, onClearH
       "  ",
       isOnEditFavorites ? "Manage favorites: edit names, shortcuts, and commands" : isOnClearFavorites ? "Remove all favorite projects" : isOnClearHistory ? "Remove all recent projects from history" : isOnEditConfig ? "Open settings.json in default editor" : currentField?.description
     ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { dimColor: true, children: isEditing ? currentField?.type === "number" ? "  type or \u2191\u2193 adjust \u2022 enter save \u2022 esc cancel" : "  type to edit \u2022 enter save \u2022 esc cancel" : "  \u2191\u2193 navigate \u2022 enter edit \u2022 esc save & exit" }) })
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { dimColor: true, children: isEditing ? currentField?.type === "number" ? "  type or \u2191\u2193 adjust \u2022 enter save \u2022 esc cancel" : "  \u2190\u2192 cursor \u2022 enter save \u2022 esc cancel" : "  \u2191\u2193 navigate \u2022 enter edit \u2022 esc save & exit" }) })
   ] });
 }
 
 // src/components/FavoritesEditor.tsx
-var import_react25 = __toESM(require_react(), 1);
+var import_react26 = __toESM(require_react(), 1);
 var import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
 function FavoritesEditor({
   favorites,
@@ -55140,8 +55250,8 @@ function FavoritesEditor({
   onBack,
   breadcrumbs
 }) {
-  const [selectedIndex, setSelectedIndex] = (0, import_react25.useState)(0);
-  const [confirmDelete, setConfirmDelete] = (0, import_react25.useState)(null);
+  const [selectedIndex, setSelectedIndex] = (0, import_react26.useState)(0);
+  const [confirmDelete, setConfirmDelete] = (0, import_react26.useState)(null);
   const totalItems = favorites.length + 1;
   const isOnAddNew = selectedIndex === favorites.length;
   use_input_default((input, key) => {
@@ -55229,7 +55339,7 @@ function FavoritesEditor({
 }
 
 // src/components/FavoriteEdit.tsx
-var import_react26 = __toESM(require_react(), 1);
+var import_react27 = __toESM(require_react(), 1);
 var import_jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
 function FavoriteEdit({
   favorite,
@@ -55238,14 +55348,13 @@ function FavoriteEdit({
   onBack,
   breadcrumbs
 }) {
-  const [name, setName] = (0, import_react26.useState)(favorite.name);
-  const [shortcut, setShortcut] = (0, import_react26.useState)(favorite.shortcut);
-  const [caseSensitive, setCaseSensitive] = (0, import_react26.useState)(favorite.caseSensitive);
-  const [commands, setCommands] = (0, import_react26.useState)([...favorite.command]);
-  const [selectedIndex, setSelectedIndex] = (0, import_react26.useState)(0);
-  const [editingField, setEditingField] = (0, import_react26.useState)(null);
-  const [editValue, setEditValue] = (0, import_react26.useState)("");
-  const [error, setError] = (0, import_react26.useState)(null);
+  const [name, setName] = (0, import_react27.useState)(favorite.name);
+  const [shortcut, setShortcut] = (0, import_react27.useState)(favorite.shortcut);
+  const [caseSensitive, setCaseSensitive] = (0, import_react27.useState)(favorite.caseSensitive);
+  const [commands, setCommands] = (0, import_react27.useState)([...favorite.command]);
+  const [selectedIndex, setSelectedIndex] = (0, import_react27.useState)(0);
+  const [editingField, setEditingField] = (0, import_react27.useState)(null);
+  const [error, setError] = (0, import_react27.useState)(null);
   const fields = [
     { key: "name", label: "Name", type: "text" },
     { key: "shortcut", label: "Shortcut", type: "text" },
@@ -55259,7 +55368,7 @@ function FavoriteEdit({
   ];
   const totalItems = fields.length;
   const currentField = fields[selectedIndex];
-  (0, import_react26.useEffect)(() => {
+  (0, import_react27.useEffect)(() => {
     if (error) {
       const timer = setTimeout(() => setError(null), 3e3);
       return () => clearTimeout(timer);
@@ -55275,7 +55384,7 @@ function FavoriteEdit({
     }
     return "";
   };
-  const setValue = (key, value) => {
+  const handleChange = (key, value) => {
     if (key === "name") setName(value);
     if (key === "shortcut") setShortcut(value);
     if (key.startsWith("cmd-")) {
@@ -55298,18 +55407,9 @@ function FavoriteEdit({
       return;
     }
     setEditingField(field.key);
-    setEditValue(getValue(field.key));
   };
   const commitEdit = () => {
-    if (editingField) {
-      setValue(editingField, editValue);
-      setEditingField(null);
-      setEditValue("");
-    }
-  };
-  const cancelEdit = () => {
     setEditingField(null);
-    setEditValue("");
   };
   const deleteCommandLine = () => {
     if (!currentField.key.startsWith("cmd-")) return;
@@ -55354,19 +55454,8 @@ function FavoriteEdit({
   use_input_default((input, key) => {
     if (editingField) {
       if (key.escape) {
-        cancelEdit();
+        setEditingField(null);
         return;
-      }
-      if (key.return) {
-        commitEdit();
-        return;
-      }
-      if (key.backspace || key.delete) {
-        setEditValue((prev) => prev.slice(0, -1));
-        return;
-      }
-      if (input && input.length === 1 && !key.ctrl && !key.meta) {
-        setEditValue((prev) => prev + input);
       }
       return;
     }
@@ -55391,45 +55480,40 @@ function FavoriteEdit({
       return;
     }
   });
+  const renderField = (field, idx) => {
+    const isSelected = idx === selectedIndex;
+    const isEditing = editingField === field.key;
+    const value = getValue(field.key);
+    return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
+        Text,
+        {
+          color: isSelected ? "#FFD700" : void 0,
+          bold: isSelected,
+          children: [
+            isSelected ? "> " : "  ",
+            field.label,
+            ":"
+          ]
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { children: " " }),
+      isEditing ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+        build_default2,
+        {
+          value,
+          onChange: (newValue) => handleChange(field.key, newValue),
+          onSubmit: commitEdit,
+          focus: true
+        }
+      ) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: isSelected ? "#FFD700" : value ? "white" : "gray", children: value || "(empty)" })
+    ] }, field.key);
+  };
   return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { flexDirection: "column", children: [
     /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Breadcrumb, { items: breadcrumbs }),
     /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Edit Favorite \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
-        Text,
-        {
-          color: selectedIndex === 0 ? "#FFD700" : void 0,
-          bold: selectedIndex === 0,
-          children: [
-            selectedIndex === 0 ? "> " : "  ",
-            "Name:"
-          ]
-        }
-      ),
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { children: " " }),
-      editingField === "name" ? /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_jsx_runtime4.Fragment, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "cyan", children: editValue }),
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "cyan", children: "\u258C" })
-      ] }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: selectedIndex === 0 ? "#FFD700" : "white", children: name })
-    ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
-        Text,
-        {
-          color: selectedIndex === 1 ? "#FFD700" : void 0,
-          bold: selectedIndex === 1,
-          children: [
-            selectedIndex === 1 ? "> " : "  ",
-            "Shortcut:"
-          ]
-        }
-      ),
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { children: " " }),
-      editingField === "shortcut" ? /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_jsx_runtime4.Fragment, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "cyan", children: editValue }),
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "cyan", children: "\u258C" })
-      ] }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: selectedIndex === 1 ? "#FFD700" : "white", children: shortcut })
-    ] }),
+    renderField(fields[0], 0),
+    renderField(fields[1], 1),
     /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
       /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
         Text,
@@ -55448,6 +55532,7 @@ function FavoriteEdit({
     /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Commands \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
     commands.map((cmd, idx) => {
       const fieldIdx = 3 + idx;
+      const field = fields[fieldIdx];
       const isSelected = selectedIndex === fieldIdx;
       const isEditing = editingField === `cmd-${idx}`;
       return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
@@ -55459,10 +55544,15 @@ function FavoriteEdit({
             children: isSelected ? "> " : "  "
           }
         ),
-        isEditing ? /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_jsx_runtime4.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "cyan", children: editValue }),
-          /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "cyan", children: "\u258C" })
-        ] }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: isSelected ? "#FFD700" : cmd ? "white" : "gray", children: cmd || "(empty)" })
+        isEditing ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+          build_default2,
+          {
+            value: cmd,
+            onChange: (newValue) => handleChange(`cmd-${idx}`, newValue),
+            onSubmit: commitEdit,
+            focus: true
+          }
+        ) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: isSelected ? "#FFD700" : cmd ? "white" : "gray", children: cmd || "(empty)" })
       ] }, `cmd-${idx}`);
     }),
     /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
@@ -55478,7 +55568,7 @@ function FavoriteEdit({
     ) }),
     error && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "red", children: error }) }),
     /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { dimColor: true, children: "enter edit \u2022 ^D delete line \u2022 esc/tab save & back" }) })
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { dimColor: true, children: "enter edit \u2022 ^D delete line \u2022 esc save & back" }) })
   ] });
 }
 
@@ -55732,7 +55822,7 @@ function collectNestedGitProjects(project, basePath) {
 function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEntries: initialFavoriteEntries, onSelect, onSettingsSave }) {
   log("App component function called");
   const { exit } = use_app_default();
-  const [screenStack, setScreenStack] = (0, import_react27.useState)([
+  const [screenStack, setScreenStack] = (0, import_react28.useState)([
     { screen: "main" }
   ]);
   const currentScreen = screenStack[screenStack.length - 1];
@@ -55749,13 +55839,13 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
     "favorite-edit": "Edit"
   };
   const breadcrumbItems = screenStack.slice(1).map((entry) => breadcrumbLabels[entry.screen]);
-  const [projects, setProjects] = (0, import_react27.useState)(null);
-  const [isRefreshing, setIsRefreshing] = (0, import_react27.useState)(false);
-  const [settings, setSettings] = (0, import_react27.useState)(initialSettings);
-  const [recentEntries, setRecentEntries] = (0, import_react27.useState)(initialRecentEntries);
-  const [favoriteEntries, setFavoriteEntries] = (0, import_react27.useState)(initialFavoriteEntries);
-  const scanAbortSignal = (0, import_react27.useRef)({ aborted: false });
-  (0, import_react27.useEffect)(() => {
+  const [projects, setProjects] = (0, import_react28.useState)(null);
+  const [isRefreshing, setIsRefreshing] = (0, import_react28.useState)(false);
+  const [settings, setSettings] = (0, import_react28.useState)(initialSettings);
+  const [recentEntries, setRecentEntries] = (0, import_react28.useState)(initialRecentEntries);
+  const [favoriteEntries, setFavoriteEntries] = (0, import_react28.useState)(initialFavoriteEntries);
+  const scanAbortSignal = (0, import_react28.useRef)({ aborted: false });
+  (0, import_react28.useEffect)(() => {
     log("useEffect: mount - starting cache/scan");
     scanAbortSignal.current = { aborted: false };
     setIsRefreshing(true);
@@ -55783,12 +55873,12 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
       scanAbortSignal.current.aborted = true;
     };
   }, []);
-  const [searchTerm, setSearchTerm] = (0, import_react27.useState)("");
-  const [nestedCache, setNestedCache] = (0, import_react27.useState)(() => /* @__PURE__ */ new Map());
-  const [navStack, setNavStack] = (0, import_react27.useState)([
+  const [searchTerm, setSearchTerm] = (0, import_react28.useState)("");
+  const [nestedCache, setNestedCache] = (0, import_react28.useState)(() => /* @__PURE__ */ new Map());
+  const [navStack, setNavStack] = (0, import_react28.useState)([
     { projects: [], parentPath: null, savedScrollOffset: 0, savedSelectedKey: null }
   ]);
-  (0, import_react27.useEffect)(() => {
+  (0, import_react28.useEffect)(() => {
     if (projects) {
       setNavStack([{ projects, parentPath: null, savedScrollOffset: 0, savedSelectedKey: null }]);
     }
@@ -55796,7 +55886,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
   const currentLevel = navStack[navStack.length - 1];
   const currentProjects = currentLevel.projects;
   const isAtRoot = navStack.length === 1;
-  const favoritePaths = (0, import_react27.useMemo)(() => {
+  const favoritePaths = (0, import_react28.useMemo)(() => {
     const paths = /* @__PURE__ */ new Set();
     for (const fav of favoriteEntries) {
       const cdCmd = fav.command.find((c) => c.startsWith("cd "));
@@ -55809,11 +55899,11 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
     }
     return paths;
   }, [favoriteEntries]);
-  const recentPaths = (0, import_react27.useMemo)(
+  const recentPaths = (0, import_react28.useMemo)(
     () => new Set(recentEntries.map((e) => e.path)),
     [recentEntries]
   );
-  const allProjectsMap = (0, import_react27.useMemo)(() => {
+  const allProjectsMap = (0, import_react28.useMemo)(() => {
     const map = /* @__PURE__ */ new Map();
     if (!projects) return map;
     function traverse(list) {
@@ -55825,7 +55915,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
     traverse(projects);
     return map;
   }, [projects]);
-  const shortcutsByPath = (0, import_react27.useMemo)(() => {
+  const shortcutsByPath = (0, import_react28.useMemo)(() => {
     const map = /* @__PURE__ */ new Map();
     for (const fav of favoriteEntries) {
       const firstCmd = fav.command[0];
@@ -55841,7 +55931,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
     }
     return map;
   }, [favoriteEntries]);
-  const { unfilteredItems, unfilteredKeyToIndex } = (0, import_react27.useMemo)(() => {
+  const { unfilteredItems, unfilteredKeyToIndex } = (0, import_react28.useMemo)(() => {
     const list = [];
     const keyMap = /* @__PURE__ */ new Map();
     if (isAtRoot && favoriteEntries.length > 0 && !searchTerm) {
@@ -55926,7 +56016,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
     }
     return { unfilteredItems: list, unfilteredKeyToIndex: keyMap };
   }, [currentProjects, recentEntries, favoriteEntries, isAtRoot, recentPaths, favoritePaths, shortcutsByPath, allProjectsMap, currentLevel.parentPath, settings.projectsDir, searchTerm]);
-  const { items, keyToIndex } = (0, import_react27.useMemo)(() => {
+  const { items, keyToIndex } = (0, import_react28.useMemo)(() => {
     if (!searchTerm) {
       return { items: unfilteredItems, keyToIndex: unfilteredKeyToIndex };
     }
@@ -55963,19 +56053,19 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, favoriteEn
     }
     return { items: filtered, keyToIndex: keyMap };
   }, [unfilteredItems, unfilteredKeyToIndex, searchTerm]);
-  const selectableIndices = (0, import_react27.useMemo)(
+  const selectableIndices = (0, import_react28.useMemo)(
     () => items.map((item, idx) => item.type !== "header" ? idx : -1).filter((idx) => idx !== -1),
     [items]
   );
-  const [selectedKey, setSelectedKey] = (0, import_react27.useState)(null);
-  const [scrollOffset, setScrollOffset] = (0, import_react27.useState)(0);
-  const selectedIndex = (0, import_react27.useMemo)(() => {
+  const [selectedKey, setSelectedKey] = (0, import_react28.useState)(null);
+  const [scrollOffset, setScrollOffset] = (0, import_react28.useState)(0);
+  const selectedIndex = (0, import_react28.useMemo)(() => {
     if (!selectedKey) return selectableIndices[0] ?? 0;
     const idx = keyToIndex.get(selectedKey);
     return idx !== void 0 ? idx : selectableIndices[0] ?? 0;
   }, [selectedKey, keyToIndex, selectableIndices]);
-  const prevSearchTerm = (0, import_react27.useRef)(searchTerm);
-  (0, import_react27.useEffect)(() => {
+  const prevSearchTerm = (0, import_react28.useRef)(searchTerm);
+  (0, import_react28.useEffect)(() => {
     if (searchTerm !== prevSearchTerm.current) {
       prevSearchTerm.current = searchTerm;
       if (selectableIndices.length > 0) {

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
+import TextInput from "ink-text-input";
 import open from "open";
 import { join } from "node:path";
 import { homedir } from "node:os";
@@ -141,9 +142,21 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, o
     setEditValue(String(newValue));
   };
 
+  // Check if current editing field uses TextInput (not number or key types)
+  const usesTextInput = currentField && !["number", "key"].includes(currentField.type);
+
   useInput((input, key) => {
     if (isEditing) {
-      // Edit mode input handling
+      // For TextInput fields, only handle Escape
+      if (usesTextInput) {
+        if (key.escape) {
+          cancelEdit();
+        }
+        // Let TextInput handle everything else
+        return;
+      }
+
+      // For number/key fields, use manual handling
       if (key.escape) {
         cancelEdit();
         return;
@@ -259,9 +272,8 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, o
         const isSelected = idx === selectedIndex;
         const isFieldEditing = editingKey === field.key;
         const value = localSettings[field.key];
-        const displayValue = isFieldEditing
-          ? editValue
-          : formatValue(field, value);
+        const displayValue = formatValue(field, value);
+        const useTextInputForField = !["number", "key"].includes(field.type);
 
         return (
           <Box key={field.key} flexDirection="row">
@@ -269,17 +281,28 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, o
               {isSelected ? "> " : "  "}
               {field.label.padEnd(20)}
             </Text>
-            <Text
-              color={isFieldEditing ? "#FFD700" : isSelected ? "#FFD700" : "gray"}
-            >
-              {displayValue}
-            </Text>
-            {isFieldEditing && <Text color="#FFD700">|</Text>}
-            {field.type === "color" && !isFieldEditing && (
-              <Text>{"  "}</Text>
+            {isFieldEditing && useTextInputForField ? (
+              <TextInput
+                value={editValue}
+                onChange={setEditValue}
+                onSubmit={commitEdit}
+                focus={true}
+              />
+            ) : (
+              <>
+                <Text
+                  color={isFieldEditing ? "#FFD700" : isSelected ? "#FFD700" : "gray"}
+                >
+                  {isFieldEditing ? editValue : displayValue}
+                </Text>
+                {isFieldEditing && <Text color="#FFD700">|</Text>}
+              </>
             )}
             {field.type === "color" && !isFieldEditing && (
-              <Text backgroundColor={String(value)}>{"    "}</Text>
+              <>
+                <Text>{"  "}</Text>
+                <Text backgroundColor={String(value)}>{"    "}</Text>
+              </>
             )}
           </Box>
         );
@@ -344,7 +367,7 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearFavorites, o
           {isEditing
             ? currentField?.type === "number"
               ? "  type or ↑↓ adjust • enter save • esc cancel"
-              : "  type to edit • enter save • esc cancel"
+              : "  ←→ cursor • enter save • esc cancel"
             : "  ↑↓ navigate • enter edit • esc save & exit"}
         </Text>
       </Box>

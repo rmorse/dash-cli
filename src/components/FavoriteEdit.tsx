@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
+import TextInput from "ink-text-input";
 import type { Favorite } from "../types.js";
 import { updateFavorite, validateShortcut } from "../favorites.js";
 import { Breadcrumb } from "./Breadcrumb.js";
@@ -35,7 +36,6 @@ export function FavoriteEdit({
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [editingField, setEditingField] = useState<FieldKey | null>(null);
-  const [editValue, setEditValue] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   // Build dynamic field list
@@ -73,7 +73,7 @@ export function FavoriteEdit({
     return "";
   };
 
-  const setValue = (key: FieldKey, value: string) => {
+  const handleChange = (key: FieldKey, value: string) => {
     if (key === "name") setName(value);
     if (key === "shortcut") setShortcut(value);
     if (key.startsWith("cmd-")) {
@@ -88,33 +88,19 @@ export function FavoriteEdit({
 
   const startEditing = (field: Field) => {
     if (field.type === "toggle") {
-      // Toggle immediately
       setCaseSensitive((prev) => !prev);
       return;
     }
     if (field.type === "action") {
-      // Add line action
       setCommands((prev) => [...prev, ""]);
-      // Move selection to the new command line
-      setSelectedIndex(fields.length - 1); // This will be the new cmd line after re-render
+      setSelectedIndex(fields.length - 1);
       return;
     }
-    // Start text editing
     setEditingField(field.key);
-    setEditValue(getValue(field.key));
   };
 
   const commitEdit = () => {
-    if (editingField) {
-      setValue(editingField, editValue);
-      setEditingField(null);
-      setEditValue("");
-    }
-  };
-
-  const cancelEdit = () => {
     setEditingField(null);
-    setEditValue("");
   };
 
   const deleteCommandLine = () => {
@@ -125,27 +111,23 @@ export function FavoriteEdit({
     }
     const idx = parseInt(currentField.key.split("-")[1], 10);
     setCommands((prev) => prev.filter((_, i) => i !== idx));
-    // Adjust selection if needed
     if (selectedIndex >= 3 + commands.length - 1) {
       setSelectedIndex((prev) => prev - 1);
     }
   };
 
   const saveAndExit = () => {
-    // Validate shortcut
     const validation = validateShortcut(shortcut, caseSensitive, favorite.id);
     if (!validation.valid) {
       setError(validation.error || "Invalid shortcut");
       return;
     }
 
-    // Validate name
     if (!name.trim()) {
       setError("Name cannot be empty");
       return;
     }
 
-    // Validate commands
     const nonEmptyCommands = commands.filter((c) => c.trim() !== "");
     if (nonEmptyCommands.length === 0) {
       setError("At least one command is required");
@@ -167,24 +149,13 @@ export function FavoriteEdit({
   };
 
   useInput((input, key) => {
-    // Handle editing mode
+    // When editing, only handle Escape to cancel
     if (editingField) {
       if (key.escape) {
-        cancelEdit();
+        setEditingField(null);
         return;
       }
-      if (key.return) {
-        commitEdit();
-        return;
-      }
-      if (key.backspace || key.delete) {
-        setEditValue((prev) => prev.slice(0, -1));
-        return;
-      }
-      // Regular character input
-      if (input && input.length === 1 && !key.ctrl && !key.meta) {
-        setEditValue((prev) => prev + input);
-      }
+      // Let TextInput handle everything else
       return;
     }
 
@@ -199,24 +170,52 @@ export function FavoriteEdit({
       return;
     }
 
-    // Enter - edit current field
     if (key.return) {
       startEditing(currentField);
       return;
     }
 
-    // Ctrl+D - delete command line
     if (key.ctrl && input === "d") {
       deleteCommandLine();
       return;
     }
 
-    // Escape or Tab - save and go back
     if (key.escape || key.tab) {
       saveAndExit();
       return;
     }
   });
+
+  const renderField = (field: Field, idx: number) => {
+    const isSelected = idx === selectedIndex;
+    const isEditing = editingField === field.key;
+    const value = getValue(field.key);
+
+    return (
+      <Box key={field.key}>
+        <Text
+          color={isSelected ? "#FFD700" : undefined}
+          bold={isSelected}
+        >
+          {isSelected ? "> " : "  "}
+          {field.label}:
+        </Text>
+        <Text> </Text>
+        {isEditing ? (
+          <TextInput
+            value={value}
+            onChange={(newValue) => handleChange(field.key, newValue)}
+            onSubmit={commitEdit}
+            focus={true}
+          />
+        ) : (
+          <Text color={isSelected ? "#FFD700" : value ? "white" : "gray"}>
+            {value || "(empty)"}
+          </Text>
+        )}
+      </Box>
+    );
+  };
 
   return (
     <Box flexDirection="column">
@@ -229,46 +228,10 @@ export function FavoriteEdit({
       </Box>
 
       {/* Name field */}
-      <Box>
-        <Text
-          color={selectedIndex === 0 ? "#FFD700" : undefined}
-          bold={selectedIndex === 0}
-        >
-          {selectedIndex === 0 ? "> " : "  "}
-          Name:
-        </Text>
-        <Text> </Text>
-        {editingField === "name" ? (
-          <>
-            <Text color="cyan">{editValue}</Text>
-            <Text color="cyan">▌</Text>
-          </>
-        ) : (
-          <Text color={selectedIndex === 0 ? "#FFD700" : "white"}>{name}</Text>
-        )}
-      </Box>
+      {renderField(fields[0], 0)}
 
       {/* Shortcut field */}
-      <Box>
-        <Text
-          color={selectedIndex === 1 ? "#FFD700" : undefined}
-          bold={selectedIndex === 1}
-        >
-          {selectedIndex === 1 ? "> " : "  "}
-          Shortcut:
-        </Text>
-        <Text> </Text>
-        {editingField === "shortcut" ? (
-          <>
-            <Text color="cyan">{editValue}</Text>
-            <Text color="cyan">▌</Text>
-          </>
-        ) : (
-          <Text color={selectedIndex === 1 ? "#FFD700" : "white"}>
-            {shortcut}
-          </Text>
-        )}
-      </Box>
+      {renderField(fields[1], 1)}
 
       {/* Case Sensitive toggle */}
       <Box>
@@ -294,6 +257,7 @@ export function FavoriteEdit({
 
       {commands.map((cmd, idx) => {
         const fieldIdx = 3 + idx;
+        const field = fields[fieldIdx];
         const isSelected = selectedIndex === fieldIdx;
         const isEditing = editingField === `cmd-${idx}`;
 
@@ -306,10 +270,12 @@ export function FavoriteEdit({
               {isSelected ? "> " : "  "}
             </Text>
             {isEditing ? (
-              <>
-                <Text color="cyan">{editValue}</Text>
-                <Text color="cyan">▌</Text>
-              </>
+              <TextInput
+                value={cmd}
+                onChange={(newValue) => handleChange(`cmd-${idx}`, newValue)}
+                onSubmit={commitEdit}
+                focus={true}
+              />
             ) : (
               <Text color={isSelected ? "#FFD700" : cmd ? "white" : "gray"}>
                 {cmd || "(empty)"}
@@ -344,7 +310,7 @@ export function FavoriteEdit({
 
       <Box>
         <Text dimColor>
-          enter edit • ^D delete line • esc/tab save & back
+          enter edit • ^D delete line • esc save & back
         </Text>
       </Box>
     </Box>
