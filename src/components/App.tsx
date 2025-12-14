@@ -6,7 +6,6 @@ import { basename, relative } from "node:path";
 import { SettingsScreen } from "./Settings.js";
 import { ShortcutsEditor } from "./ShortcutsEditor.js";
 import { ShortcutEdit } from "./ShortcutEdit.js";
-import { Breadcrumb } from "./Breadcrumb.js";
 import { scanProjectsAsync, ScanAbortSignal } from "../scanner.js";
 import { loadCacheAsync, saveCache } from "../cache.js";
 import {
@@ -31,13 +30,12 @@ interface AppProps {
   onSettingsSave: (settings: Settings) => void;
 }
 
-// Screen types for navigation stack
-type ScreenType = "main" | "settings" | "shortcuts-editor" | "shortcut-edit";
-
-interface ScreenStackEntry {
-  screen: ScreenType;
-  state?: { shortcutId?: string };
-}
+// Tab indices
+const TAB_PROJECTS = 0;
+const TAB_SHORTCUTS = 1;
+const TAB_SETTINGS = 2;
+const TAB_COUNT = 3;
+const TAB_LABELS = ["Projects", "Shortcuts", "Settings"];
 
 interface ListItem {
   type: "header" | "project" | "back";
@@ -101,30 +99,19 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
   log("App component function called");
   const { exit } = useApp();
 
-  // Screen navigation stack
-  const [screenStack, setScreenStack] = useState<ScreenStackEntry[]>([
-    { screen: "main" }
-  ]);
+  // Tab-based navigation
+  const [currentTab, setCurrentTab] = useState(TAB_PROJECTS);
+  const [editingShortcutId, setEditingShortcutId] = useState<string | null>(null);
 
-  const currentScreen = screenStack[screenStack.length - 1];
-
-  const pushScreen = (screen: ScreenType, state?: { shortcutId?: string }) => {
-    setScreenStack(prev => [...prev, { screen, state }]);
+  const cycleTab = (reverse = false) => {
+    setCurrentTab((prev) => {
+      if (reverse) {
+        return prev <= 0 ? TAB_COUNT - 1 : prev - 1;
+      }
+      return (prev + 1) % TAB_COUNT;
+    });
+    setEditingShortcutId(null); // Reset sub-navigation when cycling tabs
   };
-
-  const popScreen = () => {
-    setScreenStack(prev => prev.length > 1 ? prev.slice(0, -1) : prev);
-  };
-
-  // Get breadcrumb items from screen stack
-  const breadcrumbLabels: Record<ScreenType, string> = {
-    main: "Home",
-    settings: "Settings",
-    "shortcuts-editor": "Shortcuts",
-    "shortcut-edit": "Edit",
-  };
-
-  const breadcrumbItems = screenStack.slice(1).map(entry => breadcrumbLabels[entry.screen]);
 
   // Projects and settings state
   const [projects, setProjects] = useState<Project[] | null>(null);
@@ -585,9 +572,6 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
     onSettingsSave(newSettings);
     log("handleSettingsSave: onSettingsSave done");
 
-    // Return to main screen
-    setScreenStack([{ screen: "main" }]);
-
     if (needsRescan) {
       // Use async scan to avoid blocking UI
       log("handleSettingsSave: starting async rescan...");
@@ -614,8 +598,8 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
   };
 
   useInput((input, key) => {
-    // Skip input handling when not on main screen
-    if (currentScreen.screen !== "main") return;
+    // Skip input handling when not on projects tab
+    if (currentTab !== TAB_PROJECTS) return;
 
     // Handle delete confirmation mode
     if (confirmDeleteId) {
@@ -628,9 +612,9 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
       return;
     }
 
-    // Tab - open settings
+    // Tab - cycle tabs (Shift+Tab for reverse)
     if (key.tab) {
-      pushScreen("settings");
+      cycleTab(key.shift);
       return;
     }
 
@@ -804,29 +788,54 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
   const hasMoreAbove = clampedScrollOffset > 0;
   const hasMoreBelow = clampedScrollOffset + settings.visibleRows < items.length;
 
-  // Handle non-main screens
-  if (currentScreen.screen === "settings") {
-    return (
-      <SettingsScreen
-        settings={settings}
-        onSave={handleSettingsSave}
-        onCancel={() => popScreen()}
-        onClearShortcuts={() => {
-          setShortcutEntries([]);
-        }}
-        onClearHistory={() => setRecentEntries([])}
-        onEditShortcuts={() => pushScreen("shortcuts-editor")}
-        breadcrumbs={breadcrumbItems}
-      />
-    );
-  }
+  // TabBar component
+  const TabBar = () => (
+    <Box>
+      <Text dimColor>{"  "}</Text>
+      {TAB_LABELS.map((label, idx) => (
+        <React.Fragment key={label}>
+          <Text
+            color={idx === currentTab ? "#FFD700" : "gray"}
+            bold={idx === currentTab}
+          >
+            {idx === currentTab ? `[${label}]` : ` ${label} `}
+          </Text>
+          {idx < TAB_LABELS.length - 1 && <Text dimColor> │ </Text>}
+        </React.Fragment>
+      ))}
+    </Box>
+  );
 
-  if (currentScreen.screen === "shortcuts-editor") {
+  // Handle Shortcuts tab
+  if (currentTab === TAB_SHORTCUTS) {
+    // Sub-navigation: editing a specific shortcut
+    if (editingShortcutId) {
+      const shortcut = shortcutEntries.find(s => s.id === editingShortcutId);
+      if (shortcut) {
+        return (
+          <ShortcutEdit
+            shortcut={shortcut}
+            allShortcuts={shortcutEntries}
+            onSave={(updated) => {
+              setShortcutEntries(prev =>
+                prev.map(s => s.id === updated.id ? updated : s)
+              );
+            }}
+            onBack={() => setEditingShortcutId(null)}
+            onTab={cycleTab}
+            tabBar={<TabBar />}
+          />
+        );
+      }
+      // Shortcut not found, go back
+      setEditingShortcutId(null);
+    }
+
     return (
       <ShortcutsEditor
         shortcuts={shortcutEntries}
         onUpdate={(updated) => setShortcutEntries(updated)}
-        onEditShortcut={(id) => pushScreen("shortcut-edit", { shortcutId: id })}
+        onEditShortcut={(id) => setEditingShortcutId(id)}
         onAddShortcut={() => {
           // Create a new shortcut with defaults
           const newShortcut = addShortcut({
@@ -836,34 +845,29 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
             command: ["cd ~"],
           });
           setShortcutEntries(prev => [...prev, newShortcut]);
-          pushScreen("shortcut-edit", { shortcutId: newShortcut.id });
+          setEditingShortcutId(newShortcut.id);
         }}
-        onBack={() => popScreen()}
-        breadcrumbs={breadcrumbItems}
+        onTab={cycleTab}
+        tabBar={<TabBar />}
       />
     );
   }
 
-  if (currentScreen.screen === "shortcut-edit" && currentScreen.state?.shortcutId) {
-    const shortcut = shortcutEntries.find(s => s.id === currentScreen.state?.shortcutId);
-    if (shortcut) {
-      return (
-        <ShortcutEdit
-          shortcut={shortcut}
-          allShortcuts={shortcutEntries}
-          onSave={(updated) => {
-            setShortcutEntries(prev =>
-              prev.map(s => s.id === updated.id ? updated : s)
-            );
-          }}
-          onBack={() => popScreen()}
-          breadcrumbs={breadcrumbItems}
-        />
-      );
-    }
-    // Shortcut not found, go back
-    popScreen();
-    return null;
+  // Handle Settings tab
+  if (currentTab === TAB_SETTINGS) {
+    return (
+      <SettingsScreen
+        settings={settings}
+        onSave={handleSettingsSave}
+        onClearShortcuts={() => {
+          setShortcutEntries([]);
+        }}
+        onClearHistory={() => setRecentEntries([])}
+        onTab={cycleTab}
+        onClose={() => setCurrentTab(TAB_PROJECTS)}
+        tabBar={<TabBar />}
+      />
+    );
   }
 
   return (
@@ -965,9 +969,14 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
         </Box>
       )}
 
+      {/* Tab bar */}
       <Box marginTop={isRefreshing ? 0 : 1}>
+        <TabBar />
+      </Box>
+
+      <Box>
         <Text dimColor>
-          ↑↓ navigate • enter select • →← drill/back • ^{settings.shortcutToggleKey.toUpperCase()} add shortcut • ^D delete • tab settings • ^{settings.refreshKey.toUpperCase()} refresh • esc quit
+          {"  "}tab next • ↑↓ select • →← drill • ^{settings.shortcutToggleKey.toUpperCase()} add • ^D del • ^{settings.refreshKey.toUpperCase()} refresh • esc quit
         </Text>
       </Box>
     </Box>

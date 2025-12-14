@@ -48,7 +48,7 @@ If any trigger in the chain doesn't exist, you'll get an error.
 
 ### Shortcuts Editor
 
-Access the full shortcuts editor from **Settings > Edit shortcuts** to:
+Access the full shortcuts editor from the **Shortcuts** tab (`Tab` from Projects) to:
 
 - **Custom triggers** - Use any text (e.g., `work`, `api`, `1`)
 - **Multi-line commands** - Run multiple commands in sequence
@@ -74,7 +74,7 @@ Press `Ctrl+T` on any project or recent item to quickly add it as a shortcut. Th
 
 To delete a shortcut, select it in the Shortcuts section and press `Ctrl+D` (confirm with y/n).
 
-Edit shortcuts via **Settings > Edit shortcuts** to customize triggers or add more commands.
+Edit shortcuts via the **Shortcuts** tab (`Tab` from Projects) to customize triggers or add more commands.
 
 ## Controls
 
@@ -88,12 +88,20 @@ Edit shortcuts via **Settings > Edit shortcuts** to customize triggers or add mo
 | `Ctrl+T` | Add shortcut (customizable) |
 | `Ctrl+D` | Delete shortcut (in Shortcuts section) |
 | `Ctrl+R` | Refresh projects list (customizable) |
-| `Esc` | Clear filter / go back / quit |
-| `Tab` | Open settings |
+| `Tab` | Cycle tabs (Projects → Shortcuts → Settings) |
+| `Esc` | Clear filter / go back / save & exit / quit |
+
+## Tabs
+
+The app has three tabs, accessible by pressing `Tab`:
+
+1. **Projects** - Main project list with shortcuts and recent projects
+2. **Shortcuts** - Edit, add, and delete shortcuts
+3. **Settings** - Configure app settings
 
 ## Settings
 
-Press `Tab` to open the settings screen, or edit `~/.dash-cli/settings.json`:
+Press `Tab` twice from Projects to reach settings, or edit `~/.dash-cli/settings.json`:
 
 | Setting | Default | Description |
 |---------|---------|-------------|

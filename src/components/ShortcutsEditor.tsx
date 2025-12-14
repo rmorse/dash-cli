@@ -2,15 +2,14 @@ import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import type { Shortcut } from "../types.js";
 import { removeShortcut } from "../shortcuts.js";
-import { Breadcrumb } from "./Breadcrumb.js";
 
 interface ShortcutsEditorProps {
   shortcuts: Shortcut[];
   onUpdate: (shortcuts: Shortcut[]) => void;
   onEditShortcut: (id: string) => void;
   onAddShortcut: () => void;
-  onBack: () => void;
-  breadcrumbs: string[];
+  onTab: (reverse?: boolean) => void;
+  tabBar: React.ReactNode;
 }
 
 export function ShortcutsEditor({
@@ -18,8 +17,8 @@ export function ShortcutsEditor({
   onUpdate,
   onEditShortcut,
   onAddShortcut,
-  onBack,
-  breadcrumbs,
+  onTab,
+  tabBar,
 }: ShortcutsEditorProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -74,17 +73,15 @@ export function ShortcutsEditor({
       return;
     }
 
-    // Escape or Tab - go back
-    if (key.escape || key.tab) {
-      onBack();
+    // Tab - cycle tabs (Shift+Tab for reverse)
+    if (key.tab) {
+      onTab(key.shift);
       return;
     }
   });
 
   return (
     <Box flexDirection="column" marginTop={1}>
-      <Breadcrumb items={breadcrumbs} />
-
       <Box>
         <Text color="gray" dimColor>
           ── Shortcuts ──────────────────
@@ -131,9 +128,15 @@ export function ShortcutsEditor({
           ────────────────────────────────
         </Text>
       </Box>
+
+      {/* Tab bar */}
+      <Box marginTop={1}>
+        {tabBar}
+      </Box>
+
       <Box>
         <Text dimColor>
-          enter edit {shortcuts.length > 0 ? "• ^D delete " : ""}• esc/tab back
+          {"  "}tab next • ↑↓ navigate • enter edit{shortcuts.length > 0 ? " • ^D delete" : ""}
         </Text>
       </Box>
     </Box>

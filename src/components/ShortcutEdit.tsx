@@ -3,14 +3,14 @@ import { Box, Text, useInput } from "ink";
 import TextInput from "ink-text-input";
 import type { Shortcut } from "../types.js";
 import { updateShortcut, validateTrigger } from "../shortcuts.js";
-import { Breadcrumb } from "./Breadcrumb.js";
 
 interface ShortcutEditProps {
   shortcut: Shortcut;
   allShortcuts: Shortcut[];
   onSave: (updated: Shortcut) => void;
   onBack: () => void;
-  breadcrumbs: string[];
+  onTab: (reverse?: boolean) => void;
+  tabBar: React.ReactNode;
 }
 
 type FieldKey = "name" | "trigger" | "caseSensitive" | `cmd-${number}` | "add-line";
@@ -26,7 +26,8 @@ export function ShortcutEdit({
   allShortcuts,
   onSave,
   onBack,
-  breadcrumbs,
+  onTab,
+  tabBar,
 }: ShortcutEditProps) {
   // Local state for editing
   const [name, setName] = useState(shortcut.name);
@@ -183,8 +184,41 @@ export function ShortcutEdit({
       return;
     }
 
-    if (key.escape || key.tab) {
+    // Escape - save and go back to shortcuts list
+    if (key.escape) {
       saveAndExit();
+      return;
+    }
+
+    // Tab - save and cycle tabs (Shift+Tab for reverse)
+    if (key.tab) {
+      // Save first
+      const validation = validateTrigger(trigger, caseSensitive, shortcut.id);
+      if (!validation.valid) {
+        setError(validation.error || "Invalid trigger");
+        return;
+      }
+      if (!name.trim()) {
+        setError("Name cannot be empty");
+        return;
+      }
+      const nonEmptyCommands = commands.filter((c) => c.trim() !== "");
+      if (nonEmptyCommands.length === 0) {
+        setError("At least one command is required");
+        return;
+      }
+      try {
+        const updated = updateShortcut(shortcut.id, {
+          name: name.trim(),
+          trigger,
+          caseSensitive,
+          command: nonEmptyCommands,
+        });
+        onSave(updated);
+        onTab(key.shift);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to save");
+      }
       return;
     }
   });
@@ -222,8 +256,6 @@ export function ShortcutEdit({
 
   return (
     <Box flexDirection="column" marginTop={1}>
-      <Breadcrumb items={breadcrumbs} />
-
       <Box>
         <Text color="gray" dimColor>
           ── Edit Shortcut ───────────────
@@ -310,9 +342,15 @@ export function ShortcutEdit({
           ────────────────────────────────
         </Text>
       </Box>
+
+      {/* Tab bar */}
+      <Box marginTop={1}>
+        {tabBar}
+      </Box>
+
       <Box>
         <Text dimColor>
-          enter edit • ^D delete line • esc save & back
+          {"  "}tab next • enter edit • ^D delete line • esc save & back
         </Text>
       </Box>
     </Box>

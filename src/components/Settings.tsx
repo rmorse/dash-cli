@@ -8,22 +8,21 @@ import type { Settings } from "../types.js";
 import { SETTING_FIELDS } from "../settings.js";
 import { clearHistory } from "../history.js";
 import { clearShortcuts } from "../shortcuts.js";
-import { Breadcrumb } from "./Breadcrumb.js";
 
 const CONFIG_FILE = join(homedir(), ".dash-cli", "settings.json");
 
 interface SettingsProps {
   settings: Settings;
   onSave: (settings: Settings) => void;
-  onCancel: () => void;
   onClearShortcuts: () => void;
   onClearHistory: () => void;
-  onEditShortcuts: () => void;
-  breadcrumbs: string[];
+  onTab: (reverse?: boolean) => void;
+  onClose: () => void;
+  tabBar: React.ReactNode;
 }
 
 
-export function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, onClearHistory, onEditShortcuts, breadcrumbs }: SettingsProps) {
+export function SettingsScreen({ settings, onSave, onClearShortcuts, onClearHistory, onTab, onClose, tabBar }: SettingsProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [editingKey, setEditingKey] = useState<keyof Settings | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -34,18 +33,16 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, o
     (field) => !field.showIf || field.showIf(localSettings)
   );
 
-  // Dynamic indices based on visible fields
-  const totalItems = visibleFields.length + 4;
-  const editShortcutsIndex = visibleFields.length;
-  const clearShortcutsIndex = visibleFields.length + 1;
-  const clearHistoryIndex = visibleFields.length + 2;
-  const editConfigIndex = visibleFields.length + 3;
+  // Dynamic indices based on visible fields (3 action items: Clear shortcuts, Clear history, Edit config)
+  const totalItems = visibleFields.length + 3;
+  const clearShortcutsIndex = visibleFields.length;
+  const clearHistoryIndex = visibleFields.length + 1;
+  const editConfigIndex = visibleFields.length + 2;
 
-  const isOnEditShortcuts = selectedIndex === editShortcutsIndex;
   const isOnClearShortcuts = selectedIndex === clearShortcutsIndex;
   const isOnClearHistory = selectedIndex === clearHistoryIndex;
   const isOnEditConfig = selectedIndex === editConfigIndex;
-  const isOnActionItem = isOnEditShortcuts || isOnClearShortcuts || isOnClearHistory || isOnEditConfig;
+  const isOnActionItem = isOnClearShortcuts || isOnClearHistory || isOnEditConfig;
   const currentField = isOnActionItem ? null : visibleFields[selectedIndex];
   const isEditing = editingKey !== null;
 
@@ -69,10 +66,6 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, o
   };
 
   const startEditing = () => {
-    if (isOnEditShortcuts) {
-      onEditShortcuts();
-      return;
-    }
     if (isOnClearShortcuts) {
       handleClearShortcuts();
       return;
@@ -226,14 +219,17 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, o
     }
 
     // Navigation mode input handling
-    if (key.escape) {
+    // Tab - save and cycle tabs (Shift+Tab for reverse)
+    if (key.tab) {
       onSave(localSettings);
+      onTab(key.shift);
       return;
     }
 
-    // Tab also exits
-    if (key.tab) {
+    // Escape - save and close (go to Projects)
+    if (key.escape) {
       onSave(localSettings);
+      onClose();
       return;
     }
 
@@ -276,13 +272,6 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, o
 
   return (
     <Box flexDirection="column" marginTop={1}>
-      <Breadcrumb items={breadcrumbs} />
-
-      <Box>
-        <Text color="gray">{"  "}Settings </Text>
-        <Text dimColor>(Tab to close)</Text>
-      </Box>
-
       <Box>
         <Text dimColor>{"  "}───────────────────────────────────────</Text>
       </Box>
@@ -327,14 +316,6 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, o
         );
       })}
 
-      {/* Edit shortcuts option */}
-      <Box>
-        <Text color={isOnEditShortcuts ? "#FFD700" : "gray"} bold={isOnEditShortcuts}>
-          {isOnEditShortcuts ? "> " : "  "}
-          {"Edit shortcuts..."}
-        </Text>
-      </Box>
-
       {/* Clear shortcuts option */}
       <Box>
         <Text color={isOnClearShortcuts ? "#FFD700" : "gray"} bold={isOnClearShortcuts}>
@@ -369,27 +350,30 @@ export function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, o
       <Box>
         <Text dimColor>
           {"  "}
-          {isOnEditShortcuts
-            ? "Manage shortcuts: edit names, triggers, and commands"
-            : isOnClearShortcuts
-              ? "Remove all shortcuts"
-              : isOnClearHistory
-                ? "Remove all recent projects from history"
-                : isOnEditConfig
-                  ? "Open settings.json in default editor"
-                  : currentField?.description}
+          {isOnClearShortcuts
+            ? "Remove all shortcuts"
+            : isOnClearHistory
+              ? "Remove all recent projects from history"
+              : isOnEditConfig
+                ? "Open settings.json in default editor"
+                : currentField?.description}
         </Text>
       </Box>
 
+      {/* Tab bar */}
       <Box marginTop={1}>
+        {tabBar}
+      </Box>
+
+      <Box>
         <Text dimColor>
           {isEditing
             ? currentField?.type === "number"
               ? "  type or ←→↑↓ adjust • enter save • esc cancel"
               : "  ←→ cursor • enter save • esc cancel"
             : currentField?.type === "toggle"
-              ? "  ↑↓ navigate • enter toggle • esc save & exit"
-              : "  ↑↓ navigate • enter edit • esc save & exit"}
+              ? "  tab next • ↑↓ navigate • enter toggle • esc close"
+              : "  tab next • ↑↓ navigate • enter edit • esc close"}
         </Text>
       </Box>
     </Box>

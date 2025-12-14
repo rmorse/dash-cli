@@ -7870,9 +7870,9 @@ var require_react_reconciler_development = __commonJS({
       module.exports = function $$$reconciler($$$hostConfig) {
         var exports2 = {};
         "use strict";
-        var React17 = require_react();
+        var React16 = require_react();
         var Scheduler = require_scheduler();
-        var ReactSharedInternals = React17.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+        var ReactSharedInternals = React16.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
         var suppressWarning = false;
         function setSuppressWarning(newSuppressWarning) {
           {
@@ -41831,7 +41831,7 @@ var require_react_jsx_runtime_development = __commonJS({
     if (process.env.NODE_ENV !== "production") {
       (function() {
         "use strict";
-        var React17 = require_react();
+        var React16 = require_react();
         var REACT_ELEMENT_TYPE = /* @__PURE__ */ Symbol.for("react.element");
         var REACT_PORTAL_TYPE = /* @__PURE__ */ Symbol.for("react.portal");
         var REACT_FRAGMENT_TYPE = /* @__PURE__ */ Symbol.for("react.fragment");
@@ -41857,7 +41857,7 @@ var require_react_jsx_runtime_development = __commonJS({
           }
           return null;
         }
-        var ReactSharedInternals = React17.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+        var ReactSharedInternals = React16.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
         function error(format) {
           {
             {
@@ -42707,11 +42707,11 @@ var require_react_jsx_runtime_development = __commonJS({
             return jsxWithValidation(type, props, key, false);
           }
         }
-        var jsx7 = jsxWithValidationDynamic;
-        var jsxs6 = jsxWithValidationStatic;
+        var jsx6 = jsxWithValidationDynamic;
+        var jsxs5 = jsxWithValidationStatic;
         exports.Fragment = REACT_FRAGMENT_TYPE;
-        exports.jsx = jsx7;
-        exports.jsxs = jsxs6;
+        exports.jsx = jsx6;
+        exports.jsxs = jsxs5;
       })();
     }
   }
@@ -53787,7 +53787,7 @@ var import_react20 = __toESM(require_react(), 1);
 var import_react21 = __toESM(require_react(), 1);
 
 // src/components/App.tsx
-var import_react28 = __toESM(require_react(), 1);
+var import_react27 = __toESM(require_react(), 1);
 
 // node_modules/ink-spinner/build/index.js
 var import_react22 = __toESM(require_react(), 1);
@@ -53814,7 +53814,7 @@ var build_default = Spinner;
 import { basename as basename2, relative as relative2 } from "path";
 
 // src/components/Settings.tsx
-var import_react25 = __toESM(require_react(), 1);
+var import_react24 = __toESM(require_react(), 1);
 
 // node_modules/ink-text-input/build/index.js
 var import_react23 = __toESM(require_react(), 1);
@@ -54966,47 +54966,29 @@ async function getShortcutByTriggerAsync(trigger) {
   });
 }
 
-// src/components/Breadcrumb.tsx
-var import_react24 = __toESM(require_react(), 1);
-var import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
-function Breadcrumb({ items }) {
-  if (items.length === 0) {
-    return null;
-  }
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { children: [
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { dimColor: true, children: "  " }),
-    items.map((item, idx) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_react24.default.Fragment, { children: [
-      idx > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { dimColor: true, children: " > " }),
-      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: idx === items.length - 1 ? "white" : "gray", children: item })
-    ] }, idx))
-  ] });
-}
-
 // src/components/Settings.tsx
-var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
+var import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
 var CONFIG_FILE = join4(homedir4(), ".dash-cli", "settings.json");
-function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, onClearHistory, onEditShortcuts, breadcrumbs }) {
-  const [selectedIndex, setSelectedIndex] = (0, import_react25.useState)(0);
-  const [editingKey, setEditingKey] = (0, import_react25.useState)(null);
-  const [editValue, setEditValue] = (0, import_react25.useState)("");
-  const [localSettings, setLocalSettings] = (0, import_react25.useState)({ ...settings });
+function SettingsScreen({ settings, onSave, onClearShortcuts, onClearHistory, onTab, onClose, tabBar }) {
+  const [selectedIndex, setSelectedIndex] = (0, import_react24.useState)(0);
+  const [editingKey, setEditingKey] = (0, import_react24.useState)(null);
+  const [editValue, setEditValue] = (0, import_react24.useState)("");
+  const [localSettings, setLocalSettings] = (0, import_react24.useState)({ ...settings });
   const visibleFields = SETTING_FIELDS.filter(
     (field) => !field.showIf || field.showIf(localSettings)
   );
-  const totalItems = visibleFields.length + 4;
-  const editShortcutsIndex = visibleFields.length;
-  const clearShortcutsIndex = visibleFields.length + 1;
-  const clearHistoryIndex = visibleFields.length + 2;
-  const editConfigIndex = visibleFields.length + 3;
-  const isOnEditShortcuts = selectedIndex === editShortcutsIndex;
+  const totalItems = visibleFields.length + 3;
+  const clearShortcutsIndex = visibleFields.length;
+  const clearHistoryIndex = visibleFields.length + 1;
+  const editConfigIndex = visibleFields.length + 2;
   const isOnClearShortcuts = selectedIndex === clearShortcutsIndex;
   const isOnClearHistory = selectedIndex === clearHistoryIndex;
   const isOnEditConfig = selectedIndex === editConfigIndex;
-  const isOnActionItem = isOnEditShortcuts || isOnClearShortcuts || isOnClearHistory || isOnEditConfig;
+  const isOnActionItem = isOnClearShortcuts || isOnClearHistory || isOnEditConfig;
   const currentField = isOnActionItem ? null : visibleFields[selectedIndex];
   const isEditing = editingKey !== null;
-  const [shortcutsCleared, setShortcutsCleared] = (0, import_react25.useState)(false);
-  const [historyCleared, setHistoryCleared] = (0, import_react25.useState)(false);
+  const [shortcutsCleared, setShortcutsCleared] = (0, import_react24.useState)(false);
+  const [historyCleared, setHistoryCleared] = (0, import_react24.useState)(false);
   const openConfigFile = async () => {
     await open_default(CONFIG_FILE);
   };
@@ -55021,10 +55003,6 @@ function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, onClearH
     setHistoryCleared(true);
   };
   const startEditing = () => {
-    if (isOnEditShortcuts) {
-      onEditShortcuts();
-      return;
-    }
     if (isOnClearShortcuts) {
       handleClearShortcuts();
       return;
@@ -55147,12 +55125,14 @@ function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, onClearH
       }
       return;
     }
-    if (key.escape) {
-      onSave(localSettings);
-      return;
-    }
     if (key.tab) {
       onSave(localSettings);
+      onTab(key.shift);
+      return;
+    }
+    if (key.escape) {
+      onSave(localSettings);
+      onClose();
       return;
     }
     if (key.return) {
@@ -55188,16 +55168,8 @@ function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, onClearH
     }
     return str;
   };
-  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { flexDirection: "column", marginTop: 1, children: [
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Breadcrumb, { items: breadcrumbs }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: "gray", children: [
-        "  ",
-        "Settings "
-      ] }),
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { dimColor: true, children: "(Tab to close)" })
-    ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { dimColor: true, children: [
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { flexDirection: "column", marginTop: 1, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { dimColor: true, children: [
       "  ",
       "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
     ] }) }),
@@ -55207,12 +55179,12 @@ function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, onClearH
       const value = localSettings[field.key];
       const displayValue = formatValue(field, value);
       const useTextInputForField = !["number", "key", "toggle"].includes(field.type);
-      return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { flexDirection: "row", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isSelected ? "#FFD700" : void 0, bold: isSelected, children: [
+      return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { flexDirection: "row", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isSelected ? "#FFD700" : void 0, bold: isSelected, children: [
           isSelected ? "> " : "  ",
           field.label.padEnd(20)
         ] }),
-        isFieldEditing && useTextInputForField ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+        isFieldEditing && useTextInputForField ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
           build_default2,
           {
             value: editValue,
@@ -55220,75 +55192,72 @@ function SettingsScreen({ settings, onSave, onCancel, onClearShortcuts, onClearH
             onSubmit: commitEdit,
             focus: true
           }
-        ) : /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+        ) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
             Text,
             {
               color: isFieldEditing ? "#FFD700" : isSelected ? "#FFD700" : "gray",
               children: isFieldEditing ? editValue : displayValue
             }
           ),
-          isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: "#FFD700", children: "|" })
+          isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: "#FFD700", children: "|" })
         ] }),
-        field.type === "color" && !isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { children: "  " }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { backgroundColor: String(value), children: "    " })
+        field.type === "color" && !isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { children: "  " }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { backgroundColor: String(value), children: "    " })
         ] })
       ] }, field.key);
     }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isOnEditShortcuts ? "#FFD700" : "gray", bold: isOnEditShortcuts, children: [
-      isOnEditShortcuts ? "> " : "  ",
-      "Edit shortcuts..."
-    ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isOnClearShortcuts ? "#FFD700" : "gray", bold: isOnClearShortcuts, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isOnClearShortcuts ? "#FFD700" : "gray", bold: isOnClearShortcuts, children: [
         isOnClearShortcuts ? "> " : "  ",
         "Clear shortcuts..."
       ] }),
-      shortcutsCleared && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: "green", children: [
+      shortcutsCleared && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: "green", children: [
         " ",
         "\u2713"
       ] })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isOnClearHistory ? "#FFD700" : "gray", bold: isOnClearHistory, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isOnClearHistory ? "#FFD700" : "gray", bold: isOnClearHistory, children: [
         isOnClearHistory ? "> " : "  ",
         "Clear history..."
       ] }),
-      historyCleared && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: "green", children: [
+      historyCleared && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: "green", children: [
         " ",
         "\u2713"
       ] })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isOnEditConfig ? "#FFD700" : "gray", bold: isOnEditConfig, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isOnEditConfig ? "#FFD700" : "gray", bold: isOnEditConfig, children: [
       isOnEditConfig ? "> " : "  ",
       "Edit config file..."
     ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { dimColor: true, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { dimColor: true, children: [
       "  ",
       "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
     ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { dimColor: true, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { dimColor: true, children: [
       "  ",
-      isOnEditShortcuts ? "Manage shortcuts: edit names, triggers, and commands" : isOnClearShortcuts ? "Remove all shortcuts" : isOnClearHistory ? "Remove all recent projects from history" : isOnEditConfig ? "Open settings.json in default editor" : currentField?.description
+      isOnClearShortcuts ? "Remove all shortcuts" : isOnClearHistory ? "Remove all recent projects from history" : isOnEditConfig ? "Open settings.json in default editor" : currentField?.description
     ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { dimColor: true, children: isEditing ? currentField?.type === "number" ? "  type or \u2190\u2192\u2191\u2193 adjust \u2022 enter save \u2022 esc cancel" : "  \u2190\u2192 cursor \u2022 enter save \u2022 esc cancel" : currentField?.type === "toggle" ? "  \u2191\u2193 navigate \u2022 enter toggle \u2022 esc save & exit" : "  \u2191\u2193 navigate \u2022 enter edit \u2022 esc save & exit" }) })
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { marginTop: 1, children: tabBar }),
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { dimColor: true, children: isEditing ? currentField?.type === "number" ? "  type or \u2190\u2192\u2191\u2193 adjust \u2022 enter save \u2022 esc cancel" : "  \u2190\u2192 cursor \u2022 enter save \u2022 esc cancel" : currentField?.type === "toggle" ? "  tab next \u2022 \u2191\u2193 navigate \u2022 enter toggle \u2022 esc close" : "  tab next \u2022 \u2191\u2193 navigate \u2022 enter edit \u2022 esc close" }) })
   ] });
 }
 
 // src/components/ShortcutsEditor.tsx
-var import_react26 = __toESM(require_react(), 1);
-var import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
+var import_react25 = __toESM(require_react(), 1);
+var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
 function ShortcutsEditor({
   shortcuts,
   onUpdate,
   onEditShortcut,
   onAddShortcut,
-  onBack,
-  breadcrumbs
+  onTab,
+  tabBar
 }) {
-  const [selectedIndex, setSelectedIndex] = (0, import_react26.useState)(0);
-  const [confirmDelete, setConfirmDelete] = (0, import_react26.useState)(null);
+  const [selectedIndex, setSelectedIndex] = (0, import_react25.useState)(0);
+  const [confirmDelete, setConfirmDelete] = (0, import_react25.useState)(null);
   const totalItems = shortcuts.length + 1;
   const isOnAddNew = selectedIndex === shortcuts.length;
   use_input_default((input, key) => {
@@ -55327,35 +55296,34 @@ function ShortcutsEditor({
       }
       return;
     }
-    if (key.escape || key.tab) {
-      onBack();
+    if (key.tab) {
+      onTab(key.shift);
       return;
     }
   });
-  return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { flexDirection: "column", marginTop: 1, children: [
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Breadcrumb, { items: breadcrumbs }),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Shortcuts \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
-    shortcuts.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { color: "gray", dimColor: true, children: [
+  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { flexDirection: "column", marginTop: 1, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Shortcuts \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
+    shortcuts.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: "gray", dimColor: true, children: [
       "  ",
       "No shortcuts yet"
     ] }) }),
     shortcuts.map((sc, idx) => {
       const isSelected = idx === selectedIndex;
       const isDeleting = confirmDelete === sc.id;
-      return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { color: isSelected ? "#FFD700" : void 0, bold: isSelected, children: [
+      return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isSelected ? "#FFD700" : void 0, bold: isSelected, children: [
           isSelected ? "> " : "  ",
           sc.name
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { dimColor: true, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { dimColor: true, children: [
           " [",
           sc.trigger,
           "]"
         ] }),
-        isDeleting && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "red", children: " Delete? (y/n)" })
+        isDeleting && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: "red", children: " Delete? (y/n)" })
       ] }, sc.id);
     }),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
       Text,
       {
         color: isOnAddNew ? "#FFD700" : "cyan",
@@ -55366,32 +55334,34 @@ function ShortcutsEditor({
         ]
       }
     ) }),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { dimColor: true, children: [
-      "enter edit ",
-      shortcuts.length > 0 ? "\u2022 ^D delete " : "",
-      "\u2022 esc/tab back"
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { marginTop: 1, children: tabBar }),
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { dimColor: true, children: [
+      "  ",
+      "tab next \u2022 \u2191\u2193 navigate \u2022 enter edit",
+      shortcuts.length > 0 ? " \u2022 ^D delete" : ""
     ] }) })
   ] });
 }
 
 // src/components/ShortcutEdit.tsx
-var import_react27 = __toESM(require_react(), 1);
-var import_jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
+var import_react26 = __toESM(require_react(), 1);
+var import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
 function ShortcutEdit({
   shortcut,
   allShortcuts,
   onSave,
   onBack,
-  breadcrumbs
+  onTab,
+  tabBar
 }) {
-  const [name, setName] = (0, import_react27.useState)(shortcut.name);
-  const [trigger, setTrigger] = (0, import_react27.useState)(shortcut.trigger);
-  const [caseSensitive, setCaseSensitive] = (0, import_react27.useState)(shortcut.caseSensitive);
-  const [commands, setCommands] = (0, import_react27.useState)([...shortcut.command]);
-  const [selectedIndex, setSelectedIndex] = (0, import_react27.useState)(0);
-  const [editingField, setEditingField] = (0, import_react27.useState)(null);
-  const [error, setError] = (0, import_react27.useState)(null);
+  const [name, setName] = (0, import_react26.useState)(shortcut.name);
+  const [trigger, setTrigger] = (0, import_react26.useState)(shortcut.trigger);
+  const [caseSensitive, setCaseSensitive] = (0, import_react26.useState)(shortcut.caseSensitive);
+  const [commands, setCommands] = (0, import_react26.useState)([...shortcut.command]);
+  const [selectedIndex, setSelectedIndex] = (0, import_react26.useState)(0);
+  const [editingField, setEditingField] = (0, import_react26.useState)(null);
+  const [error, setError] = (0, import_react26.useState)(null);
   const fields = [
     { key: "name", label: "Name", type: "text" },
     { key: "trigger", label: "Trigger", type: "text" },
@@ -55405,7 +55375,7 @@ function ShortcutEdit({
   ];
   const totalItems = fields.length;
   const currentField = fields[selectedIndex];
-  (0, import_react27.useEffect)(() => {
+  (0, import_react26.useEffect)(() => {
     if (error) {
       const timer = setTimeout(() => setError(null), 3e3);
       return () => clearTimeout(timer);
@@ -55514,8 +55484,37 @@ function ShortcutEdit({
       deleteCommandLine();
       return;
     }
-    if (key.escape || key.tab) {
+    if (key.escape) {
       saveAndExit();
+      return;
+    }
+    if (key.tab) {
+      const validation = validateTrigger(trigger, caseSensitive, shortcut.id);
+      if (!validation.valid) {
+        setError(validation.error || "Invalid trigger");
+        return;
+      }
+      if (!name.trim()) {
+        setError("Name cannot be empty");
+        return;
+      }
+      const nonEmptyCommands = commands.filter((c) => c.trim() !== "");
+      if (nonEmptyCommands.length === 0) {
+        setError("At least one command is required");
+        return;
+      }
+      try {
+        const updated = updateShortcut(shortcut.id, {
+          name: name.trim(),
+          trigger,
+          caseSensitive,
+          command: nonEmptyCommands
+        });
+        onSave(updated);
+        onTab(key.shift);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to save");
+      }
       return;
     }
   });
@@ -55523,8 +55522,8 @@ function ShortcutEdit({
     const isSelected = idx === selectedIndex;
     const isEditing = editingField === field.key;
     const value = getValue(field.key);
-    return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
+    return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
         Text,
         {
           color: isSelected ? "#FFD700" : void 0,
@@ -55536,8 +55535,8 @@ function ShortcutEdit({
           ]
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { children: " " }),
-      isEditing ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { children: " " }),
+      isEditing ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
         build_default2,
         {
           value,
@@ -55545,16 +55544,15 @@ function ShortcutEdit({
           onSubmit: commitEdit,
           focus: true
         }
-      ) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: isSelected ? "#FFD700" : value ? "white" : "gray", children: value || "(empty)" })
+      ) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: isSelected ? "#FFD700" : value ? "white" : "gray", children: value || "(empty)" })
     ] }, field.key);
   };
-  return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { flexDirection: "column", marginTop: 1, children: [
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Breadcrumb, { items: breadcrumbs }),
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Edit Shortcut \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
+  return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { flexDirection: "column", marginTop: 1, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Edit Shortcut \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
     renderField(fields[0], 0),
     renderField(fields[1], 1),
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
         Text,
         {
           color: selectedIndex === 2 ? "#FFD700" : void 0,
@@ -55565,17 +55563,17 @@ function ShortcutEdit({
           ]
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { children: " " }),
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: selectedIndex === 2 ? "#FFD700" : "white", children: caseSensitive ? "Yes" : "No" })
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { children: " " }),
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: selectedIndex === 2 ? "#FFD700" : "white", children: caseSensitive ? "Yes" : "No" })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Commands \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Commands \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
     commands.map((cmd, idx) => {
       const fieldIdx = 3 + idx;
       const field = fields[fieldIdx];
       const isSelected = selectedIndex === fieldIdx;
       const isEditing = editingField === `cmd-${idx}`;
-      return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
           Text,
           {
             color: isSelected ? "#FFD700" : void 0,
@@ -55583,7 +55581,7 @@ function ShortcutEdit({
             children: isSelected ? "> " : "  "
           }
         ),
-        isEditing ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+        isEditing ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
           build_default2,
           {
             value: cmd,
@@ -55591,10 +55589,10 @@ function ShortcutEdit({
             onSubmit: commitEdit,
             focus: true
           }
-        ) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: isSelected ? "#FFD700" : cmd ? "white" : "gray", children: cmd || "(empty)" })
+        ) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: isSelected ? "#FFD700" : cmd ? "white" : "gray", children: cmd || "(empty)" })
       ] }, `cmd-${idx}`);
     }),
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
       Text,
       {
         color: selectedIndex === fields.length - 1 ? "#FFD700" : "cyan",
@@ -55605,9 +55603,13 @@ function ShortcutEdit({
         ]
       }
     ) }),
-    error && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "red", children: error }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { dimColor: true, children: "enter edit \u2022 ^D delete line \u2022 esc save & back" }) })
+    error && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "red", children: error }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { marginTop: 1, children: tabBar }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { dimColor: true, children: [
+      "  ",
+      "tab next \u2022 enter edit \u2022 ^D delete line \u2022 esc save & back"
+    ] }) })
   ] });
 }
 
@@ -55827,8 +55829,13 @@ function saveCache(projects, projectsDir, maxDepth, skipDirs) {
 }
 
 // src/components/App.tsx
-var import_jsx_runtime5 = __toESM(require_jsx_runtime(), 1);
+var import_jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
 var PAGE_SIZE = 10;
+var TAB_PROJECTS = 0;
+var TAB_SHORTCUTS = 1;
+var TAB_SETTINGS = 2;
+var TAB_COUNT = 3;
+var TAB_LABELS = ["Projects", "Shortcuts", "Settings"];
 function getDisplayName(path2, projectsDir) {
   const rel = relative2(projectsDir, path2);
   return rel.replace(/\\/g, "/") || basename2(path2);
@@ -55861,31 +55868,25 @@ function collectNestedGitProjects(project, basePath) {
 function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEntries: initialShortcutEntries, onSelect, onSettingsSave }) {
   log("App component function called");
   const { exit } = use_app_default();
-  const [screenStack, setScreenStack] = (0, import_react28.useState)([
-    { screen: "main" }
-  ]);
-  const currentScreen = screenStack[screenStack.length - 1];
-  const pushScreen = (screen, state) => {
-    setScreenStack((prev) => [...prev, { screen, state }]);
+  const [currentTab, setCurrentTab] = (0, import_react27.useState)(TAB_PROJECTS);
+  const [editingShortcutId, setEditingShortcutId] = (0, import_react27.useState)(null);
+  const cycleTab = (reverse = false) => {
+    setCurrentTab((prev) => {
+      if (reverse) {
+        return prev <= 0 ? TAB_COUNT - 1 : prev - 1;
+      }
+      return (prev + 1) % TAB_COUNT;
+    });
+    setEditingShortcutId(null);
   };
-  const popScreen = () => {
-    setScreenStack((prev) => prev.length > 1 ? prev.slice(0, -1) : prev);
-  };
-  const breadcrumbLabels = {
-    main: "Home",
-    settings: "Settings",
-    "shortcuts-editor": "Shortcuts",
-    "shortcut-edit": "Edit"
-  };
-  const breadcrumbItems = screenStack.slice(1).map((entry) => breadcrumbLabels[entry.screen]);
-  const [projects, setProjects] = (0, import_react28.useState)(null);
-  const [isRefreshing, setIsRefreshing] = (0, import_react28.useState)(false);
-  const [settings, setSettings] = (0, import_react28.useState)(initialSettings);
-  const [recentEntries, setRecentEntries] = (0, import_react28.useState)(initialRecentEntries);
-  const [shortcutEntries, setShortcutEntries] = (0, import_react28.useState)(initialShortcutEntries);
-  const [confirmDeleteId, setConfirmDeleteId] = (0, import_react28.useState)(null);
-  const scanAbortSignal = (0, import_react28.useRef)({ aborted: false });
-  (0, import_react28.useEffect)(() => {
+  const [projects, setProjects] = (0, import_react27.useState)(null);
+  const [isRefreshing, setIsRefreshing] = (0, import_react27.useState)(false);
+  const [settings, setSettings] = (0, import_react27.useState)(initialSettings);
+  const [recentEntries, setRecentEntries] = (0, import_react27.useState)(initialRecentEntries);
+  const [shortcutEntries, setShortcutEntries] = (0, import_react27.useState)(initialShortcutEntries);
+  const [confirmDeleteId, setConfirmDeleteId] = (0, import_react27.useState)(null);
+  const scanAbortSignal = (0, import_react27.useRef)({ aborted: false });
+  (0, import_react27.useEffect)(() => {
     log("useEffect: mount - starting cache/scan");
     scanAbortSignal.current = { aborted: false };
     setIsRefreshing(true);
@@ -55913,12 +55914,12 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
       scanAbortSignal.current.aborted = true;
     };
   }, []);
-  const [searchTerm, setSearchTerm] = (0, import_react28.useState)("");
-  const [nestedCache, setNestedCache] = (0, import_react28.useState)(() => /* @__PURE__ */ new Map());
-  const [navStack, setNavStack] = (0, import_react28.useState)([
+  const [searchTerm, setSearchTerm] = (0, import_react27.useState)("");
+  const [nestedCache, setNestedCache] = (0, import_react27.useState)(() => /* @__PURE__ */ new Map());
+  const [navStack, setNavStack] = (0, import_react27.useState)([
     { projects: [], parentPath: null, savedScrollOffset: 0, savedSelectedKey: null }
   ]);
-  (0, import_react28.useEffect)(() => {
+  (0, import_react27.useEffect)(() => {
     if (projects) {
       setNavStack([{ projects, parentPath: null, savedScrollOffset: 0, savedSelectedKey: null }]);
     }
@@ -55926,7 +55927,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
   const currentLevel = navStack[navStack.length - 1];
   const currentProjects = currentLevel.projects;
   const isAtRoot = navStack.length === 1;
-  const exactShortcutPaths = (0, import_react28.useMemo)(() => {
+  const exactShortcutPaths = (0, import_react27.useMemo)(() => {
     const paths = /* @__PURE__ */ new Set();
     for (const sc of shortcutEntries) {
       if (sc.command.length === 1) {
@@ -55939,11 +55940,11 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
     }
     return paths;
   }, [shortcutEntries]);
-  const recentPaths = (0, import_react28.useMemo)(
+  const recentPaths = (0, import_react27.useMemo)(
     () => new Set(recentEntries.map((e) => e.path)),
     [recentEntries]
   );
-  const allProjectsMap = (0, import_react28.useMemo)(() => {
+  const allProjectsMap = (0, import_react27.useMemo)(() => {
     const map = /* @__PURE__ */ new Map();
     if (!projects) return map;
     function traverse(list) {
@@ -55955,7 +55956,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
     traverse(projects);
     return map;
   }, [projects]);
-  const triggersByPath = (0, import_react28.useMemo)(() => {
+  const triggersByPath = (0, import_react27.useMemo)(() => {
     const map = /* @__PURE__ */ new Map();
     for (const sc of shortcutEntries) {
       const firstCmd = sc.command[0];
@@ -55971,7 +55972,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
     }
     return map;
   }, [shortcutEntries]);
-  const { unfilteredItems, unfilteredKeyToIndex } = (0, import_react28.useMemo)(() => {
+  const { unfilteredItems, unfilteredKeyToIndex } = (0, import_react27.useMemo)(() => {
     const list = [];
     const keyMap = /* @__PURE__ */ new Map();
     if (isAtRoot && settings.showShortcuts && shortcutEntries.length > 0 && !searchTerm) {
@@ -56056,7 +56057,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
     }
     return { unfilteredItems: list, unfilteredKeyToIndex: keyMap };
   }, [currentProjects, recentEntries, shortcutEntries, isAtRoot, recentPaths, exactShortcutPaths, triggersByPath, allProjectsMap, currentLevel.parentPath, settings.projectsDir, settings.showShortcuts, settings.showRecent, searchTerm]);
-  const { items, keyToIndex } = (0, import_react28.useMemo)(() => {
+  const { items, keyToIndex } = (0, import_react27.useMemo)(() => {
     if (!searchTerm) {
       return { items: unfilteredItems, keyToIndex: unfilteredKeyToIndex };
     }
@@ -56093,19 +56094,19 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
     }
     return { items: filtered, keyToIndex: keyMap };
   }, [unfilteredItems, unfilteredKeyToIndex, searchTerm]);
-  const selectableIndices = (0, import_react28.useMemo)(
+  const selectableIndices = (0, import_react27.useMemo)(
     () => items.map((item, idx) => item.type !== "header" ? idx : -1).filter((idx) => idx !== -1),
     [items]
   );
-  const [selectedKey, setSelectedKey] = (0, import_react28.useState)(null);
-  const [scrollOffset, setScrollOffset] = (0, import_react28.useState)(0);
-  const selectedIndex = (0, import_react28.useMemo)(() => {
+  const [selectedKey, setSelectedKey] = (0, import_react27.useState)(null);
+  const [scrollOffset, setScrollOffset] = (0, import_react27.useState)(0);
+  const selectedIndex = (0, import_react27.useMemo)(() => {
     if (!selectedKey) return selectableIndices[0] ?? 0;
     const idx = keyToIndex.get(selectedKey);
     return idx !== void 0 ? idx : selectableIndices[0] ?? 0;
   }, [selectedKey, keyToIndex, selectableIndices]);
-  const prevSearchTerm = (0, import_react28.useRef)(searchTerm);
-  (0, import_react28.useEffect)(() => {
+  const prevSearchTerm = (0, import_react27.useRef)(searchTerm);
+  (0, import_react27.useEffect)(() => {
     if (searchTerm !== prevSearchTerm.current) {
       prevSearchTerm.current = searchTerm;
       if (selectableIndices.length > 0) {
@@ -56225,7 +56226,6 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
     setSettings(newSettings);
     onSettingsSave(newSettings);
     log("handleSettingsSave: onSettingsSave done");
-    setScreenStack([{ screen: "main" }]);
     if (needsRescan) {
       log("handleSettingsSave: starting async rescan...");
       setIsRefreshing(true);
@@ -56247,7 +56247,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
     }
   };
   use_input_default((input, key) => {
-    if (currentScreen.screen !== "main") return;
+    if (currentTab !== TAB_PROJECTS) return;
     if (confirmDeleteId) {
       if (input === "y" || input === "Y") {
         confirmDelete();
@@ -56257,7 +56257,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
       return;
     }
     if (key.tab) {
-      pushScreen("settings");
+      cycleTab(key.shift);
       return;
     }
     if (key.ctrl && input === settings.refreshKey) {
@@ -56390,29 +56390,48 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
   const visibleItems = items.slice(clampedScrollOffset, clampedScrollOffset + settings.visibleRows);
   const hasMoreAbove = clampedScrollOffset > 0;
   const hasMoreBelow = clampedScrollOffset + settings.visibleRows < items.length;
-  if (currentScreen.screen === "settings") {
-    return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
-      SettingsScreen,
-      {
-        settings,
-        onSave: handleSettingsSave,
-        onCancel: () => popScreen(),
-        onClearShortcuts: () => {
-          setShortcutEntries([]);
-        },
-        onClearHistory: () => setRecentEntries([]),
-        onEditShortcuts: () => pushScreen("shortcuts-editor"),
-        breadcrumbs: breadcrumbItems
+  const TabBar = () => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { dimColor: true, children: "  " }),
+    TAB_LABELS.map((label, idx) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_react27.default.Fragment, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+        Text,
+        {
+          color: idx === currentTab ? "#FFD700" : "gray",
+          bold: idx === currentTab,
+          children: idx === currentTab ? `[${label}]` : ` ${label} `
+        }
+      ),
+      idx < TAB_LABELS.length - 1 && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { dimColor: true, children: " \u2502 " })
+    ] }, label))
+  ] });
+  if (currentTab === TAB_SHORTCUTS) {
+    if (editingShortcutId) {
+      const shortcut = shortcutEntries.find((s) => s.id === editingShortcutId);
+      if (shortcut) {
+        return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+          ShortcutEdit,
+          {
+            shortcut,
+            allShortcuts: shortcutEntries,
+            onSave: (updated) => {
+              setShortcutEntries(
+                (prev) => prev.map((s) => s.id === updated.id ? updated : s)
+              );
+            },
+            onBack: () => setEditingShortcutId(null),
+            onTab: cycleTab,
+            tabBar: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(TabBar, {})
+          }
+        );
       }
-    );
-  }
-  if (currentScreen.screen === "shortcuts-editor") {
-    return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+      setEditingShortcutId(null);
+    }
+    return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
       ShortcutsEditor,
       {
         shortcuts: shortcutEntries,
         onUpdate: (updated) => setShortcutEntries(updated),
-        onEditShortcut: (id) => pushScreen("shortcut-edit", { shortcutId: id }),
+        onEditShortcut: (id) => setEditingShortcutId(id),
         onAddShortcut: () => {
           const newShortcut = addShortcut({
             name: "New Shortcut",
@@ -56421,46 +56440,41 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
             command: ["cd ~"]
           });
           setShortcutEntries((prev) => [...prev, newShortcut]);
-          pushScreen("shortcut-edit", { shortcutId: newShortcut.id });
+          setEditingShortcutId(newShortcut.id);
         },
-        onBack: () => popScreen(),
-        breadcrumbs: breadcrumbItems
+        onTab: cycleTab,
+        tabBar: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(TabBar, {})
       }
     );
   }
-  if (currentScreen.screen === "shortcut-edit" && currentScreen.state?.shortcutId) {
-    const shortcut = shortcutEntries.find((s) => s.id === currentScreen.state?.shortcutId);
-    if (shortcut) {
-      return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
-        ShortcutEdit,
-        {
-          shortcut,
-          allShortcuts: shortcutEntries,
-          onSave: (updated) => {
-            setShortcutEntries(
-              (prev) => prev.map((s) => s.id === updated.id ? updated : s)
-            );
-          },
-          onBack: () => popScreen(),
-          breadcrumbs: breadcrumbItems
-        }
-      );
-    }
-    popScreen();
-    return null;
+  if (currentTab === TAB_SETTINGS) {
+    return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+      SettingsScreen,
+      {
+        settings,
+        onSave: handleSettingsSave,
+        onClearShortcuts: () => {
+          setShortcutEntries([]);
+        },
+        onClearHistory: () => setRecentEntries([]),
+        onTab: cycleTab,
+        onClose: () => setCurrentTab(TAB_PROJECTS),
+        tabBar: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(TabBar, {})
+      }
+    );
   }
-  return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Box_default, { flexDirection: "column", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Box_default, { marginTop: 1, children: [
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: "gray", children: "  " }),
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: searchTerm ? "white" : "gray", children: searchTerm || "Type to search..." }),
-      searchTerm && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: "white", children: "\u258C" })
+  return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { flexDirection: "column", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { marginTop: 1, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", children: "  " }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: searchTerm ? "white" : "gray", children: searchTerm || "Type to search..." }),
+      searchTerm && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "white", children: "\u258C" })
     ] }),
-    hasMoreAbove && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { dimColor: true, children: [
+    hasMoreAbove && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { dimColor: true, children: [
       "  \u2191 ",
       scrollOffset,
       " more"
     ] }) }),
-    visibleItems.length === 0 && searchTerm && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: "yellow", children: [
+    visibleItems.length === 0 && searchTerm && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { color: "yellow", children: [
       '  No matches for "',
       searchTerm,
       '"'
@@ -56468,7 +56482,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
     visibleItems.map((item, visibleIdx) => {
       const actualIdx = clampedScrollOffset + visibleIdx;
       if (item.type === "header") {
-        return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: "gray", dimColor: true, children: [
+        return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { color: "gray", dimColor: true, children: [
           "\u2500\u2500 ",
           item.label,
           " \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
@@ -56476,7 +56490,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
       }
       const isSelected = actualIdx === selectedIndex;
       if (item.type === "back") {
-        return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: isSelected ? settings.selectedColor : "gray", bold: isSelected, children: [
+        return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { color: isSelected ? settings.selectedColor : "gray", bold: isSelected, children: [
           "< ",
           item.label
         ] }) }, "back");
@@ -56493,33 +56507,35 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
         color = settings.recentColor;
       }
       const isDeleting = item.shortcutId && confirmDeleteId === item.shortcutId;
-      return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Box_default, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color, bold: isSelected, children: [
+      return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { color, bold: isSelected, children: [
           isSelected ? "> " : "  ",
           item.label
         ] }),
-        item.triggers && item.triggers.map((t, i) => /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { dimColor: true, children: [
+        item.triggers && item.triggers.map((t, i) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { dimColor: true, children: [
           " [",
           t,
           "]"
         ] }, i)),
-        hasNested && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: "gray", dimColor: true, children: " \u25B6" }),
-        isDeleting && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: "red", children: " Delete? (y/n)" })
+        hasNested && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: " \u25B6" }),
+        isDeleting && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "red", children: " Delete? (y/n)" })
       ] }, `item-${actualIdx}`);
     }),
-    hasMoreBelow && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { dimColor: true, children: [
+    hasMoreBelow && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { dimColor: true, children: [
       "  \u2193 ",
       items.length - scrollOffset - settings.visibleRows,
       " more"
     ] }) }),
-    isRefreshing && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: "cyan", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(build_default, { type: "dots" }),
+    isRefreshing && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { color: "cyan", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(build_default, { type: "dots" }),
       " Refreshing..."
     ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { marginTop: isRefreshing ? 0 : 1, children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { dimColor: true, children: [
-      "\u2191\u2193 navigate \u2022 enter select \u2022 \u2192\u2190 drill/back \u2022 ^",
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: isRefreshing ? 0 : 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(TabBar, {}) }),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { dimColor: true, children: [
+      "  ",
+      "tab next \u2022 \u2191\u2193 select \u2022 \u2192\u2190 drill \u2022 ^",
       settings.shortcutToggleKey.toUpperCase(),
-      " add shortcut \u2022 ^D delete \u2022 tab settings \u2022 ^",
+      " add \u2022 ^D del \u2022 ^",
       settings.refreshKey.toUpperCase(),
       " refresh \u2022 esc quit"
     ] }) })
@@ -56789,7 +56805,7 @@ async function runSetup(shellArg, aliasArg) {
 }
 
 // src/index.tsx
-var import_jsx_runtime6 = __toESM(require_jsx_runtime(), 1);
+var import_jsx_runtime5 = __toESM(require_jsx_runtime(), 1);
 async function main() {
   const args = process.argv.slice(2);
   const debugMode = args.includes("--debug");
@@ -56831,7 +56847,7 @@ async function main() {
   let selectedDisplayName = null;
   log("about to render App...");
   const { waitUntilExit, unmount } = render_default(
-    /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
       App2,
       {
         initialSettings: settings,
