@@ -271,7 +271,10 @@ export function SettingsScreen({ settings, onSave, onClearShortcuts, onClearHist
   };
 
   return (
-    <Box flexDirection="column" marginTop={1}>
+    <Box flexDirection="column">
+      {/* Tab bar at top */}
+      {tabBar}
+
       <Box>
         <Text dimColor>{"  "}───────────────────────────────────────</Text>
       </Box>
@@ -360,20 +363,15 @@ export function SettingsScreen({ settings, onSave, onClearShortcuts, onClearHist
         </Text>
       </Box>
 
-      {/* Tab bar */}
       <Box marginTop={1}>
-        {tabBar}
-      </Box>
-
-      <Box>
         <Text dimColor>
           {isEditing
             ? currentField?.type === "number"
               ? "  type or ←→↑↓ adjust • enter save • esc cancel"
               : "  ←→ cursor • enter save • esc cancel"
             : currentField?.type === "toggle"
-              ? "  tab next • ↑↓ navigate • enter toggle • esc close"
-              : "  tab next • ↑↓ navigate • enter edit • esc close"}
+              ? "  tab/shift+tab • ↑↓ navigate • enter toggle • esc close"
+              : "  tab/shift+tab • ↑↓ navigate • enter edit • esc close"}
         </Text>
       </Box>
     </Box>

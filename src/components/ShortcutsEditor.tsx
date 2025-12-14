@@ -9,6 +9,7 @@ interface ShortcutsEditorProps {
   onEditShortcut: (id: string) => void;
   onAddShortcut: () => void;
   onTab: (reverse?: boolean) => void;
+  onClose: () => void;
   tabBar: React.ReactNode;
 }
 
@@ -18,6 +19,7 @@ export function ShortcutsEditor({
   onEditShortcut,
   onAddShortcut,
   onTab,
+  onClose,
   tabBar,
 }: ShortcutsEditorProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -78,10 +80,19 @@ export function ShortcutsEditor({
       onTab(key.shift);
       return;
     }
+
+    // Escape - go back to Projects
+    if (key.escape) {
+      onClose();
+      return;
+    }
   });
 
   return (
-    <Box flexDirection="column" marginTop={1}>
+    <Box flexDirection="column">
+      {/* Tab bar at top */}
+      {tabBar}
+
       <Box>
         <Text color="gray" dimColor>
           ── Shortcuts ──────────────────
@@ -129,14 +140,9 @@ export function ShortcutsEditor({
         </Text>
       </Box>
 
-      {/* Tab bar */}
       <Box marginTop={1}>
-        {tabBar}
-      </Box>
-
-      <Box>
         <Text dimColor>
-          {"  "}tab next • ↑↓ navigate • enter edit{shortcuts.length > 0 ? " • ^D delete" : ""}
+          {"  "}tab/shift+tab • ↑↓ navigate • enter edit{shortcuts.length > 0 ? " • ^D delete" : ""} • esc close
         </Text>
       </Box>
     </Box>

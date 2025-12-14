@@ -9,13 +9,11 @@ import { ShortcutEdit } from "./ShortcutEdit.js";
 import { scanProjectsAsync, ScanAbortSignal } from "../scanner.js";
 import { loadCacheAsync, saveCache } from "../cache.js";
 import {
-  getShortcuts,
   addShortcut,
   removeShortcut,
   findShortcutByPath,
   generateCommand,
   generateUniqueTrigger,
-  getShortcutById,
 } from "../shortcuts.js";
 import { writeLastCommand } from "../history.js";
 import { log } from "../logger.js";
@@ -788,23 +786,35 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
   const hasMoreAbove = clampedScrollOffset > 0;
   const hasMoreBelow = clampedScrollOffset + settings.visibleRows < items.length;
 
-  // TabBar component
-  const TabBar = () => (
-    <Box>
-      <Text dimColor>{"  "}</Text>
-      {TAB_LABELS.map((label, idx) => (
-        <React.Fragment key={label}>
-          <Text
-            color={idx === currentTab ? "#FFD700" : "gray"}
-            bold={idx === currentTab}
-          >
-            {idx === currentTab ? `[${label}]` : ` ${label} `}
-          </Text>
-          {idx < TAB_LABELS.length - 1 && <Text dimColor> │ </Text>}
-        </React.Fragment>
-      ))}
-    </Box>
-  );
+  // TabBar component with border and inverted active tab
+  const TabBar = () => {
+    const tabs = TAB_LABELS.map((label, idx) => {
+      const isActive = idx === currentTab;
+      return { label, isActive };
+    });
+
+    // Calculate total width for border
+    const tabsContent = tabs.map(t => t.label).join(" │ ");
+
+    return (
+      <Box flexDirection="column" marginTop={1} marginBottom={1} marginLeft={2}>
+        <Box>
+          {tabs.map((tab, idx) => (
+            <React.Fragment key={idx}>
+              {tab.isActive ? (
+                <Text backgroundColor="#FFD700" color="#333">
+                  {tab.label}
+                </Text>
+              ) : (
+                <Text color="gray">{tab.label}</Text>
+              )}
+              {idx < tabs.length - 1 && <Text dimColor>│</Text>}
+            </React.Fragment>
+          ))}
+        </Box>
+      </Box>
+    );
+  };
 
   // Handle Shortcuts tab
   if (currentTab === TAB_SHORTCUTS) {
@@ -848,6 +858,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
           setEditingShortcutId(newShortcut.id);
         }}
         onTab={cycleTab}
+        onClose={() => setCurrentTab(TAB_PROJECTS)}
         tabBar={<TabBar />}
       />
     );
@@ -872,8 +883,11 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
 
   return (
     <Box flexDirection="column">
-      {/* Search input - outside scroll area */}
-      <Box marginTop={1}>
+      {/* Tab bar at top */}
+      <TabBar />
+
+      {/* Search input */}
+      <Box>
         <Text color="gray">{"  "}</Text>
         <Text color={searchTerm ? "white" : "gray"}>
           {searchTerm || "Type to search..."}
@@ -969,14 +983,9 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
         </Box>
       )}
 
-      {/* Tab bar */}
       <Box marginTop={isRefreshing ? 0 : 1}>
-        <TabBar />
-      </Box>
-
-      <Box>
         <Text dimColor>
-          {"  "}tab next • ↑↓ select • →← drill • ^{settings.shortcutToggleKey.toUpperCase()} add • ^D del • ^{settings.refreshKey.toUpperCase()} refresh • esc quit
+          {"  "}tab/shift+tab • ↑↓ select • →← drill • ^{settings.shortcutToggleKey.toUpperCase()} add • ^D del • ^{settings.refreshKey.toUpperCase()} refresh • esc quit
         </Text>
       </Box>
     </Box>

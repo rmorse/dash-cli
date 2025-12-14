@@ -55168,7 +55168,8 @@ function SettingsScreen({ settings, onSave, onClearShortcuts, onClearHistory, on
     }
     return str;
   };
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { flexDirection: "column", marginTop: 1, children: [
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { flexDirection: "column", children: [
+    tabBar,
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { dimColor: true, children: [
       "  ",
       "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
@@ -55240,8 +55241,7 @@ function SettingsScreen({ settings, onSave, onClearShortcuts, onClearHistory, on
       "  ",
       isOnClearShortcuts ? "Remove all shortcuts" : isOnClearHistory ? "Remove all recent projects from history" : isOnEditConfig ? "Open settings.json in default editor" : currentField?.description
     ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { marginTop: 1, children: tabBar }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { dimColor: true, children: isEditing ? currentField?.type === "number" ? "  type or \u2190\u2192\u2191\u2193 adjust \u2022 enter save \u2022 esc cancel" : "  \u2190\u2192 cursor \u2022 enter save \u2022 esc cancel" : currentField?.type === "toggle" ? "  tab next \u2022 \u2191\u2193 navigate \u2022 enter toggle \u2022 esc close" : "  tab next \u2022 \u2191\u2193 navigate \u2022 enter edit \u2022 esc close" }) })
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { dimColor: true, children: isEditing ? currentField?.type === "number" ? "  type or \u2190\u2192\u2191\u2193 adjust \u2022 enter save \u2022 esc cancel" : "  \u2190\u2192 cursor \u2022 enter save \u2022 esc cancel" : currentField?.type === "toggle" ? "  tab/shift+tab \u2022 \u2191\u2193 navigate \u2022 enter toggle \u2022 esc close" : "  tab/shift+tab \u2022 \u2191\u2193 navigate \u2022 enter edit \u2022 esc close" }) })
   ] });
 }
 
@@ -55254,6 +55254,7 @@ function ShortcutsEditor({
   onEditShortcut,
   onAddShortcut,
   onTab,
+  onClose,
   tabBar
 }) {
   const [selectedIndex, setSelectedIndex] = (0, import_react25.useState)(0);
@@ -55300,8 +55301,13 @@ function ShortcutsEditor({
       onTab(key.shift);
       return;
     }
+    if (key.escape) {
+      onClose();
+      return;
+    }
   });
-  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { flexDirection: "column", marginTop: 1, children: [
+  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { flexDirection: "column", children: [
+    tabBar,
     /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Shortcuts \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
     shortcuts.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: "gray", dimColor: true, children: [
       "  ",
@@ -55335,11 +55341,11 @@ function ShortcutsEditor({
       }
     ) }),
     /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { marginTop: 1, children: tabBar }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { dimColor: true, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { dimColor: true, children: [
       "  ",
-      "tab next \u2022 \u2191\u2193 navigate \u2022 enter edit",
-      shortcuts.length > 0 ? " \u2022 ^D delete" : ""
+      "tab/shift+tab \u2022 \u2191\u2193 navigate \u2022 enter edit",
+      shortcuts.length > 0 ? " \u2022 ^D delete" : "",
+      " \u2022 esc close"
     ] }) })
   ] });
 }
@@ -55547,7 +55553,8 @@ function ShortcutEdit({
       ) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: isSelected ? "#FFD700" : value ? "white" : "gray", children: value || "(empty)" })
     ] }, field.key);
   };
-  return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { flexDirection: "column", marginTop: 1, children: [
+  return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { flexDirection: "column", children: [
+    tabBar,
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Edit Shortcut \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
     renderField(fields[0], 0),
     renderField(fields[1], 1),
@@ -55605,10 +55612,9 @@ function ShortcutEdit({
     ) }),
     error && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "red", children: error }) }),
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { marginTop: 1, children: tabBar }),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { dimColor: true, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { dimColor: true, children: [
       "  ",
-      "tab next \u2022 enter edit \u2022 ^D delete line \u2022 esc save & back"
+      "tab/shift+tab \u2022 enter edit \u2022 ^D delete line \u2022 esc save & back"
     ] }) })
   ] });
 }
@@ -56390,20 +56396,17 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
   const visibleItems = items.slice(clampedScrollOffset, clampedScrollOffset + settings.visibleRows);
   const hasMoreAbove = clampedScrollOffset > 0;
   const hasMoreBelow = clampedScrollOffset + settings.visibleRows < items.length;
-  const TabBar = () => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { dimColor: true, children: "  " }),
-    TAB_LABELS.map((label, idx) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_react27.default.Fragment, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
-        Text,
-        {
-          color: idx === currentTab ? "#FFD700" : "gray",
-          bold: idx === currentTab,
-          children: idx === currentTab ? `[${label}]` : ` ${label} `
-        }
-      ),
-      idx < TAB_LABELS.length - 1 && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { dimColor: true, children: " \u2502 " })
-    ] }, label))
-  ] });
+  const TabBar = () => {
+    const tabs = TAB_LABELS.map((label, idx) => {
+      const isActive = idx === currentTab;
+      return { label, isActive };
+    });
+    const tabsContent = tabs.map((t) => t.label).join(" \u2502 ");
+    return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { flexDirection: "column", marginTop: 1, marginBottom: 1, marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: tabs.map((tab2, idx) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_react27.default.Fragment, { children: [
+      tab2.isActive ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { backgroundColor: "#FFD700", color: "#333", children: tab2.label }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", children: tab2.label }),
+      idx < tabs.length - 1 && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { dimColor: true, children: "\u2502" })
+    ] }, idx)) }) });
+  };
   if (currentTab === TAB_SHORTCUTS) {
     if (editingShortcutId) {
       const shortcut = shortcutEntries.find((s) => s.id === editingShortcutId);
@@ -56443,6 +56446,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
           setEditingShortcutId(newShortcut.id);
         },
         onTab: cycleTab,
+        onClose: () => setCurrentTab(TAB_PROJECTS),
         tabBar: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(TabBar, {})
       }
     );
@@ -56464,7 +56468,8 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
     );
   }
   return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { flexDirection: "column", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { marginTop: 1, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(TabBar, {}),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
       /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", children: "  " }),
       /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: searchTerm ? "white" : "gray", children: searchTerm || "Type to search..." }),
       searchTerm && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "white", children: "\u258C" })
@@ -56530,10 +56535,9 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
       /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(build_default, { type: "dots" }),
       " Refreshing..."
     ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: isRefreshing ? 0 : 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(TabBar, {}) }),
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { dimColor: true, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: isRefreshing ? 0 : 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { dimColor: true, children: [
       "  ",
-      "tab next \u2022 \u2191\u2193 select \u2022 \u2192\u2190 drill \u2022 ^",
+      "tab/shift+tab \u2022 \u2191\u2193 select \u2022 \u2192\u2190 drill \u2022 ^",
       settings.shortcutToggleKey.toUpperCase(),
       " add \u2022 ^D del \u2022 ^",
       settings.refreshKey.toUpperCase(),

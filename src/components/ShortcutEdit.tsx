@@ -255,7 +255,10 @@ export function ShortcutEdit({
   };
 
   return (
-    <Box flexDirection="column" marginTop={1}>
+    <Box flexDirection="column">
+      {/* Tab bar at top */}
+      {tabBar}
+
       <Box>
         <Text color="gray" dimColor>
           ── Edit Shortcut ───────────────
@@ -343,14 +346,9 @@ export function ShortcutEdit({
         </Text>
       </Box>
 
-      {/* Tab bar */}
       <Box marginTop={1}>
-        {tabBar}
-      </Box>
-
-      <Box>
         <Text dimColor>
-          {"  "}tab next • enter edit • ^D delete line • esc save & back
+          {"  "}tab/shift+tab • enter edit • ^D delete line • esc save & back
         </Text>
       </Box>
     </Box>
