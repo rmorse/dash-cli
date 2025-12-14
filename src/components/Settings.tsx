@@ -306,18 +306,16 @@ export function SettingsScreen({ settings, onSave, onClearHistory, onTab, onClos
 
       {/* Clear history option */}
       <Box>
-        <Text color={isOnClearHistory ? localSettings.selectedColor : "gray"} bold={isOnClearHistory}>
-          {isOnClearHistory ? "> " : "  "}
-          {"Clear history..."}
+        <Text color={isOnClearHistory ? localSettings.selectedColor : "red"} bold={isOnClearHistory}>
+          {isOnClearHistory ? "> " : "  "}[Clear history]
         </Text>
         {historyCleared && <Text color="green">{" "}✓</Text>}
       </Box>
 
       {/* Edit config file option */}
       <Box>
-        <Text color={isOnEditConfig ? localSettings.selectedColor : "gray"} bold={isOnEditConfig}>
-          {isOnEditConfig ? "> " : "  "}
-          {"Edit config file..."}
+        <Text color={isOnEditConfig ? localSettings.selectedColor : "cyan"} bold={isOnEditConfig}>
+          {isOnEditConfig ? "> " : "  "}[Edit config]
         </Text>
       </Box>
 

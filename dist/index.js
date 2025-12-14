@@ -54974,18 +54974,18 @@ function SettingsScreen({ settings, onSave, onClearHistory, onTab, onClose, tabB
       ] }, field.key);
     }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isOnClearHistory ? localSettings.selectedColor : "gray", bold: isOnClearHistory, children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isOnClearHistory ? localSettings.selectedColor : "red", bold: isOnClearHistory, children: [
         isOnClearHistory ? "> " : "  ",
-        "Clear history..."
+        "[Clear history]"
       ] }),
       historyCleared && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: "green", children: [
         " ",
         "\u2713"
       ] })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isOnEditConfig ? localSettings.selectedColor : "gray", bold: isOnEditConfig, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isOnEditConfig ? localSettings.selectedColor : "cyan", bold: isOnEditConfig, children: [
       isOnEditConfig ? "> " : "  ",
-      "Edit config file..."
+      "[Edit config]"
     ] }) }),
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { dimColor: true, children: [
       "  ",
@@ -55546,7 +55546,7 @@ function ShortcutEdit({
       /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
         Text,
         {
-          color: isSelected ? "selectedColor" : void 0,
+          color: isSelected ? selectedColor : void 0,
           bold: isSelected,
           children: [
             isSelected ? "> " : "  ",
@@ -55564,7 +55564,7 @@ function ShortcutEdit({
           onSubmit: commitEdit,
           focus: true
         }
-      ) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: isSelected ? "selectedColor" : value ? "white" : "gray", children: value || "(empty)" })
+      ) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: isSelected ? selectedColor : value ? "white" : "gray", children: value || "(empty)" })
     ] }, field.key);
   };
   return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { flexDirection: "column", children: [
@@ -55576,7 +55576,7 @@ function ShortcutEdit({
       /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
         Text,
         {
-          color: selectedIndex === 2 ? "selectedColor" : void 0,
+          color: selectedIndex === 2 ? selectedColor : void 0,
           bold: selectedIndex === 2,
           children: [
             selectedIndex === 2 ? "> " : "  ",
@@ -55585,7 +55585,7 @@ function ShortcutEdit({
         }
       ),
       /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { children: " " }),
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: selectedIndex === 2 ? "selectedColor" : "white", children: caseSensitive ? "Yes" : "No" })
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: selectedIndex === 2 ? selectedColor : "white", children: caseSensitive ? "Yes" : "No" })
     ] }),
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Commands \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
     commands.map((cmd, idx) => {
@@ -55597,7 +55597,7 @@ function ShortcutEdit({
         /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
           Text,
           {
-            color: isSelected ? "selectedColor" : void 0,
+            color: isSelected ? selectedColor : void 0,
             bold: isSelected,
             children: isSelected ? "> " : "  "
           }
@@ -55610,13 +55610,13 @@ function ShortcutEdit({
             onSubmit: commitEdit,
             focus: true
           }
-        ) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: isSelected ? "selectedColor" : cmd ? "white" : "gray", children: cmd || "(empty)" })
+        ) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: isSelected ? selectedColor : cmd ? "white" : "gray", children: cmd || "(empty)" })
       ] }, `cmd-${idx}`);
     }),
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
       Text,
       {
-        color: selectedIndex === fields.length - 1 ? "selectedColor" : "cyan",
+        color: selectedIndex === fields.length - 1 ? selectedColor : "cyan",
         bold: selectedIndex === fields.length - 1,
         children: [
           selectedIndex === fields.length - 1 ? "> " : "  ",
