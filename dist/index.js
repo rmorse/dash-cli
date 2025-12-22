@@ -42707,10 +42707,10 @@ var require_react_jsx_runtime_development = __commonJS({
             return jsxWithValidation(type, props, key, false);
           }
         }
-        var jsx6 = jsxWithValidationDynamic;
+        var jsx7 = jsxWithValidationDynamic;
         var jsxs5 = jsxWithValidationStatic;
         exports.Fragment = REACT_FRAGMENT_TYPE;
-        exports.jsx = jsx6;
+        exports.jsx = jsx7;
         exports.jsxs = jsxs5;
       })();
     }
@@ -53776,6 +53776,8 @@ var use_app_default = useApp;
 
 // node_modules/ink/build/hooks/use-stdout.js
 var import_react18 = __toESM(require_react(), 1);
+var useStdout = () => (0, import_react18.useContext)(StdoutContext_default);
+var use_stdout_default = useStdout;
 
 // node_modules/ink/build/hooks/use-stderr.js
 var import_react19 = __toESM(require_react(), 1);
@@ -53816,9 +53818,19 @@ import { basename as basename2, relative as relative2 } from "path";
 // src/components/Settings.tsx
 var import_react24 = __toESM(require_react(), 1);
 
-// node_modules/ink-text-input/build/index.js
+// src/components/TextInput.tsx
 var import_react23 = __toESM(require_react(), 1);
-function TextInput({ value: originalValue, placeholder = "", focus = true, mask, highlightPastedText = false, showCursor = true, onChange, onSubmit }) {
+var import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
+function TextInput({
+  value: originalValue,
+  placeholder = "",
+  focus = true,
+  mask,
+  highlightPastedText = false,
+  showCursor = true,
+  onChange,
+  onSubmit
+}) {
   const [state, setState] = (0, import_react23.useState)({
     cursorOffset: (originalValue || "").length,
     cursorWidth: 0
@@ -53855,56 +53867,82 @@ function TextInput({ value: originalValue, placeholder = "", focus = true, mask,
       renderedValue += source_default.inverse(" ");
     }
   }
-  use_input_default((input, key) => {
-    if (key.upArrow || key.downArrow || key.ctrl && input === "c" || key.tab || key.shift && key.tab) {
-      return;
-    }
-    if (key.return) {
-      if (onSubmit) {
-        onSubmit(originalValue);
+  use_input_default(
+    (input, key) => {
+      if (key.upArrow || key.downArrow || key.ctrl && input === "c" || key.tab || key.shift && key.tab) {
+        return;
       }
-      return;
-    }
-    let nextCursorOffset = cursorOffset;
-    let nextValue = originalValue;
-    let nextCursorWidth = 0;
-    if (key.leftArrow) {
-      if (showCursor) {
-        nextCursorOffset--;
+      if (key.return) {
+        if (onSubmit) {
+          onSubmit(originalValue);
+        }
+        return;
       }
-    } else if (key.rightArrow) {
-      if (showCursor) {
-        nextCursorOffset++;
+      let nextCursorOffset = cursorOffset;
+      let nextValue = originalValue;
+      let nextCursorWidth = 0;
+      if (input === "\x1B[H" || input === "\x1B[1~" || input === "\x1B[7~" || input.includes("\x1B[H") || input.includes("\x1B[1~") || input.includes("\x1B[7~")) {
+        if (showCursor) {
+          nextCursorOffset = 0;
+        }
+        setState({
+          cursorOffset: nextCursorOffset,
+          cursorWidth: nextCursorWidth
+        });
+        return;
       }
-    } else if (key.backspace || key.delete) {
-      if (cursorOffset > 0) {
-        nextValue = originalValue.slice(0, cursorOffset - 1) + originalValue.slice(cursorOffset, originalValue.length);
-        nextCursorOffset--;
+      if (input === "\x1B[F" || input === "\x1B[4~" || input === "\x1B[8~" || input.includes("\x1B[F") || input.includes("\x1B[4~") || input.includes("\x1B[8~")) {
+        if (showCursor) {
+          nextCursorOffset = originalValue.length;
+        }
+        setState({
+          cursorOffset: nextCursorOffset,
+          cursorWidth: nextCursorWidth
+        });
+        return;
       }
-    } else {
-      nextValue = originalValue.slice(0, cursorOffset) + input + originalValue.slice(cursorOffset, originalValue.length);
-      nextCursorOffset += input.length;
-      if (input.length > 1) {
-        nextCursorWidth = input.length;
+      if (key.leftArrow) {
+        if (showCursor) {
+          nextCursorOffset--;
+        }
+      } else if (key.rightArrow) {
+        if (showCursor) {
+          nextCursorOffset++;
+        }
+      } else if (key.backspace || key.delete) {
+        if (cursorOffset > 0) {
+          nextValue = originalValue.slice(0, cursorOffset - 1) + originalValue.slice(cursorOffset, originalValue.length);
+          nextCursorOffset--;
+        }
+      } else {
+        const filteredInput = input.replace(/\x1b\[[^\x1b]*$/g, "");
+        if (filteredInput.length > 0) {
+          nextValue = originalValue.slice(0, cursorOffset) + filteredInput + originalValue.slice(cursorOffset, originalValue.length);
+          nextCursorOffset += filteredInput.length;
+          if (filteredInput.length > 1) {
+            nextCursorWidth = filteredInput.length;
+          }
+        }
       }
-    }
-    if (cursorOffset < 0) {
-      nextCursorOffset = 0;
-    }
-    if (cursorOffset > originalValue.length) {
-      nextCursorOffset = originalValue.length;
-    }
-    setState({
-      cursorOffset: nextCursorOffset,
-      cursorWidth: nextCursorWidth
-    });
-    if (nextValue !== originalValue) {
-      onChange(nextValue);
-    }
-  }, { isActive: focus });
-  return import_react23.default.createElement(Text, null, placeholder ? value.length > 0 ? renderedValue : renderedPlaceholder : renderedValue);
+      if (nextCursorOffset < 0) {
+        nextCursorOffset = 0;
+      }
+      if (nextCursorOffset > nextValue.length) {
+        nextCursorOffset = nextValue.length;
+      }
+      setState({
+        cursorOffset: nextCursorOffset,
+        cursorWidth: nextCursorWidth
+      });
+      if (nextValue !== originalValue) {
+        onChange(nextValue);
+      }
+    },
+    { isActive: focus }
+  );
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { children: placeholder ? value.length > 0 ? renderedValue : renderedPlaceholder : renderedValue });
 }
-var build_default2 = TextInput;
+var TextInput_default = TextInput;
 
 // node_modules/open/index.js
 import process19 from "process";
@@ -54743,7 +54781,7 @@ async function getRecentAsync(limit = 5) {
 }
 
 // src/components/Settings.tsx
-var import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
+var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
 var CONFIG_FILE = join3(homedir3(), ".dash-cli", "settings.json");
 function SettingsScreen({ settings, onSave, onClearHistory, onTab, onClose, tabBar }) {
   const [selectedIndex, setSelectedIndex] = (0, import_react24.useState)(0);
@@ -54932,9 +54970,9 @@ function SettingsScreen({ settings, onSave, onClearHistory, onTab, onClose, tabB
     }
     return str;
   };
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { flexDirection: "column", children: [
+  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { flexDirection: "column", children: [
     tabBar,
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { dimColor: true, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { dimColor: true, children: [
       "  ",
       "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
     ] }) }),
@@ -54944,58 +54982,58 @@ function SettingsScreen({ settings, onSave, onClearHistory, onTab, onClose, tabB
       const value = localSettings[field.key];
       const displayValue = formatValue(field, value);
       const useTextInputForField = !["number", "key", "toggle"].includes(field.type);
-      return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { flexDirection: "row", children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isSelected ? localSettings.selectedColor : void 0, bold: isSelected, children: [
+      return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { flexDirection: "row", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isSelected ? localSettings.selectedColor : void 0, bold: isSelected, children: [
           isSelected ? "> " : "  ",
           field.label.padEnd(20)
         ] }),
-        isFieldEditing && useTextInputForField ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-          build_default2,
+        isFieldEditing && useTextInputForField ? /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
+          TextInput_default,
           {
             value: editValue,
             onChange: setEditValue,
             onSubmit: commitEdit,
             focus: true
           }
-        ) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+        ) : /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
             Text,
             {
               color: isFieldEditing ? localSettings.selectedColor : isSelected ? localSettings.selectedColor : "gray",
               children: isFieldEditing ? editValue : displayValue
             }
           ),
-          isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { color: localSettings.selectedColor, children: "|" })
+          isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: localSettings.selectedColor, children: "|" })
         ] }),
-        field.type === "color" && !isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { children: "  " }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { backgroundColor: String(value), children: "    " })
+        field.type === "color" && !isFieldEditing && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { children: "  " }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { backgroundColor: String(value), children: "    " })
         ] })
       ] }, field.key);
     }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Box_default, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isOnClearHistory ? localSettings.selectedColor : "red", bold: isOnClearHistory, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isOnClearHistory ? localSettings.selectedColor : "red", bold: isOnClearHistory, children: [
         isOnClearHistory ? "> " : "  ",
         "[Clear history]"
       ] }),
-      historyCleared && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: "green", children: [
+      historyCleared && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: "green", children: [
         " ",
         "\u2713"
       ] })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { color: isOnEditConfig ? localSettings.selectedColor : "cyan", bold: isOnEditConfig, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isOnEditConfig ? localSettings.selectedColor : "cyan", bold: isOnEditConfig, children: [
       isOnEditConfig ? "> " : "  ",
       "[Edit config]"
     ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { dimColor: true, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { dimColor: true, children: [
       "  ",
       "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
     ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Text, { dimColor: true, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { dimColor: true, children: [
       "  ",
       isOnClearHistory ? "Remove all recent projects from history" : isOnEditConfig ? "Open settings.json in default editor" : currentField?.description
     ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { dimColor: true, children: isEditing ? currentField?.type === "number" ? "  type or \u2190\u2192\u2191\u2193 adjust \u2022 enter save \u2022 esc cancel" : "  \u2190\u2192 cursor \u2022 enter save \u2022 esc cancel" : currentField?.type === "toggle" ? "  tab/shift+tab \u2022 \u2191\u2193 navigate \u2022 enter toggle \u2022 esc close" : "  tab/shift+tab \u2022 \u2191\u2193 navigate \u2022 enter edit \u2022 esc close" }) })
+    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { dimColor: true, children: isEditing ? currentField?.type === "number" ? "  type or \u2190\u2192\u2191\u2193 adjust \u2022 enter save \u2022 esc cancel" : "  \u2190\u2192 cursor \u2022 enter save \u2022 esc cancel" : currentField?.type === "toggle" ? "  tab/shift+tab \u2022 \u2191\u2193 navigate \u2022 enter toggle \u2022 esc close" : "  tab/shift+tab \u2022 \u2191\u2193 navigate \u2022 enter edit \u2022 esc close" }) })
   ] });
 }
 
@@ -55227,7 +55265,7 @@ async function getShortcutByTriggerAsync(trigger) {
 }
 
 // src/components/ShortcutsEditor.tsx
-var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
+var import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
 function ShortcutsEditor({
   shortcuts,
   onUpdate,
@@ -55305,30 +55343,30 @@ function ShortcutsEditor({
       return;
     }
   });
-  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { flexDirection: "column", children: [
+  return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { flexDirection: "column", children: [
     tabBar,
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Shortcuts \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
-    shortcuts.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: "gray", dimColor: true, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Shortcuts \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
+    shortcuts.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { color: "gray", dimColor: true, children: [
       "  ",
       "No shortcuts yet"
     ] }) }),
     shortcuts.map((sc, idx) => {
       const isSelected = idx === selectedIndex;
       const isDeleting = confirmDelete === sc.id;
-      return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { color: isSelected ? selectedColor : void 0, bold: isSelected, children: [
+      return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { color: isSelected ? selectedColor : void 0, bold: isSelected, children: [
           isSelected ? "> " : "  ",
           sc.name
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { dimColor: true, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { dimColor: true, children: [
           " [",
           sc.trigger,
           "]"
         ] }),
-        isDeleting && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: "red", children: " Delete? (y/n)" })
+        isDeleting && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "red", children: " Delete? (y/n)" })
       ] }, sc.id);
     }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
       Text,
       {
         color: isOnAddNew ? selectedColor : "cyan",
@@ -55339,8 +55377,8 @@ function ShortcutsEditor({
         ]
       }
     ) }),
-    hasClearAll && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Box_default, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
+    hasClearAll && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
         Text,
         {
           color: isOnClearAll ? selectedColor : "red",
@@ -55351,10 +55389,10 @@ function ShortcutsEditor({
           ]
         }
       ),
-      confirmClearAll && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: "red", children: " Clear all shortcuts? (y/n)" })
+      confirmClearAll && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "red", children: " Clear all shortcuts? (y/n)" })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(Text, { dimColor: true, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { dimColor: true, children: [
       "  ",
       "tab/shift+tab \u2022 \u2191\u2193 navigate \u2022 enter edit",
       shortcuts.length > 0 ? " \u2022 ^D delete" : "",
@@ -55365,7 +55403,7 @@ function ShortcutsEditor({
 
 // src/components/ShortcutEdit.tsx
 var import_react26 = __toESM(require_react(), 1);
-var import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
+var import_jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
 function ShortcutEdit({
   shortcut,
   allShortcuts,
@@ -55375,6 +55413,8 @@ function ShortcutEdit({
   selectedColor,
   tabBar
 }) {
+  const { stdout } = use_stdout_default();
+  const terminalWidth = stdout.columns || 80;
   const [name, setName] = (0, import_react26.useState)(shortcut.name);
   const [trigger, setTrigger] = (0, import_react26.useState)(shortcut.trigger);
   const [caseSensitive, setCaseSensitive] = (0, import_react26.useState)(shortcut.caseSensitive);
@@ -55542,8 +55582,8 @@ function ShortcutEdit({
     const isSelected = idx === selectedIndex;
     const isEditing = editingField === field.key;
     const value = getValue(field.key);
-    return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+    return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
         Text,
         {
           color: isSelected ? selectedColor : void 0,
@@ -55555,25 +55595,25 @@ function ShortcutEdit({
           ]
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { children: " " }),
-      isEditing ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
-        build_default2,
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { children: " " }),
+      isEditing ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+        TextInput_default,
         {
           value,
           onChange: (newValue) => handleChange(field.key, newValue),
           onSubmit: commitEdit,
           focus: true
         }
-      ) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: isSelected ? selectedColor : value ? "white" : "gray", children: value || "(empty)" })
+      ) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: isSelected ? selectedColor : value ? "white" : "gray", children: value || "(empty)" })
     ] }, field.key);
   };
-  return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { flexDirection: "column", children: [
+  return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { flexDirection: "column", width: terminalWidth - 2, children: [
     tabBar,
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Edit Shortcut \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Edit Shortcut \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
     renderField(fields[0], 0),
     renderField(fields[1], 1),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
         Text,
         {
           color: selectedIndex === 2 ? selectedColor : void 0,
@@ -55584,49 +55624,56 @@ function ShortcutEdit({
           ]
         }
       ),
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { children: " " }),
-      /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: selectedIndex === 2 ? selectedColor : "white", children: caseSensitive ? "Yes" : "No" })
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { children: " " }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: selectedIndex === 2 ? selectedColor : "white", children: caseSensitive ? "Yes" : "No" })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Commands \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Commands \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
     commands.map((cmd, idx) => {
       const fieldIdx = 3 + idx;
       const field = fields[fieldIdx];
       const isSelected = selectedIndex === fieldIdx;
       const isEditing = editingField === `cmd-${idx}`;
-      return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
+      return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { width: 2, flexShrink: 0, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
           Text,
           {
             color: isSelected ? selectedColor : void 0,
             bold: isSelected,
             children: isSelected ? "> " : "  "
           }
-        ),
-        isEditing ? /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
-          build_default2,
+        ) }),
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { flexShrink: 1, children: isEditing ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+          TextInput_default,
           {
             value: cmd,
             onChange: (newValue) => handleChange(`cmd-${idx}`, newValue),
             onSubmit: commitEdit,
             focus: true
           }
-        ) : /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: isSelected ? selectedColor : cmd ? "white" : "gray", children: cmd || "(empty)" })
+        ) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: isSelected ? selectedColor : cmd ? "white" : "gray", children: cmd || "(empty)" }) })
       ] }, `cmd-${idx}`);
     }),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
-      Text,
-      {
-        color: selectedIndex === fields.length - 1 ? selectedColor : "cyan",
-        bold: selectedIndex === fields.length - 1,
-        children: [
-          selectedIndex === fields.length - 1 ? "> " : "  ",
-          "[Add line]"
-        ]
-      }
-    ) }),
-    error && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "red", children: error }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { dimColor: true, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { width: 2, flexShrink: 0, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+        Text,
+        {
+          color: selectedIndex === fields.length - 1 ? selectedColor : "cyan",
+          bold: selectedIndex === fields.length - 1,
+          children: selectedIndex === fields.length - 1 ? "> " : "  "
+        }
+      ) }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+        Text,
+        {
+          color: selectedIndex === fields.length - 1 ? selectedColor : "cyan",
+          bold: selectedIndex === fields.length - 1,
+          children: "[Add line]"
+        }
+      )
+    ] }),
+    error && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "red", children: error }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { dimColor: true, children: [
       "  ",
       "tab/shift+tab \u2022 enter edit \u2022 ^D delete line \u2022 esc save & back"
     ] }) })
@@ -55849,7 +55896,7 @@ function saveCache(projects, projectsDir, maxDepth, skipDirs) {
 }
 
 // src/components/App.tsx
-var import_jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
+var import_jsx_runtime5 = __toESM(require_jsx_runtime(), 1);
 var PAGE_SIZE = 10;
 var TAB_PROJECTS = 0;
 var TAB_SHORTCUTS = 1;
@@ -56415,16 +56462,16 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
       const isActive = idx === currentTab;
       return { label, isActive };
     });
-    return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { flexDirection: "column", marginTop: 1, marginBottom: 1, marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: tabs.map((tab2, idx) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_react27.default.Fragment, { children: [
-      tab2.isActive ? /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { backgroundColor: "#ccc", color: "#333", children: tab2.label }) : /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", children: tab2.label }),
-      idx < tabs.length - 1 && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { dimColor: true, children: "\u2502" })
+    return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { flexDirection: "column", marginTop: 1, marginBottom: 1, marginLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: tabs.map((tab2, idx) => /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(import_react27.default.Fragment, { children: [
+      tab2.isActive ? /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { backgroundColor: "#ccc", color: "#333", children: tab2.label }) : /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: "gray", children: tab2.label }),
+      idx < tabs.length - 1 && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { dimColor: true, children: "\u2502" })
     ] }, idx)) }) });
   };
   if (currentTab === TAB_SHORTCUTS) {
     if (editingShortcutId) {
       const shortcut = shortcutEntries.find((s) => s.id === editingShortcutId);
       if (shortcut) {
-        return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+        return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
           ShortcutEdit,
           {
             shortcut,
@@ -56437,13 +56484,13 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
             onBack: () => setEditingShortcutId(null),
             onTab: cycleTab,
             selectedColor: settings.selectedColor,
-            tabBar: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(TabBar, {})
+            tabBar: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(TabBar, {})
           }
         );
       }
       setEditingShortcutId(null);
     }
-    return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
       ShortcutsEditor,
       {
         shortcuts: shortcutEntries,
@@ -56462,12 +56509,12 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
         onTab: cycleTab,
         onClose: () => setCurrentTab(TAB_PROJECTS),
         selectedColor: settings.selectedColor,
-        tabBar: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(TabBar, {})
+        tabBar: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(TabBar, {})
       }
     );
   }
   if (currentTab === TAB_SETTINGS) {
-    return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
+    return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
       SettingsScreen,
       {
         settings,
@@ -56475,23 +56522,23 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
         onClearHistory: () => setRecentEntries([]),
         onTab: cycleTab,
         onClose: () => setCurrentTab(TAB_PROJECTS),
-        tabBar: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(TabBar, {})
+        tabBar: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(TabBar, {})
       }
     );
   }
-  return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { flexDirection: "column", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(TabBar, {}),
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", children: "  " }),
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: searchTerm ? "white" : "gray", children: searchTerm || "Type to search..." }),
-      searchTerm && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "white", children: "\u258C" })
+  return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Box_default, { flexDirection: "column", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(TabBar, {}),
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Box_default, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: "gray", children: "  " }),
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: searchTerm ? "white" : "gray", children: searchTerm || "Type to search..." }),
+      searchTerm && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: "white", children: "\u258C" })
     ] }),
-    hasMoreAbove && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { dimColor: true, children: [
+    hasMoreAbove && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { dimColor: true, children: [
       "  \u2191 ",
       scrollOffset,
       " more"
     ] }) }),
-    visibleItems.length === 0 && searchTerm && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { dimColor: true, children: [
+    visibleItems.length === 0 && searchTerm && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { dimColor: true, children: [
       '  No matches for "',
       searchTerm,
       '"'
@@ -56499,7 +56546,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
     visibleItems.map((item, visibleIdx) => {
       const actualIdx = clampedScrollOffset + visibleIdx;
       if (item.type === "header") {
-        return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { color: "gray", dimColor: true, children: [
+        return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: "gray", dimColor: true, children: [
           "\u2500\u2500 ",
           item.label,
           " \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"
@@ -56507,7 +56554,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
       }
       const isSelected = actualIdx === selectedIndex;
       if (item.type === "back") {
-        return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { color: isSelected ? settings.selectedColor : "gray", bold: isSelected, children: [
+        return /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: isSelected ? settings.selectedColor : "gray", bold: isSelected, children: [
           "< ",
           item.label
         ] }) }, "back");
@@ -56524,30 +56571,30 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
         color = settings.recentColor;
       }
       const isDeleting = item.shortcutId && confirmDeleteId === item.shortcutId;
-      return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { color, bold: isSelected, children: [
+      return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Box_default, { children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color, bold: isSelected, children: [
           isSelected ? "> " : "  ",
           item.label
         ] }),
-        item.triggers && item.triggers.map((t, i) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { dimColor: true, children: [
+        item.triggers && item.triggers.map((t, i) => /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { dimColor: true, children: [
           " [",
           t,
           "]"
         ] }, i)),
-        hasNested && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: " \u25B6" }),
-        isDeleting && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "red", children: " Delete? (y/n)" })
+        hasNested && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: "gray", dimColor: true, children: " \u25B6" }),
+        isDeleting && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: "red", children: " Delete? (y/n)" })
       ] }, `item-${actualIdx}`);
     }),
-    hasMoreBelow && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { dimColor: true, children: [
+    hasMoreBelow && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { dimColor: true, children: [
       "  \u2193 ",
       items.length - scrollOffset - settings.visibleRows,
       " more"
     ] }) }),
-    isRefreshing && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { color: "cyan", children: [
-      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(build_default, { type: "dots" }),
+    isRefreshing && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color: "cyan", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(build_default, { type: "dots" }),
       " Refreshing..."
     ] }) }),
-    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { marginTop: isRefreshing ? 0 : 1, children: /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Text, { dimColor: true, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { marginTop: isRefreshing ? 0 : 1, children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { dimColor: true, children: [
       "  ",
       "tab/shift+tab \u2022 \u2191\u2193 select \u2022 \u2192\u2190 drill \u2022 ^",
       settings.shortcutToggleKey.toUpperCase(),
@@ -56821,7 +56868,7 @@ async function runSetup(shellArg, aliasArg) {
 }
 
 // src/index.tsx
-var import_jsx_runtime5 = __toESM(require_jsx_runtime(), 1);
+var import_jsx_runtime6 = __toESM(require_jsx_runtime(), 1);
 async function main() {
   const args = process.argv.slice(2);
   const debugMode = args.includes("--debug");
@@ -56863,7 +56910,7 @@ async function main() {
   let selectedDisplayName = null;
   log("about to render App...");
   const { waitUntilExit, unmount } = render_default(
-    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
+    /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
       App2,
       {
         initialSettings: settings,

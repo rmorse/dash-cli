@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Box, Text, useInput } from "ink";
-import TextInput from "ink-text-input";
+import { Box, Text, useInput, useStdout } from "ink";
+import TextInput from "./TextInput.js";
 import type { Shortcut } from "../types.js";
 import { updateShortcut, validateTrigger } from "../shortcuts.js";
 
@@ -31,6 +31,10 @@ export function ShortcutEdit({
   selectedColor,
   tabBar,
 }: ShortcutEditProps) {
+  // Get terminal width for layout constraints
+  const { stdout } = useStdout();
+  const terminalWidth = stdout.columns || 80;
+
   // Local state for editing
   const [name, setName] = useState(shortcut.name);
   const [trigger, setTrigger] = useState(shortcut.trigger);
@@ -257,7 +261,7 @@ export function ShortcutEdit({
   };
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" width={terminalWidth - 2}>
       {/* Tab bar at top */}
       {tabBar}
 
@@ -303,35 +307,47 @@ export function ShortcutEdit({
 
         return (
           <Box key={`cmd-${idx}`}>
-            <Text
-              color={isSelected ? selectedColor : undefined}
-              bold={isSelected}
-            >
-              {isSelected ? "> " : "  "}
-            </Text>
-            {isEditing ? (
-              <TextInput
-                value={cmd}
-                onChange={(newValue) => handleChange(`cmd-${idx}`, newValue)}
-                onSubmit={commitEdit}
-                focus={true}
-              />
-            ) : (
-              <Text color={isSelected ? selectedColor : cmd ? "white" : "gray"}>
-                {cmd || "(empty)"}
+            <Box width={2} flexShrink={0}>
+              <Text
+                color={isSelected ? selectedColor : undefined}
+                bold={isSelected}
+              >
+                {isSelected ? "> " : "  "}
               </Text>
-            )}
+            </Box>
+            <Box flexShrink={1}>
+              {isEditing ? (
+                <TextInput
+                  value={cmd}
+                  onChange={(newValue) => handleChange(`cmd-${idx}`, newValue)}
+                  onSubmit={commitEdit}
+                  focus={true}
+                />
+              ) : (
+                <Text color={isSelected ? selectedColor : cmd ? "white" : "gray"}>
+                  {cmd || "(empty)"}
+                </Text>
+              )}
+            </Box>
           </Box>
         );
       })}
 
       {/* Add line action */}
       <Box>
+        <Box width={2} flexShrink={0}>
+          <Text
+            color={selectedIndex === fields.length - 1 ? selectedColor : "cyan"}
+            bold={selectedIndex === fields.length - 1}
+          >
+            {selectedIndex === fields.length - 1 ? "> " : "  "}
+          </Text>
+        </Box>
         <Text
           color={selectedIndex === fields.length - 1 ? selectedColor : "cyan"}
           bold={selectedIndex === fields.length - 1}
         >
-          {selectedIndex === fields.length - 1 ? "> " : "  "}[Add line]
+          [Add line]
         </Text>
       </Box>
 
