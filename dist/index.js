@@ -56572,17 +56572,17 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
       }
       const isDeleting = item.shortcutId && confirmDeleteId === item.shortcutId;
       return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Box_default, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { color, bold: isSelected, children: [
-          isSelected ? "> " : "  ",
-          item.label
-        ] }),
-        item.triggers && item.triggers.map((t, i) => /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { dimColor: true, children: [
-          " [",
-          t,
-          "]"
-        ] }, i)),
-        hasNested && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: "gray", dimColor: true, children: " \u25B6" }),
-        isDeleting && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: "red", children: " Delete? (y/n)" })
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { width: 2, flexShrink: 0, children: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color, bold: isSelected, children: isSelected ? "> " : "  " }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Box_default, { flexShrink: 1, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color, bold: isSelected, children: item.label }),
+          item.triggers && item.triggers.map((t, i) => /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { dimColor: true, children: [
+            " [",
+            t,
+            "]"
+          ] }, i)),
+          hasNested && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: "gray", dimColor: true, children: " \u25B6" }),
+          isDeleting && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Text, { color: "red", children: " Delete? (y/n)" })
+        ] })
       ] }, `item-${actualIdx}`);
     }),
     hasMoreBelow && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(Text, { dimColor: true, children: [

@@ -948,19 +948,25 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
 
         return (
           <Box key={`item-${actualIdx}`}>
-            <Text color={color} bold={isSelected}>
-              {isSelected ? "> " : "  "}
-              {item.label}
-            </Text>
-            {item.triggers && item.triggers.map((t, i) => (
-              <Text key={i} dimColor> [{t}]</Text>
-            ))}
-            {hasNested && (
-              <Text color="gray" dimColor> ▶</Text>
-            )}
-            {isDeleting && (
-              <Text color="red"> Delete? (y/n)</Text>
-            )}
+            <Box width={2} flexShrink={0}>
+              <Text color={color} bold={isSelected}>
+                {isSelected ? "> " : "  "}
+              </Text>
+            </Box>
+            <Box flexShrink={1}>
+              <Text color={color} bold={isSelected}>
+                {item.label}
+              </Text>
+              {item.triggers && item.triggers.map((t, i) => (
+                <Text key={i} dimColor> [{t}]</Text>
+              ))}
+              {hasNested && (
+                <Text color="gray" dimColor> ▶</Text>
+              )}
+              {isDeleting && (
+                <Text color="red"> Delete? (y/n)</Text>
+              )}
+            </Box>
           </Box>
         );
       })}
