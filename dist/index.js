@@ -42891,7 +42891,7 @@ function updateShortcut(id, updates) {
     trigger: merged.trigger,
     caseSensitive: merged.caseSensitive,
     command: merged.command.filter((cmd) => cmd.trim() !== ""),
-    pinned: merged.pinned ?? existing.pinned ?? true
+    pinned: merged.pinned ?? true
   };
   data.shortcuts[index] = updated;
   saveShortcutsData(data);
