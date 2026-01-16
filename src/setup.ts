@@ -99,21 +99,37 @@ dash() {
 }
 
 function getPowerShellWrapper(withAlias: boolean): string {
-  let wrapper = `
-# Dash CLI: Navigate to projects
-function dash {
-    dash-cli @args
-    $cmdFile = "${COMMAND_FILE.replace(/\\/g, "\\\\")}"
-    if (Test-Path $cmdFile) {
-        $commands = Get-Content $cmdFile -Raw
-        if ($commands) { Invoke-Expression $commands }
-        Remove-Item $cmdFile -Force -ErrorAction SilentlyContinue
-    }
-}
-`;
+  const cmdFile = COMMAND_FILE.replace(/\\/g, "\\\\");
+  // Build PowerShell script - use regular string to avoid template literal backtick issues
+  const lines = [
+    "",
+    "# Dash CLI: Navigate to projects",
+    "function dash {",
+    "    $rawLine = $MyInvocation.Line",
+    '    $rawArgs = ""',
+    "    if ($rawLine -match '\\b(d|dash)\\s+(.*)$') {",
+    "        $rawArgs = $Matches[2]",
+    "    }",
+    '    $exe = if ($IsWindows -or $PSVersionTable.PSVersion -lt "6.0") { ".exe" } else { "" }',
+    "    $cmdSource = (Get-Command dash-cli).Source",
+    "    $npmPrefix = Split-Path $cmdSource",
+    '    $scriptPath = Join-Path $npmPrefix "node_modules\\dash-cli\\dist\\index.js"',
+    "    if ($rawArgs) {",
+    '        Invoke-Expression "node$exe `"$scriptPath`" $rawArgs"',
+    "    } else {",
+    "        & dash-cli",
+    "    }",
+    `    $cmdFile = "${cmdFile}"`,
+    "    if (Test-Path $cmdFile) {",
+    "        $commands = Get-Content $cmdFile -Raw",
+    "        if ($commands) { Invoke-Expression $commands }",
+    "        Remove-Item $cmdFile -Force -ErrorAction SilentlyContinue",
+    "    }",
+    "}",
+  ];
+  let wrapper = lines.join("\n");
   if (withAlias) {
-    wrapper += `Set-Alias -Name d -Value dash
-`;
+    wrapper += "\nSet-Alias -Name d -Value dash\n";
   }
   return wrapper;
 }

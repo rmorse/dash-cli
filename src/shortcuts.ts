@@ -82,6 +82,10 @@ export function validateTriggerFormat(trigger: string): ValidationResult {
     return { valid: false, error: "Trigger cannot contain spaces" };
   }
 
+  if (trigger.startsWith("--")) {
+    return { valid: false, error: "Trigger cannot start with '--'" };
+  }
+
   return { valid: true };
 }
 

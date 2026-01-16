@@ -45,10 +45,10 @@ export function ShortcutEdit({
   const [editingField, setEditingField] = useState<FieldKey | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Build dynamic field list
+  // Build dynamic field list (trigger is primary identifier, so first)
   const fields: Field[] = [
-    { key: "name", label: "Name", type: "text" },
     { key: "trigger", label: "Trigger", type: "text" },
+    { key: "name", label: "Name", type: "text" },
     { key: "caseSensitive", label: "Case Sensitive", type: "toggle" },
     ...commands.map((_, i) => ({
       key: `cmd-${i}` as FieldKey,
@@ -271,10 +271,10 @@ export function ShortcutEdit({
         </Text>
       </Box>
 
-      {/* Name field */}
+      {/* Trigger field */}
       {renderField(fields[0], 0)}
 
-      {/* Trigger field */}
+      {/* Name field */}
       {renderField(fields[1], 1)}
 
       {/* Case Sensitive toggle */}

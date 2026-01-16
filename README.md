@@ -156,6 +156,195 @@ dash 1 claude                        # Chain shortcuts together
 | `--debug` | Enable debug logging to `~/.dash-cli/debug.log` |
 | `[triggers...]` | Run one or more shortcuts by trigger |
 
+## CLI Shortcut Management
+
+Manage shortcuts from the command line using `dash-cli -- <command>`. The `--` separator distinguishes CLI commands from trigger execution.
+
+### Commands
+
+#### `add` - Add a new shortcut
+
+```bash
+dash-cli -- add <trigger> <command...> [--name "Name"] [--case-sensitive]
+```
+
+| Argument/Flag | Required | Description |
+|---------------|----------|-------------|
+| `<trigger>` | Yes | Unique trigger text (cannot contain spaces or start with `--`) |
+| `<command...>` | Yes | One or more commands to run |
+| `--name "Name"` | No | Display name (defaults to trigger) |
+| `--case-sensitive` | No | Make trigger case-sensitive (default: case-insensitive) |
+| `--json` | No | Output in JSON format |
+
+```bash
+# Basic usage (name auto-set to trigger)
+dash-cli -- add proj "cd /projects/myproj"
+
+# Multiple commands
+dash-cli -- add proj "cd /projects/myproj" "code ."
+
+# With custom name
+dash-cli -- add proj "cd /projects/myproj" --name "My Project"
+
+# Case-sensitive trigger
+dash-cli -- add Proj "cd /projects/myproj" --case-sensitive
+```
+
+#### `list` - List all shortcuts
+
+```bash
+dash-cli -- list [--json]
+```
+
+| Flag | Description |
+|------|-------------|
+| `--json` | Output full shortcut data as JSON |
+
+```bash
+# Human-readable table
+dash-cli -- list
+
+# JSON output
+dash-cli -- list --json
+```
+
+Output example:
+```
+Shortcuts:
+  proj    My Project    cd /projects/myproj, code .
+  web     Website       cd /sites/web
+```
+
+#### `show` - Show shortcut details
+
+```bash
+dash-cli -- show <trigger> [--json]
+```
+
+| Argument/Flag | Required | Description |
+|---------------|----------|-------------|
+| `<trigger>` | Yes | Trigger to look up |
+| `--json` | No | Output as JSON |
+
+```bash
+dash-cli -- show proj
+```
+
+Output example:
+```
+  Trigger:  proj
+  Name:     My Project
+  Case:     insensitive
+  Commands:
+    cd /projects/myproj
+    code .
+```
+
+#### `edit` - Edit an existing shortcut
+
+```bash
+dash-cli -- edit <trigger> [--name "Name"] [--trigger new] [--command "cmd"] [--case-sensitive] [--json]
+```
+
+| Argument/Flag | Required | Description |
+|---------------|----------|-------------|
+| `<trigger>` | Yes | Current trigger of shortcut to edit |
+| `--name "Name"` | No | New display name |
+| `--trigger new` | No | New trigger (must be unique) |
+| `--command "cmd"` | No | Replace commands (comma-separated for multiple) |
+| `--case-sensitive` | No | Set case-sensitive (flag present = true) |
+| `--json` | No | Output as JSON |
+
+```bash
+# Change name
+dash-cli -- edit proj --name "My Awesome Project"
+
+# Change trigger
+dash-cli -- edit proj --trigger myproj
+
+# Replace commands
+dash-cli -- edit proj --command "cd /new/path"
+
+# Multiple commands (comma-separated)
+dash-cli -- edit proj --command "cd /path,code ."
+
+# Make case-sensitive
+dash-cli -- edit proj --case-sensitive
+
+# Multiple changes at once
+dash-cli -- edit proj --name "New Name" --trigger newproj --case-sensitive
+```
+
+#### `rm` - Remove a shortcut
+
+```bash
+dash-cli -- rm <trigger> [--json]
+```
+
+| Argument/Flag | Required | Description |
+|---------------|----------|-------------|
+| `<trigger>` | Yes | Trigger of shortcut to remove |
+| `--json` | No | Output as JSON |
+
+```bash
+dash-cli -- rm proj
+```
+
+#### `help` - Show usage
+
+```bash
+dash-cli -- help
+dash-cli --        # Also shows help when no command given
+```
+
+### JSON Output
+
+All commands support `--json` for machine-readable output:
+
+```bash
+# Success responses
+dash-cli -- add proj "cd /foo" --json
+# {"success":true,"message":"Added: proj","shortcut":{...}}
+
+dash-cli -- list --json
+# {"shortcuts":[...]}
+
+dash-cli -- show proj --json
+# {"shortcut":{...}}
+
+dash-cli -- edit proj --name "New" --json
+# {"success":true,"shortcut":{...}}
+
+dash-cli -- rm proj --json
+# {"deleted":true,"trigger":"proj"}
+
+# Error responses
+dash-cli -- show nonexistent --json
+# {"error":"Shortcut not found: nonexistent"}
+```
+
+### Error Handling
+
+Commands exit with code 1 on errors:
+
+```bash
+# Missing arguments
+dash-cli -- add
+# Error: Usage: dash -- add <trigger> <command...> [--name "Name"] [--case-sensitive]
+
+# Trigger collision
+dash-cli -- add existingTrigger "cmd"
+# Error: Trigger "existingTrigger" collides with "existingTrigger" (case-insensitive) on "Existing Name"
+
+# Not found
+dash-cli -- show nonexistent
+# Error: Shortcut not found: nonexistent
+
+# Invalid trigger
+dash-cli -- add "my trigger" "cmd"
+# Error: Trigger cannot contain spaces
+```
+
 ## Configuration Files
 
 Stored in `~/.dash-cli/`:

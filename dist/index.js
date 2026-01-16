@@ -12879,8 +12879,8 @@ var require_react_reconciler_development = __commonJS({
             lastRenderedState: initialState
           };
           hook.queue = queue;
-          var dispatch = queue.dispatch = dispatchReducerAction.bind(null, currentlyRenderingFiber$1, queue);
-          return [hook.memoizedState, dispatch];
+          var dispatch2 = queue.dispatch = dispatchReducerAction.bind(null, currentlyRenderingFiber$1, queue);
+          return [hook.memoizedState, dispatch2];
         }
         function updateReducer(reducer, initialArg, init) {
           var hook = updateWorkInProgressHook();
@@ -12980,8 +12980,8 @@ var require_react_reconciler_development = __commonJS({
           } else if (baseQueue === null) {
             queue.lanes = NoLanes;
           }
-          var dispatch = queue.dispatch;
-          return [hook.memoizedState, dispatch];
+          var dispatch2 = queue.dispatch;
+          return [hook.memoizedState, dispatch2];
         }
         function rerenderReducer(reducer, initialArg, init) {
           var hook = updateWorkInProgressHook();
@@ -12990,7 +12990,7 @@ var require_react_reconciler_development = __commonJS({
             throw new Error("Should have a queue. This is likely a bug in React. Please file an issue.");
           }
           queue.lastRenderedReducer = reducer;
-          var dispatch = queue.dispatch;
+          var dispatch2 = queue.dispatch;
           var lastRenderPhaseUpdate = queue.pending;
           var newState = hook.memoizedState;
           if (lastRenderPhaseUpdate !== null) {
@@ -13011,7 +13011,7 @@ var require_react_reconciler_development = __commonJS({
             }
             queue.lastRenderedState = newState;
           }
-          return [newState, dispatch];
+          return [newState, dispatch2];
         }
         function mountMutableSource(source, getSnapshot, subscribe) {
           {
@@ -13173,8 +13173,8 @@ var require_react_reconciler_development = __commonJS({
             lastRenderedState: initialState
           };
           hook.queue = queue;
-          var dispatch = queue.dispatch = dispatchSetState.bind(null, currentlyRenderingFiber$1, queue);
-          return [hook.memoizedState, dispatch];
+          var dispatch2 = queue.dispatch = dispatchSetState.bind(null, currentlyRenderingFiber$1, queue);
+          return [hook.memoizedState, dispatch2];
         }
         function updateState(initialState) {
           return updateReducer(basicStateReducer);
@@ -42729,6 +42729,250 @@ var require_jsx_runtime = __commonJS({
   }
 });
 
+// src/shortcuts.ts
+import { existsSync as existsSync4, mkdirSync as mkdirSync3, readFileSync as readFileSync4, writeFileSync as writeFileSync3 } from "fs";
+import { readFile as readFile3, mkdir as mkdir3, access as access3 } from "fs/promises";
+import { join as join4 } from "path";
+import { homedir as homedir4 } from "os";
+import { randomUUID } from "crypto";
+function ensureConfigDir3() {
+  if (!existsSync4(CONFIG_DIR3)) {
+    mkdirSync3(CONFIG_DIR3, { recursive: true });
+  }
+}
+function loadShortcutsData() {
+  ensureConfigDir3();
+  if (!existsSync4(SHORTCUTS_FILE)) {
+    return { shortcuts: [] };
+  }
+  try {
+    const content = readFileSync4(SHORTCUTS_FILE, "utf-8");
+    return JSON.parse(content);
+  } catch {
+    return { shortcuts: [] };
+  }
+}
+function saveShortcutsData(data) {
+  ensureConfigDir3();
+  writeFileSync3(SHORTCUTS_FILE, JSON.stringify(data, null, 2));
+}
+function triggersCollide(trigger1, caseSensitive1, trigger2, caseSensitive2) {
+  if (caseSensitive1 && caseSensitive2) {
+    return trigger1 === trigger2;
+  }
+  return trigger1.toLowerCase() === trigger2.toLowerCase();
+}
+function validateTriggerFormat(trigger) {
+  if (!trigger || trigger.trim() === "") {
+    return { valid: false, error: "Trigger cannot be empty" };
+  }
+  if (trigger.includes(" ")) {
+    return { valid: false, error: "Trigger cannot contain spaces" };
+  }
+  if (trigger.startsWith("--")) {
+    return { valid: false, error: "Trigger cannot start with '--'" };
+  }
+  return { valid: true };
+}
+function validateTrigger(trigger, caseSensitive, excludeId) {
+  const formatResult = validateTriggerFormat(trigger);
+  if (!formatResult.valid) {
+    return formatResult;
+  }
+  const data = loadShortcutsData();
+  for (const shortcut of data.shortcuts) {
+    if (excludeId && shortcut.id === excludeId) {
+      continue;
+    }
+    if (triggersCollide(
+      trigger,
+      caseSensitive,
+      shortcut.trigger,
+      shortcut.caseSensitive
+    )) {
+      const sensitivity = shortcut.caseSensitive ? "case-sensitive" : "case-insensitive";
+      return {
+        valid: false,
+        error: `Trigger "${trigger}" collides with "${shortcut.trigger}" (${sensitivity}) on "${shortcut.name}"`
+      };
+    }
+  }
+  return { valid: true };
+}
+function validateCommand(command) {
+  if (!command || !Array.isArray(command)) {
+    return { valid: false, error: "Command must be an array" };
+  }
+  if (command.length === 0) {
+    return { valid: false, error: "Command array cannot be empty" };
+  }
+  const hasNonEmpty = command.some((cmd) => cmd && cmd.trim() !== "");
+  if (!hasNonEmpty) {
+    return {
+      valid: false,
+      error: "Command array must contain at least one non-empty command"
+    };
+  }
+  return { valid: true };
+}
+function validateShortcutInput(input, excludeId) {
+  if (!input.name || input.name.trim() === "") {
+    return { valid: false, error: "Name cannot be empty" };
+  }
+  const triggerResult = validateTrigger(
+    input.trigger,
+    input.caseSensitive,
+    excludeId
+  );
+  if (!triggerResult.valid) {
+    return triggerResult;
+  }
+  const commandResult = validateCommand(input.command);
+  if (!commandResult.valid) {
+    return commandResult;
+  }
+  return { valid: true };
+}
+function getShortcuts() {
+  const data = loadShortcutsData();
+  return data.shortcuts.sort((a, b) => a.createdAt - b.createdAt);
+}
+function getShortcutByTrigger(trigger) {
+  const data = loadShortcutsData();
+  const lowerTrigger = trigger.toLowerCase();
+  return data.shortcuts.find((shortcut) => {
+    if (shortcut.caseSensitive) {
+      return shortcut.trigger === trigger;
+    } else {
+      return shortcut.trigger.toLowerCase() === lowerTrigger;
+    }
+  });
+}
+function addShortcut(input) {
+  const validation = validateShortcutInput(input);
+  if (!validation.valid) {
+    throw new Error(validation.error);
+  }
+  const data = loadShortcutsData();
+  const newShortcut = {
+    id: randomUUID(),
+    name: input.name.trim(),
+    trigger: input.trigger,
+    caseSensitive: input.caseSensitive,
+    command: input.command.filter((cmd) => cmd.trim() !== ""),
+    createdAt: Date.now()
+  };
+  data.shortcuts.push(newShortcut);
+  saveShortcutsData(data);
+  return newShortcut;
+}
+function updateShortcut(id, updates) {
+  const data = loadShortcutsData();
+  const index = data.shortcuts.findIndex((s) => s.id === id);
+  if (index === -1) {
+    throw new Error(`Shortcut with ID "${id}" not found`);
+  }
+  const existing = data.shortcuts[index];
+  const merged = {
+    name: updates.name ?? existing.name,
+    trigger: updates.trigger ?? existing.trigger,
+    caseSensitive: updates.caseSensitive ?? existing.caseSensitive,
+    command: updates.command ?? existing.command
+  };
+  const validation = validateShortcutInput(merged, id);
+  if (!validation.valid) {
+    throw new Error(validation.error);
+  }
+  const updated = {
+    ...existing,
+    name: merged.name.trim(),
+    trigger: merged.trigger,
+    caseSensitive: merged.caseSensitive,
+    command: merged.command.filter((cmd) => cmd.trim() !== "")
+  };
+  data.shortcuts[index] = updated;
+  saveShortcutsData(data);
+  return updated;
+}
+function removeShortcut(id) {
+  const data = loadShortcutsData();
+  const initialLength = data.shortcuts.length;
+  data.shortcuts = data.shortcuts.filter((s) => s.id !== id);
+  if (data.shortcuts.length < initialLength) {
+    saveShortcutsData(data);
+    return true;
+  }
+  return false;
+}
+function clearShortcuts() {
+  saveShortcutsData({ shortcuts: [] });
+}
+function generateCommand(path2) {
+  const escapedPath = path2.replace(/"/g, '\\"');
+  return [`cd "${escapedPath}"`];
+}
+function generateUniqueTrigger(shortcuts) {
+  const existing = new Set(shortcuts.map((s) => s.trigger.toLowerCase()));
+  let num = 1;
+  while (existing.has(String(num))) {
+    num++;
+  }
+  return String(num);
+}
+function findShortcutByPath(path2) {
+  const shortcuts = getShortcuts();
+  const expectedCmd = generateCommand(path2)[0];
+  return shortcuts.find((s) => s.command.some((cmd) => cmd === expectedCmd));
+}
+async function pathExists3(p) {
+  try {
+    await access3(p);
+    return true;
+  } catch {
+    return false;
+  }
+}
+async function ensureConfigDirAsync3() {
+  if (!await pathExists3(CONFIG_DIR3)) {
+    await mkdir3(CONFIG_DIR3, { recursive: true });
+  }
+}
+async function loadShortcutsDataAsync() {
+  await ensureConfigDirAsync3();
+  if (!await pathExists3(SHORTCUTS_FILE)) {
+    return { shortcuts: [] };
+  }
+  try {
+    const content = await readFile3(SHORTCUTS_FILE, "utf-8");
+    return JSON.parse(content);
+  } catch {
+    return { shortcuts: [] };
+  }
+}
+async function getShortcutsAsync() {
+  const data = await loadShortcutsDataAsync();
+  return data.shortcuts.sort((a, b) => a.createdAt - b.createdAt);
+}
+async function getShortcutByTriggerAsync(trigger) {
+  const data = await loadShortcutsDataAsync();
+  const lowerTrigger = trigger.toLowerCase();
+  return data.shortcuts.find((shortcut) => {
+    if (shortcut.caseSensitive) {
+      return shortcut.trigger === trigger;
+    } else {
+      return shortcut.trigger.toLowerCase() === lowerTrigger;
+    }
+  });
+}
+var CONFIG_DIR3, SHORTCUTS_FILE;
+var init_shortcuts = __esm({
+  "src/shortcuts.ts"() {
+    "use strict";
+    CONFIG_DIR3 = join4(homedir4(), ".dash-cli");
+    SHORTCUTS_FILE = join4(CONFIG_DIR3, "shortcuts.json");
+  }
+});
+
 // node_modules/fast-glob/out/utils/array.js
 var require_array = __commonJS({
   "node_modules/fast-glob/out/utils/array.js"(exports) {
@@ -48219,6 +48463,290 @@ var require_out4 = __commonJS({
       }
     }
     module.exports = FastGlob;
+  }
+});
+
+// src/cli/parser.ts
+function parseArgv(argv) {
+  if (argv.length === 0) {
+    return { command: null, positional: [], flags: {} };
+  }
+  const command = argv[0];
+  const positional = [];
+  const flags = {};
+  let i = 1;
+  while (i < argv.length) {
+    const arg = argv[i];
+    if (arg.startsWith("--")) {
+      const flagName = arg.slice(2);
+      const nextArg = argv[i + 1];
+      if (nextArg && !nextArg.startsWith("--")) {
+        flags[flagName] = nextArg;
+        i += 2;
+      } else {
+        flags[flagName] = true;
+        i += 1;
+      }
+    } else {
+      positional.push(arg);
+      i += 1;
+    }
+  }
+  return { command, positional, flags };
+}
+var init_parser = __esm({
+  "src/cli/parser.ts"() {
+    "use strict";
+  }
+});
+
+// src/cli/formatters.ts
+function createFormatter(useJson) {
+  return useJson ? new JsonFormatter() : new HumanFormatter();
+}
+var HumanFormatter, JsonFormatter;
+var init_formatters = __esm({
+  "src/cli/formatters.ts"() {
+    "use strict";
+    HumanFormatter = class {
+      success(message, _data) {
+        console.log(`\u2713 ${message}`);
+      }
+      error(message) {
+        console.error(`Error: ${message}`);
+        process.exit(1);
+      }
+      table(rows) {
+        if (rows.length === 0) {
+          console.log("No shortcuts configured.");
+          return;
+        }
+        const triggerWidth = Math.max(7, ...rows.map((r) => r.trigger.length));
+        const nameWidth = Math.max(4, ...rows.map((r) => r.name.length));
+        console.log("Shortcuts:");
+        for (const row of rows) {
+          const trigger = row.trigger.padEnd(triggerWidth);
+          const name = row.name.padEnd(nameWidth);
+          console.log(`  ${trigger}  ${name}  ${row.commands}`);
+        }
+      }
+      json(data) {
+        console.log(JSON.stringify(data, null, 2));
+      }
+    };
+    JsonFormatter = class {
+      success(message, data) {
+        console.log(JSON.stringify({ success: true, message, ...data || {} }));
+      }
+      error(message) {
+        console.log(JSON.stringify({ error: message }));
+        process.exit(1);
+      }
+      table(rows) {
+        console.log(JSON.stringify(rows));
+      }
+      json(data) {
+        console.log(JSON.stringify(data));
+      }
+    };
+  }
+});
+
+// src/cli/commands.ts
+function showHelp(fmt) {
+  console.log(`Usage: dash -- <command> [args] [flags]
+
+Commands:
+  add <trigger> <cmd...>  Add shortcut (--name, --case-sensitive)
+  list                    List all shortcuts (--json)
+  show <trigger>          Show shortcut details (--json)
+  edit <trigger>          Edit shortcut (--name, --trigger, --command, --case-sensitive, --json)
+  rm <trigger>            Remove shortcut (--json)
+
+Flags:
+  --json                  Output in JSON format
+  --name "Name"           Set display name
+  --case-sensitive        Make trigger case-sensitive
+  --command "cmd"         Set command(s)
+
+Examples:
+  dash -- add proj "cd /projects/myproj" "code ."
+  dash -- add proj "cd /foo" --name "My Project"
+  dash -- list --json
+  dash -- show proj
+  dash -- edit proj --name "New Name" --case-sensitive
+  dash -- rm proj`);
+}
+var handleAdd, handleList, handleShow, handleEdit, handleRm, commands;
+var init_commands = __esm({
+  "src/cli/commands.ts"() {
+    "use strict";
+    init_shortcuts();
+    handleAdd = async (args, flags, fmt) => {
+      if (args.length < 2) {
+        fmt.error('Usage: dash -- add <trigger> <command...> [--name "Name"] [--case-sensitive]');
+      }
+      const trigger = args[0];
+      const commands2 = args.slice(1);
+      const formatResult = validateTriggerFormat(trigger);
+      if (!formatResult.valid) {
+        fmt.error(formatResult.error || "Invalid trigger format");
+      }
+      const caseSensitive = flags["case-sensitive"] === true;
+      const name = typeof flags.name === "string" ? flags.name : trigger;
+      const collisionResult = validateTrigger(trigger, caseSensitive);
+      if (!collisionResult.valid) {
+        fmt.error(collisionResult.error || "Trigger already exists");
+      }
+      try {
+        const shortcut = addShortcut({
+          name,
+          trigger,
+          caseSensitive,
+          command: commands2
+        });
+        if (flags.json) {
+          fmt.json({ success: true, shortcut });
+        } else {
+          fmt.success(`Added: ${shortcut.trigger}`);
+        }
+      } catch (err) {
+        fmt.error(err instanceof Error ? err.message : "Failed to add shortcut");
+      }
+    };
+    handleList = async (_args, flags, fmt) => {
+      const shortcuts = getShortcuts();
+      if (flags.json) {
+        fmt.json({ shortcuts });
+        return;
+      }
+      const rows = shortcuts.map((s) => ({
+        trigger: s.trigger,
+        name: s.name,
+        commands: s.command.join(", ")
+      }));
+      fmt.table(rows);
+    };
+    handleShow = async (args, flags, fmt) => {
+      if (args.length < 1) {
+        fmt.error("Usage: dash -- show <trigger>");
+      }
+      const trigger = args[0];
+      const shortcut = getShortcutByTrigger(trigger);
+      if (!shortcut) {
+        fmt.error(`Shortcut not found: ${trigger}`);
+      }
+      if (flags.json) {
+        fmt.json({ shortcut });
+        return;
+      }
+      console.log(`  Trigger:  ${shortcut.trigger}`);
+      console.log(`  Name:     ${shortcut.name}`);
+      console.log(`  Case:     ${shortcut.caseSensitive ? "sensitive" : "insensitive"}`);
+      console.log(`  Commands:`);
+      for (const cmd of shortcut.command) {
+        console.log(`    ${cmd}`);
+      }
+    };
+    handleEdit = async (args, flags, fmt) => {
+      if (args.length < 1) {
+        fmt.error('Usage: dash -- edit <trigger> [--name "Name"] [--trigger new] [--command "cmd1" --command "cmd2"] [--case-sensitive]');
+      }
+      const trigger = args[0];
+      const shortcut = getShortcutByTrigger(trigger);
+      if (!shortcut) {
+        fmt.error(`Shortcut not found: ${trigger}`);
+      }
+      const updates = {};
+      if (typeof flags.name === "string") {
+        updates.name = flags.name;
+      }
+      if (typeof flags.trigger === "string") {
+        const formatResult = validateTriggerFormat(flags.trigger);
+        if (!formatResult.valid) {
+          fmt.error(formatResult.error || "Invalid trigger format");
+        }
+        const caseSensitive = flags["case-sensitive"] === true ? true : shortcut.caseSensitive;
+        const collisionResult = validateTrigger(flags.trigger, caseSensitive, shortcut.id);
+        if (!collisionResult.valid) {
+          fmt.error(collisionResult.error || "Trigger already exists");
+        }
+        updates.trigger = flags.trigger;
+      }
+      if (flags["case-sensitive"] !== void 0) {
+        updates.caseSensitive = flags["case-sensitive"] === true;
+      }
+      if (typeof flags.command === "string") {
+        updates.command = flags.command.includes(",") ? flags.command.split(",").map((c) => c.trim()) : [flags.command];
+      }
+      if (Object.keys(updates).length === 0) {
+        fmt.error("No updates provided. Use --name, --trigger, --command, or --case-sensitive");
+      }
+      try {
+        const updated = updateShortcut(shortcut.id, updates);
+        if (flags.json) {
+          fmt.json({ success: true, shortcut: updated });
+        } else {
+          fmt.success(`Updated: ${updated.trigger}`);
+        }
+      } catch (err) {
+        fmt.error(err instanceof Error ? err.message : "Failed to update shortcut");
+      }
+    };
+    handleRm = async (args, flags, fmt) => {
+      if (args.length < 1) {
+        fmt.error("Usage: dash -- rm <trigger>");
+      }
+      const trigger = args[0];
+      const shortcut = getShortcutByTrigger(trigger);
+      if (!shortcut) {
+        fmt.error(`Shortcut not found: ${trigger}`);
+      }
+      const deleted = removeShortcut(shortcut.id);
+      if (!deleted) {
+        fmt.error("Failed to remove shortcut");
+      }
+      if (flags.json) {
+        fmt.json({ deleted: true, trigger: shortcut.trigger });
+      } else {
+        fmt.success(`Removed shortcut: ${shortcut.trigger}`);
+      }
+    };
+    commands = {
+      add: handleAdd,
+      list: handleList,
+      show: handleShow,
+      edit: handleEdit,
+      rm: handleRm
+    };
+  }
+});
+
+// src/cli/index.ts
+var cli_exports = {};
+__export(cli_exports, {
+  dispatch: () => dispatch
+});
+async function dispatch(argv) {
+  const { command, positional, flags } = parseArgv(argv);
+  const useJson = flags.json === true;
+  const fmt = createFormatter(useJson);
+  if (!command || command === "help" || flags.help) {
+    showHelp(fmt);
+    return;
+  }
+  const handler = commands[command];
+  if (!handler) {
+    fmt.error(`Unknown command: ${command}. Run "dash -- help" for usage.`);
+  }
+  await handler(positional, flags, fmt);
+}
+var init_cli = __esm({
+  "src/cli/index.ts"() {
+    "use strict";
+    init_parser();
+    init_formatters();
+    init_commands();
   }
 });
 
@@ -54740,9 +55268,9 @@ function addRecent(path2, displayName) {
   data.recent = data.recent.slice(0, MAX_HISTORY);
   saveHistory(data);
 }
-function writeLastCommand(commands) {
+function writeLastCommand(commands2) {
   ensureConfigDir2();
-  writeFileSync2(COMMAND_FILE, commands.join("\n"));
+  writeFileSync2(COMMAND_FILE, commands2.join("\n"));
 }
 function clearHistory() {
   saveHistory({ recent: [] });
@@ -55039,232 +55567,7 @@ function SettingsScreen({ settings, onSave, onClearHistory, onTab, onClose, tabB
 
 // src/components/ShortcutsEditor.tsx
 var import_react25 = __toESM(require_react(), 1);
-
-// src/shortcuts.ts
-import { existsSync as existsSync4, mkdirSync as mkdirSync3, readFileSync as readFileSync4, writeFileSync as writeFileSync3 } from "fs";
-import { readFile as readFile3, mkdir as mkdir3, access as access3 } from "fs/promises";
-import { join as join4 } from "path";
-import { homedir as homedir4 } from "os";
-import { randomUUID } from "crypto";
-var CONFIG_DIR3 = join4(homedir4(), ".dash-cli");
-var SHORTCUTS_FILE = join4(CONFIG_DIR3, "shortcuts.json");
-function ensureConfigDir3() {
-  if (!existsSync4(CONFIG_DIR3)) {
-    mkdirSync3(CONFIG_DIR3, { recursive: true });
-  }
-}
-function loadShortcutsData() {
-  ensureConfigDir3();
-  if (!existsSync4(SHORTCUTS_FILE)) {
-    return { shortcuts: [] };
-  }
-  try {
-    const content = readFileSync4(SHORTCUTS_FILE, "utf-8");
-    return JSON.parse(content);
-  } catch {
-    return { shortcuts: [] };
-  }
-}
-function saveShortcutsData(data) {
-  ensureConfigDir3();
-  writeFileSync3(SHORTCUTS_FILE, JSON.stringify(data, null, 2));
-}
-function triggersCollide(trigger1, caseSensitive1, trigger2, caseSensitive2) {
-  if (caseSensitive1 && caseSensitive2) {
-    return trigger1 === trigger2;
-  }
-  return trigger1.toLowerCase() === trigger2.toLowerCase();
-}
-function validateTriggerFormat(trigger) {
-  if (!trigger || trigger.trim() === "") {
-    return { valid: false, error: "Trigger cannot be empty" };
-  }
-  if (trigger.includes(" ")) {
-    return { valid: false, error: "Trigger cannot contain spaces" };
-  }
-  return { valid: true };
-}
-function validateTrigger(trigger, caseSensitive, excludeId) {
-  const formatResult = validateTriggerFormat(trigger);
-  if (!formatResult.valid) {
-    return formatResult;
-  }
-  const data = loadShortcutsData();
-  for (const shortcut of data.shortcuts) {
-    if (excludeId && shortcut.id === excludeId) {
-      continue;
-    }
-    if (triggersCollide(
-      trigger,
-      caseSensitive,
-      shortcut.trigger,
-      shortcut.caseSensitive
-    )) {
-      const sensitivity = shortcut.caseSensitive ? "case-sensitive" : "case-insensitive";
-      return {
-        valid: false,
-        error: `Trigger "${trigger}" collides with "${shortcut.trigger}" (${sensitivity}) on "${shortcut.name}"`
-      };
-    }
-  }
-  return { valid: true };
-}
-function validateCommand(command) {
-  if (!command || !Array.isArray(command)) {
-    return { valid: false, error: "Command must be an array" };
-  }
-  if (command.length === 0) {
-    return { valid: false, error: "Command array cannot be empty" };
-  }
-  const hasNonEmpty = command.some((cmd) => cmd && cmd.trim() !== "");
-  if (!hasNonEmpty) {
-    return {
-      valid: false,
-      error: "Command array must contain at least one non-empty command"
-    };
-  }
-  return { valid: true };
-}
-function validateShortcutInput(input, excludeId) {
-  if (!input.name || input.name.trim() === "") {
-    return { valid: false, error: "Name cannot be empty" };
-  }
-  const triggerResult = validateTrigger(
-    input.trigger,
-    input.caseSensitive,
-    excludeId
-  );
-  if (!triggerResult.valid) {
-    return triggerResult;
-  }
-  const commandResult = validateCommand(input.command);
-  if (!commandResult.valid) {
-    return commandResult;
-  }
-  return { valid: true };
-}
-function getShortcuts() {
-  const data = loadShortcutsData();
-  return data.shortcuts.sort((a, b) => a.createdAt - b.createdAt);
-}
-function addShortcut(input) {
-  const validation = validateShortcutInput(input);
-  if (!validation.valid) {
-    throw new Error(validation.error);
-  }
-  const data = loadShortcutsData();
-  const newShortcut = {
-    id: randomUUID(),
-    name: input.name.trim(),
-    trigger: input.trigger,
-    caseSensitive: input.caseSensitive,
-    command: input.command.filter((cmd) => cmd.trim() !== ""),
-    createdAt: Date.now()
-  };
-  data.shortcuts.push(newShortcut);
-  saveShortcutsData(data);
-  return newShortcut;
-}
-function updateShortcut(id, updates) {
-  const data = loadShortcutsData();
-  const index = data.shortcuts.findIndex((s) => s.id === id);
-  if (index === -1) {
-    throw new Error(`Shortcut with ID "${id}" not found`);
-  }
-  const existing = data.shortcuts[index];
-  const merged = {
-    name: updates.name ?? existing.name,
-    trigger: updates.trigger ?? existing.trigger,
-    caseSensitive: updates.caseSensitive ?? existing.caseSensitive,
-    command: updates.command ?? existing.command
-  };
-  const validation = validateShortcutInput(merged, id);
-  if (!validation.valid) {
-    throw new Error(validation.error);
-  }
-  const updated = {
-    ...existing,
-    name: merged.name.trim(),
-    trigger: merged.trigger,
-    caseSensitive: merged.caseSensitive,
-    command: merged.command.filter((cmd) => cmd.trim() !== "")
-  };
-  data.shortcuts[index] = updated;
-  saveShortcutsData(data);
-  return updated;
-}
-function removeShortcut(id) {
-  const data = loadShortcutsData();
-  const initialLength = data.shortcuts.length;
-  data.shortcuts = data.shortcuts.filter((s) => s.id !== id);
-  if (data.shortcuts.length < initialLength) {
-    saveShortcutsData(data);
-    return true;
-  }
-  return false;
-}
-function clearShortcuts() {
-  saveShortcutsData({ shortcuts: [] });
-}
-function generateCommand(path2) {
-  const escapedPath = path2.replace(/"/g, '\\"');
-  return [`cd "${escapedPath}"`];
-}
-function generateUniqueTrigger(shortcuts) {
-  const existing = new Set(shortcuts.map((s) => s.trigger.toLowerCase()));
-  let num = 1;
-  while (existing.has(String(num))) {
-    num++;
-  }
-  return String(num);
-}
-function findShortcutByPath(path2) {
-  const shortcuts = getShortcuts();
-  const expectedCmd = generateCommand(path2)[0];
-  return shortcuts.find((s) => s.command.some((cmd) => cmd === expectedCmd));
-}
-async function pathExists3(p) {
-  try {
-    await access3(p);
-    return true;
-  } catch {
-    return false;
-  }
-}
-async function ensureConfigDirAsync3() {
-  if (!await pathExists3(CONFIG_DIR3)) {
-    await mkdir3(CONFIG_DIR3, { recursive: true });
-  }
-}
-async function loadShortcutsDataAsync() {
-  await ensureConfigDirAsync3();
-  if (!await pathExists3(SHORTCUTS_FILE)) {
-    return { shortcuts: [] };
-  }
-  try {
-    const content = await readFile3(SHORTCUTS_FILE, "utf-8");
-    return JSON.parse(content);
-  } catch {
-    return { shortcuts: [] };
-  }
-}
-async function getShortcutsAsync() {
-  const data = await loadShortcutsDataAsync();
-  return data.shortcuts.sort((a, b) => a.createdAt - b.createdAt);
-}
-async function getShortcutByTriggerAsync(trigger) {
-  const data = await loadShortcutsDataAsync();
-  const lowerTrigger = trigger.toLowerCase();
-  return data.shortcuts.find((shortcut) => {
-    if (shortcut.caseSensitive) {
-      return shortcut.trigger === trigger;
-    } else {
-      return shortcut.trigger.toLowerCase() === lowerTrigger;
-    }
-  });
-}
-
-// src/components/ShortcutsEditor.tsx
+init_shortcuts();
 var import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
 function ShortcutsEditor({
   shortcuts,
@@ -55403,6 +55706,7 @@ function ShortcutsEditor({
 
 // src/components/ShortcutEdit.tsx
 var import_react26 = __toESM(require_react(), 1);
+init_shortcuts();
 var import_jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
 function ShortcutEdit({
   shortcut,
@@ -55418,15 +55722,15 @@ function ShortcutEdit({
   const [name, setName] = (0, import_react26.useState)(shortcut.name);
   const [trigger, setTrigger] = (0, import_react26.useState)(shortcut.trigger);
   const [caseSensitive, setCaseSensitive] = (0, import_react26.useState)(shortcut.caseSensitive);
-  const [commands, setCommands] = (0, import_react26.useState)([...shortcut.command]);
+  const [commands2, setCommands] = (0, import_react26.useState)([...shortcut.command]);
   const [selectedIndex, setSelectedIndex] = (0, import_react26.useState)(0);
   const [editingField, setEditingField] = (0, import_react26.useState)(null);
   const [error, setError] = (0, import_react26.useState)(null);
   const fields = [
-    { key: "name", label: "Name", type: "text" },
     { key: "trigger", label: "Trigger", type: "text" },
+    { key: "name", label: "Name", type: "text" },
     { key: "caseSensitive", label: "Case Sensitive", type: "toggle" },
-    ...commands.map((_, i) => ({
+    ...commands2.map((_, i) => ({
       key: `cmd-${i}`,
       label: `Command ${i + 1}`,
       type: "text"
@@ -55447,7 +55751,7 @@ function ShortcutEdit({
     if (key === "caseSensitive") return caseSensitive ? "Yes" : "No";
     if (key.startsWith("cmd-")) {
       const idx = parseInt(key.split("-")[1], 10);
-      return commands[idx] ?? "";
+      return commands2[idx] ?? "";
     }
     return "";
   };
@@ -55469,7 +55773,7 @@ function ShortcutEdit({
       return;
     }
     if (field.type === "action") {
-      const newCmdIndex = commands.length;
+      const newCmdIndex = commands2.length;
       setCommands((prev) => [...prev, ""]);
       setSelectedIndex(3 + newCmdIndex);
       setEditingField(`cmd-${newCmdIndex}`);
@@ -55482,13 +55786,13 @@ function ShortcutEdit({
   };
   const deleteCommandLine = () => {
     if (!currentField.key.startsWith("cmd-")) return;
-    if (commands.length <= 1) {
+    if (commands2.length <= 1) {
       setError("Cannot delete - at least one command required");
       return;
     }
     const idx = parseInt(currentField.key.split("-")[1], 10);
     setCommands((prev) => prev.filter((_, i) => i !== idx));
-    if (selectedIndex >= 3 + commands.length - 1) {
+    if (selectedIndex >= 3 + commands2.length - 1) {
       setSelectedIndex((prev) => prev - 1);
     }
   };
@@ -55502,7 +55806,7 @@ function ShortcutEdit({
       setError("Name cannot be empty");
       return;
     }
-    const nonEmptyCommands = commands.filter((c) => c.trim() !== "");
+    const nonEmptyCommands = commands2.filter((c) => c.trim() !== "");
     if (nonEmptyCommands.length === 0) {
       setError("At least one command is required");
       return;
@@ -55558,7 +55862,7 @@ function ShortcutEdit({
         setError("Name cannot be empty");
         return;
       }
-      const nonEmptyCommands = commands.filter((c) => c.trim() !== "");
+      const nonEmptyCommands = commands2.filter((c) => c.trim() !== "");
       if (nonEmptyCommands.length === 0) {
         setError("At least one command is required");
         return;
@@ -55628,7 +55932,7 @@ function ShortcutEdit({
       /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: selectedIndex === 2 ? selectedColor : "white", children: caseSensitive ? "Yes" : "No" })
     ] }),
     /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Commands \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
-    commands.map((cmd, idx) => {
+    commands2.map((cmd, idx) => {
       const fieldIdx = 3 + idx;
       const field = fields[fieldIdx];
       const isSelected = selectedIndex === fieldIdx;
@@ -55896,6 +56200,7 @@ function saveCache(projects, projectsDir, maxDepth, skipDirs) {
 }
 
 // src/components/App.tsx
+init_shortcuts();
 var import_jsx_runtime5 = __toESM(require_jsx_runtime(), 1);
 var PAGE_SIZE = 10;
 var TAB_PROJECTS = 0;
@@ -56605,6 +56910,9 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
   ] });
 }
 
+// src/index.tsx
+init_shortcuts();
+
 // src/setup.ts
 import { existsSync as existsSync8, readFileSync as readFileSync7, writeFileSync as writeFileSync6, appendFileSync as appendFileSync2, mkdirSync as mkdirSync5, copyFileSync } from "fs";
 import { join as join8, dirname as dirname2, resolve as resolve2 } from "path";
@@ -56671,21 +56979,36 @@ dash() {
   return wrapper;
 }
 function getPowerShellWrapper(withAlias) {
-  let wrapper = `
-# Dash CLI: Navigate to projects
-function dash {
-    dash-cli @args
-    $cmdFile = "${COMMAND_FILE2.replace(/\\/g, "\\\\")}"
-    if (Test-Path $cmdFile) {
-        $commands = Get-Content $cmdFile -Raw
-        if ($commands) { Invoke-Expression $commands }
-        Remove-Item $cmdFile -Force -ErrorAction SilentlyContinue
-    }
-}
-`;
+  const cmdFile = COMMAND_FILE2.replace(/\\/g, "\\\\");
+  const lines = [
+    "",
+    "# Dash CLI: Navigate to projects",
+    "function dash {",
+    "    $rawLine = $MyInvocation.Line",
+    '    $rawArgs = ""',
+    "    if ($rawLine -match '\\b(d|dash)\\s+(.*)$') {",
+    "        $rawArgs = $Matches[2]",
+    "    }",
+    '    $exe = if ($IsWindows -or $PSVersionTable.PSVersion -lt "6.0") { ".exe" } else { "" }',
+    "    $cmdSource = (Get-Command dash-cli).Source",
+    "    $npmPrefix = Split-Path $cmdSource",
+    '    $scriptPath = Join-Path $npmPrefix "node_modules\\dash-cli\\dist\\index.js"',
+    "    if ($rawArgs) {",
+    '        Invoke-Expression "node$exe `"$scriptPath`" $rawArgs"',
+    "    } else {",
+    "        & dash-cli",
+    "    }",
+    `    $cmdFile = "${cmdFile}"`,
+    "    if (Test-Path $cmdFile) {",
+    "        $commands = Get-Content $cmdFile -Raw",
+    "        if ($commands) { Invoke-Expression $commands }",
+    "        Remove-Item $cmdFile -Force -ErrorAction SilentlyContinue",
+    "    }",
+    "}"
+  ];
+  let wrapper = lines.join("\n");
   if (withAlias) {
-    wrapper += `Set-Alias -Name d -Value dash
-`;
+    wrapper += "\nSet-Alias -Name d -Value dash\n";
   }
   return wrapper;
 }
@@ -56876,6 +57199,13 @@ async function main() {
   initLog(debugMode);
   log("main() started");
   log(`args: ${JSON.stringify(filteredArgs)}`);
+  const separatorIndex = filteredArgs.indexOf("--");
+  if (separatorIndex !== -1) {
+    log("CLI mode detected");
+    const { dispatch: dispatch2 } = await Promise.resolve().then(() => (init_cli(), cli_exports));
+    await dispatch2(filteredArgs.slice(separatorIndex + 1));
+    return;
+  }
   if (filteredArgs[0] === "--setup") {
     log("running setup");
     await runSetup(filteredArgs[1], filteredArgs[2]);

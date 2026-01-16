@@ -18,6 +18,15 @@ async function main() {
   log("main() started");
   log(`args: ${JSON.stringify(filteredArgs)}`);
 
+  // Handle CLI API via -- separator
+  const separatorIndex = filteredArgs.indexOf("--");
+  if (separatorIndex !== -1) {
+    log("CLI mode detected");
+    const { dispatch } = await import("./cli/index.js");
+    await dispatch(filteredArgs.slice(separatorIndex + 1));
+    return;
+  }
+
   // Handle --setup command
   if (filteredArgs[0] === "--setup") {
     log("running setup");
