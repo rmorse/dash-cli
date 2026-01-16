@@ -19,6 +19,7 @@ export interface Settings {
   recentColor: string;
   shortcutToggleKey: string;
   refreshKey: string;
+  moveKey: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -34,6 +35,7 @@ export const DEFAULT_SETTINGS: Settings = {
   recentColor: "#6495ED",
   shortcutToggleKey: "t",
   refreshKey: "r",
+  moveKey: "o",
 };
 
 export interface SettingField {
@@ -125,6 +127,12 @@ export const SETTING_FIELDS: SettingField[] = [
     label: "Refresh Shortcut",
     type: "key",
     description: "Key for Ctrl+? to refresh projects (letter or number)",
+  },
+  {
+    key: "moveKey",
+    label: "Move Shortcut Key",
+    type: "key",
+    description: "Key for Ctrl+? to reorder shortcuts (letter or number)",
   },
 ];
 

@@ -24,6 +24,7 @@ export interface Shortcut {
   caseSensitive: boolean;
   command: string[];
   pinned?: boolean;  // Default: true (backwards compat)
+  order?: number;    // Display order (0-indexed, normalized)
   createdAt: number;
 }
 

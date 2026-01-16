@@ -45,6 +45,33 @@ function saveShortcutsData(data: ShortcutsData): void {
 }
 
 /**
+ * Ensures all shortcuts have an order field.
+ * Assigns sequential order based on createdAt sort for migration.
+ */
+function ensureOrderField(shortcuts: Shortcut[]): Shortcut[] {
+  const needsUpdate = shortcuts.some((s) => s.order === undefined);
+  if (!needsUpdate) return shortcuts;
+
+  // Sort by createdAt to establish baseline order for migration
+  const sorted = [...shortcuts].sort((a, b) => a.createdAt - b.createdAt);
+  return sorted.map((shortcut, index) => ({
+    ...shortcut,
+    order: shortcut.order ?? index,
+  }));
+}
+
+/**
+ * Normalizes order values to sequential 0..n-1.
+ */
+function normalizeOrder(shortcuts: Shortcut[]): Shortcut[] {
+  const sorted = [...shortcuts].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  return sorted.map((shortcut, index) => ({
+    ...shortcut,
+    order: index,
+  }));
+}
+
+/**
  * Checks if two triggers collide considering case-sensitivity rules.
  *
  * Collision occurs when:
@@ -186,11 +213,12 @@ export function validateShortcutInput(
 // ============================================================================
 
 /**
- * Retrieves all shortcuts, sorted by creation date (oldest first).
+ * Retrieves all shortcuts, sorted by order.
  */
 export function getShortcuts(): Shortcut[] {
   const data = loadShortcutsData();
-  return data.shortcuts.sort((a, b) => a.createdAt - b.createdAt);
+  const withOrder = ensureOrderField(data.shortcuts);
+  return withOrder.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 }
 
 /**
@@ -228,6 +256,10 @@ export function addShortcut(input: ShortcutInput): Shortcut {
   }
 
   const data = loadShortcutsData();
+  data.shortcuts = ensureOrderField(data.shortcuts);
+
+  // New shortcut gets last position
+  const maxOrder = data.shortcuts.reduce((max, s) => Math.max(max, s.order ?? 0), -1);
 
   const newShortcut: Shortcut = {
     id: randomUUID(),
@@ -236,10 +268,12 @@ export function addShortcut(input: ShortcutInput): Shortcut {
     caseSensitive: input.caseSensitive,
     command: input.command.filter((cmd) => cmd.trim() !== ""),
     pinned: input.pinned ?? true,
+    order: maxOrder + 1,
     createdAt: Date.now(),
   };
 
   data.shortcuts.push(newShortcut);
+  data.shortcuts = normalizeOrder(data.shortcuts);
   saveShortcutsData(data);
 
   return newShortcut;
@@ -296,6 +330,7 @@ export function removeShortcut(id: string): boolean {
   data.shortcuts = data.shortcuts.filter((s) => s.id !== id);
 
   if (data.shortcuts.length < initialLength) {
+    data.shortcuts = normalizeOrder(data.shortcuts);
     saveShortcutsData(data);
     return true;
   }
@@ -308,6 +343,38 @@ export function removeShortcut(id: string): boolean {
  */
 export function clearShortcuts(): void {
   saveShortcutsData({ shortcuts: [] });
+}
+
+/**
+ * Moves a shortcut to a new position in the order.
+ */
+export function moveShortcut(id: string, targetIndex: number): Shortcut[] {
+  const data = loadShortcutsData();
+  data.shortcuts = ensureOrderField(data.shortcuts);
+
+  // Sort by current order
+  const sorted = data.shortcuts.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+  const currentIndex = sorted.findIndex((s) => s.id === id);
+  if (currentIndex === -1) {
+    throw new Error(`Shortcut with ID "${id}" not found`);
+  }
+
+  // Bounds check
+  const clampedTarget = Math.max(0, Math.min(targetIndex, sorted.length - 1));
+
+  // Remove from current position and insert at new position
+  const [moved] = sorted.splice(currentIndex, 1);
+  sorted.splice(clampedTarget, 0, moved);
+
+  // Assign new order values (don't use normalizeOrder - it re-sorts by old order)
+  data.shortcuts = sorted.map((shortcut, index) => ({
+    ...shortcut,
+    order: index,
+  }));
+  saveShortcutsData(data);
+
+  return data.shortcuts;
 }
 
 // ============================================================================
@@ -384,7 +451,8 @@ async function loadShortcutsDataAsync(): Promise<ShortcutsData> {
  */
 export async function getShortcutsAsync(): Promise<Shortcut[]> {
   const data = await loadShortcutsDataAsync();
-  return data.shortcuts.sort((a, b) => a.createdAt - b.createdAt);
+  const withOrder = ensureOrderField(data.shortcuts);
+  return withOrder.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 }
 
 /**

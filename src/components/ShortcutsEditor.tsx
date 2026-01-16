@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
-import type { Shortcut } from "../types.js";
-import { removeShortcut, clearShortcuts } from "../shortcuts.js";
+import type { Shortcut, Settings } from "../types.js";
+import { removeShortcut, clearShortcuts, moveShortcut } from "../shortcuts.js";
 
 interface ShortcutsEditorProps {
   shortcuts: Shortcut[];
@@ -12,6 +12,13 @@ interface ShortcutsEditorProps {
   onClose: () => void;
   selectedColor: string;
   tabBar: React.ReactNode;
+  settings: Settings;
+}
+
+interface MoveMode {
+  shortcutId: string;
+  originalIndex: number;
+  currentIndex: number;
 }
 
 export function ShortcutsEditor({
@@ -23,10 +30,12 @@ export function ShortcutsEditor({
   onClose,
   selectedColor,
   tabBar,
+  settings,
 }: ShortcutsEditorProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [confirmClearAll, setConfirmClearAll] = useState(false);
+  const [moveMode, setMoveMode] = useState<MoveMode | null>(null);
 
   // Items: shortcuts + "Add new shortcut" + "Clear all" (if shortcuts exist)
   const hasClearAll = shortcuts.length > 0;
@@ -37,6 +46,49 @@ export function ShortcutsEditor({
   const isOnClearAll = hasClearAll && selectedIndex === clearAllIndex;
 
   useInput((input, key) => {
+    // Handle move mode
+    if (moveMode) {
+      if (key.upArrow) {
+        setMoveMode((prev) => {
+          if (!prev) return null;
+          const newIndex = Math.max(0, prev.currentIndex - 1);
+          return { ...prev, currentIndex: newIndex };
+        });
+        return;
+      }
+
+      if (key.downArrow) {
+        setMoveMode((prev) => {
+          if (!prev) return null;
+          const newIndex = Math.min(shortcuts.length - 1, prev.currentIndex + 1);
+          return { ...prev, currentIndex: newIndex };
+        });
+        return;
+      }
+
+      if (key.return) {
+        // Save move
+        try {
+          const updated = moveShortcut(moveMode.shortcutId, moveMode.currentIndex);
+          onUpdate(updated);
+          setSelectedIndex(moveMode.currentIndex);
+        } catch (err) {
+          console.error("Failed to move shortcut:", err);
+        }
+        setMoveMode(null);
+        return;
+      }
+
+      if (key.escape) {
+        // Cancel move - revert selection
+        setSelectedIndex(moveMode.originalIndex);
+        setMoveMode(null);
+        return;
+      }
+
+      return; // Block all other input in move mode
+    }
+
     // Handle clear all confirmation
     if (confirmClearAll) {
       if (input === "y" || input === "Y") {
@@ -91,6 +143,18 @@ export function ShortcutsEditor({
       return;
     }
 
+    // Ctrl+O - enter move mode (only on shortcut items)
+    if (key.ctrl && input === settings.moveKey) {
+      if (!isOnAddNew && !isOnClearAll && shortcuts.length > 0) {
+        setMoveMode({
+          shortcutId: shortcuts[selectedIndex].id,
+          originalIndex: selectedIndex,
+          currentIndex: selectedIndex,
+        });
+      }
+      return;
+    }
+
     // Ctrl+D - delete shortcut
     if (key.ctrl && input === "d") {
       if (!isOnAddNew && !isOnClearAll && shortcuts.length > 0) {
@@ -131,23 +195,42 @@ export function ShortcutsEditor({
         </Box>
       )}
 
-      {shortcuts.map((sc, idx) => {
-        const isSelected = idx === selectedIndex;
-        const isDeleting = confirmDelete === sc.id;
+      {(() => {
+        // Compute display order (reorder if in move mode)
+        let displayList = shortcuts;
+        if (moveMode) {
+          const reordered = [...shortcuts];
+          const movedIdx = reordered.findIndex((s) => s.id === moveMode.shortcutId);
+          if (movedIdx !== -1) {
+            const [moved] = reordered.splice(movedIdx, 1);
+            reordered.splice(moveMode.currentIndex, 0, moved);
+          }
+          displayList = reordered;
+        }
 
-        return (
-          <Box key={sc.id}>
-            <Text color={isSelected ? selectedColor : undefined} bold={isSelected}>
-              {isSelected ? "> " : "  "}
-              {sc.name}
-            </Text>
-            <Text dimColor> [{sc.trigger}]</Text>
-            {isDeleting && (
-              <Text color="red"> Delete? (y/n)</Text>
-            )}
-          </Box>
-        );
-      })}
+        return displayList.map((sc, idx) => {
+          const isSelected = idx === selectedIndex;
+          const isDeleting = confirmDelete === sc.id;
+          const isMoving = moveMode?.shortcutId === sc.id;
+
+          return (
+            <Box key={sc.id}>
+              <Text color={isSelected ? selectedColor : undefined} bold={isSelected}>
+                {isSelected ? "> " : "  "}
+                {isMoving ? "↕ " : ""}
+                {sc.name}
+              </Text>
+              <Text dimColor> [{sc.trigger}]</Text>
+              {isDeleting && (
+                <Text color="red"> Delete? (y/n)</Text>
+              )}
+              {isMoving && (
+                <Text color="yellow"> [MOVING]</Text>
+              )}
+            </Box>
+          );
+        });
+      })()}
 
       <Box>
         <Text
@@ -180,7 +263,10 @@ export function ShortcutsEditor({
 
       <Box marginTop={1}>
         <Text dimColor>
-          {"  "}tab/shift+tab • ↑↓ navigate • enter edit{shortcuts.length > 0 ? " • ^D delete" : ""} • esc close
+          {"  "}{moveMode
+            ? "↑↓ move • enter save • esc cancel"
+            : `tab/shift+tab • ↑↓ navigate • enter edit${shortcuts.length > 0 ? ` • ^${settings.moveKey.toUpperCase()} move • ^D delete` : ""} • esc close`
+          }
         </Text>
       </Box>
     </Box>

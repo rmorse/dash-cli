@@ -860,6 +860,7 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
         onClose={() => setCurrentTab(TAB_PROJECTS)}
         selectedColor={settings.selectedColor}
         tabBar={<TabBar />}
+        settings={settings}
       />
     );
   }

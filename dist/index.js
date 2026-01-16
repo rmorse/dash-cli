@@ -42756,6 +42756,22 @@ function saveShortcutsData(data) {
   ensureConfigDir3();
   writeFileSync3(SHORTCUTS_FILE, JSON.stringify(data, null, 2));
 }
+function ensureOrderField(shortcuts) {
+  const needsUpdate = shortcuts.some((s) => s.order === void 0);
+  if (!needsUpdate) return shortcuts;
+  const sorted = [...shortcuts].sort((a, b) => a.createdAt - b.createdAt);
+  return sorted.map((shortcut, index) => ({
+    ...shortcut,
+    order: shortcut.order ?? index
+  }));
+}
+function normalizeOrder(shortcuts) {
+  const sorted = [...shortcuts].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  return sorted.map((shortcut, index) => ({
+    ...shortcut,
+    order: index
+  }));
+}
 function triggersCollide(trigger1, caseSensitive1, trigger2, caseSensitive2) {
   if (caseSensitive1 && caseSensitive2) {
     return trigger1 === trigger2;
@@ -42835,7 +42851,8 @@ function validateShortcutInput(input, excludeId) {
 }
 function getShortcuts() {
   const data = loadShortcutsData();
-  return data.shortcuts.sort((a, b) => a.createdAt - b.createdAt);
+  const withOrder = ensureOrderField(data.shortcuts);
+  return withOrder.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 }
 function getShortcutByTrigger(trigger) {
   const data = loadShortcutsData();
@@ -42854,6 +42871,8 @@ function addShortcut(input) {
     throw new Error(validation.error);
   }
   const data = loadShortcutsData();
+  data.shortcuts = ensureOrderField(data.shortcuts);
+  const maxOrder = data.shortcuts.reduce((max, s) => Math.max(max, s.order ?? 0), -1);
   const newShortcut = {
     id: randomUUID(),
     name: input.name.trim(),
@@ -42861,9 +42880,11 @@ function addShortcut(input) {
     caseSensitive: input.caseSensitive,
     command: input.command.filter((cmd) => cmd.trim() !== ""),
     pinned: input.pinned ?? true,
+    order: maxOrder + 1,
     createdAt: Date.now()
   };
   data.shortcuts.push(newShortcut);
+  data.shortcuts = normalizeOrder(data.shortcuts);
   saveShortcutsData(data);
   return newShortcut;
 }
@@ -42902,6 +42923,7 @@ function removeShortcut(id) {
   const initialLength = data.shortcuts.length;
   data.shortcuts = data.shortcuts.filter((s) => s.id !== id);
   if (data.shortcuts.length < initialLength) {
+    data.shortcuts = normalizeOrder(data.shortcuts);
     saveShortcutsData(data);
     return true;
   }
@@ -42909,6 +42931,24 @@ function removeShortcut(id) {
 }
 function clearShortcuts() {
   saveShortcutsData({ shortcuts: [] });
+}
+function moveShortcut(id, targetIndex) {
+  const data = loadShortcutsData();
+  data.shortcuts = ensureOrderField(data.shortcuts);
+  const sorted = data.shortcuts.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const currentIndex = sorted.findIndex((s) => s.id === id);
+  if (currentIndex === -1) {
+    throw new Error(`Shortcut with ID "${id}" not found`);
+  }
+  const clampedTarget = Math.max(0, Math.min(targetIndex, sorted.length - 1));
+  const [moved] = sorted.splice(currentIndex, 1);
+  sorted.splice(clampedTarget, 0, moved);
+  data.shortcuts = sorted.map((shortcut, index) => ({
+    ...shortcut,
+    order: index
+  }));
+  saveShortcutsData(data);
+  return data.shortcuts;
 }
 function generateCommand(path2) {
   const escapedPath = path2.replace(/"/g, '\\"');
@@ -42954,7 +42994,8 @@ async function loadShortcutsDataAsync() {
 }
 async function getShortcutsAsync() {
   const data = await loadShortcutsDataAsync();
-  return data.shortcuts.sort((a, b) => a.createdAt - b.createdAt);
+  const withOrder = ensureOrderField(data.shortcuts);
+  return withOrder.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 }
 async function getShortcutByTriggerAsync(trigger) {
   const data = await loadShortcutsDataAsync();
@@ -55098,7 +55139,8 @@ var DEFAULT_SETTINGS = {
   shortcutColor: "#69FFBE",
   recentColor: "#6495ED",
   shortcutToggleKey: "t",
-  refreshKey: "r"
+  refreshKey: "r",
+  moveKey: "o"
 };
 var SETTING_FIELDS = [
   {
@@ -55179,6 +55221,12 @@ var SETTING_FIELDS = [
     label: "Refresh Shortcut",
     type: "key",
     description: "Key for Ctrl+? to refresh projects (letter or number)"
+  },
+  {
+    key: "moveKey",
+    label: "Move Shortcut Key",
+    type: "key",
+    description: "Key for Ctrl+? to reorder shortcuts (letter or number)"
   }
 ];
 function ensureConfigDir() {
@@ -55580,11 +55628,13 @@ function ShortcutsEditor({
   onTab,
   onClose,
   selectedColor,
-  tabBar
+  tabBar,
+  settings
 }) {
   const [selectedIndex, setSelectedIndex] = (0, import_react25.useState)(0);
   const [confirmDelete, setConfirmDelete] = (0, import_react25.useState)(null);
   const [confirmClearAll, setConfirmClearAll] = (0, import_react25.useState)(false);
+  const [moveMode, setMoveMode] = (0, import_react25.useState)(null);
   const hasClearAll = shortcuts.length > 0;
   const totalItems = shortcuts.length + 1 + (hasClearAll ? 1 : 0);
   const addNewIndex = shortcuts.length;
@@ -55592,6 +55642,41 @@ function ShortcutsEditor({
   const isOnAddNew = selectedIndex === addNewIndex;
   const isOnClearAll = hasClearAll && selectedIndex === clearAllIndex;
   use_input_default((input, key) => {
+    if (moveMode) {
+      if (key.upArrow) {
+        setMoveMode((prev) => {
+          if (!prev) return null;
+          const newIndex = Math.max(0, prev.currentIndex - 1);
+          return { ...prev, currentIndex: newIndex };
+        });
+        return;
+      }
+      if (key.downArrow) {
+        setMoveMode((prev) => {
+          if (!prev) return null;
+          const newIndex = Math.min(shortcuts.length - 1, prev.currentIndex + 1);
+          return { ...prev, currentIndex: newIndex };
+        });
+        return;
+      }
+      if (key.return) {
+        try {
+          const updated = moveShortcut(moveMode.shortcutId, moveMode.currentIndex);
+          onUpdate(updated);
+          setSelectedIndex(moveMode.currentIndex);
+        } catch (err) {
+          console.error("Failed to move shortcut:", err);
+        }
+        setMoveMode(null);
+        return;
+      }
+      if (key.escape) {
+        setSelectedIndex(moveMode.originalIndex);
+        setMoveMode(null);
+        return;
+      }
+      return;
+    }
     if (confirmClearAll) {
       if (input === "y" || input === "Y") {
         clearShortcuts();
@@ -55634,6 +55719,16 @@ function ShortcutsEditor({
       }
       return;
     }
+    if (key.ctrl && input === settings.moveKey) {
+      if (!isOnAddNew && !isOnClearAll && shortcuts.length > 0) {
+        setMoveMode({
+          shortcutId: shortcuts[selectedIndex].id,
+          originalIndex: selectedIndex,
+          currentIndex: selectedIndex
+        });
+      }
+      return;
+    }
     if (key.ctrl && input === "d") {
       if (!isOnAddNew && !isOnClearAll && shortcuts.length > 0) {
         setConfirmDelete(shortcuts[selectedIndex].id);
@@ -55656,22 +55751,37 @@ function ShortcutsEditor({
       "  ",
       "No shortcuts yet"
     ] }) }),
-    shortcuts.map((sc, idx) => {
-      const isSelected = idx === selectedIndex;
-      const isDeleting = confirmDelete === sc.id;
-      return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { children: [
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { color: isSelected ? selectedColor : void 0, bold: isSelected, children: [
-          isSelected ? "> " : "  ",
-          sc.name
-        ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { dimColor: true, children: [
-          " [",
-          sc.trigger,
-          "]"
-        ] }),
-        isDeleting && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "red", children: " Delete? (y/n)" })
-      ] }, sc.id);
-    }),
+    (() => {
+      let displayList = shortcuts;
+      if (moveMode) {
+        const reordered = [...shortcuts];
+        const movedIdx = reordered.findIndex((s) => s.id === moveMode.shortcutId);
+        if (movedIdx !== -1) {
+          const [moved] = reordered.splice(movedIdx, 1);
+          reordered.splice(moveMode.currentIndex, 0, moved);
+        }
+        displayList = reordered;
+      }
+      return displayList.map((sc, idx) => {
+        const isSelected = idx === selectedIndex;
+        const isDeleting = confirmDelete === sc.id;
+        const isMoving = moveMode?.shortcutId === sc.id;
+        return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { color: isSelected ? selectedColor : void 0, bold: isSelected, children: [
+            isSelected ? "> " : "  ",
+            isMoving ? "\u2195 " : "",
+            sc.name
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { dimColor: true, children: [
+            " [",
+            sc.trigger,
+            "]"
+          ] }),
+          isDeleting && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "red", children: " Delete? (y/n)" }),
+          isMoving && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "yellow", children: " [MOVING]" })
+        ] }, sc.id);
+      });
+    })(),
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
       Text,
       {
@@ -55700,9 +55810,7 @@ function ShortcutsEditor({
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
     /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { marginTop: 1, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { dimColor: true, children: [
       "  ",
-      "tab/shift+tab \u2022 \u2191\u2193 navigate \u2022 enter edit",
-      shortcuts.length > 0 ? " \u2022 ^D delete" : "",
-      " \u2022 esc close"
+      moveMode ? "\u2191\u2193 move \u2022 enter save \u2022 esc cancel" : `tab/shift+tab \u2022 \u2191\u2193 navigate \u2022 enter edit${shortcuts.length > 0 ? ` \u2022 ^${settings.moveKey.toUpperCase()} move \u2022 ^D delete` : ""} \u2022 esc close`
     ] }) })
   ] });
 }
@@ -56838,7 +56946,8 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
         onTab: cycleTab,
         onClose: () => setCurrentTab(TAB_PROJECTS),
         selectedColor: settings.selectedColor,
-        tabBar: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(TabBar, {})
+        tabBar: /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(TabBar, {}),
+        settings
       }
     );
   }
