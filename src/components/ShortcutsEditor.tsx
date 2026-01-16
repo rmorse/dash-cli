@@ -209,7 +209,10 @@ export function ShortcutsEditor({
         }
 
         return displayList.map((sc, idx) => {
-          const isSelected = idx === selectedIndex;
+          // In move mode, selection follows the moving item
+          const isSelected = moveMode
+            ? idx === moveMode.currentIndex
+            : idx === selectedIndex;
           const isDeleting = confirmDelete === sc.id;
           const isMoving = moveMode?.shortcutId === sc.id;
 
@@ -217,7 +220,6 @@ export function ShortcutsEditor({
             <Box key={sc.id}>
               <Text color={isSelected ? selectedColor : undefined} bold={isSelected}>
                 {isSelected ? "> " : "  "}
-                {isMoving ? "↕ " : ""}
                 {sc.name}
               </Text>
               <Text dimColor> [{sc.trigger}]</Text>

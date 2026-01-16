@@ -55763,13 +55763,12 @@ function ShortcutsEditor({
         displayList = reordered;
       }
       return displayList.map((sc, idx) => {
-        const isSelected = idx === selectedIndex;
+        const isSelected = moveMode ? idx === moveMode.currentIndex : idx === selectedIndex;
         const isDeleting = confirmDelete === sc.id;
         const isMoving = moveMode?.shortcutId === sc.id;
         return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Box_default, { children: [
           /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { color: isSelected ? selectedColor : void 0, bold: isSelected, children: [
             isSelected ? "> " : "  ",
-            isMoving ? "\u2195 " : "",
             sc.name
           ] }),
           /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { dimColor: true, children: [
