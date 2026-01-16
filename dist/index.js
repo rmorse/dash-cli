@@ -42860,6 +42860,7 @@ function addShortcut(input) {
     trigger: input.trigger,
     caseSensitive: input.caseSensitive,
     command: input.command.filter((cmd) => cmd.trim() !== ""),
+    pinned: input.pinned ?? true,
     createdAt: Date.now()
   };
   data.shortcuts.push(newShortcut);
@@ -42877,7 +42878,8 @@ function updateShortcut(id, updates) {
     name: updates.name ?? existing.name,
     trigger: updates.trigger ?? existing.trigger,
     caseSensitive: updates.caseSensitive ?? existing.caseSensitive,
-    command: updates.command ?? existing.command
+    command: updates.command ?? existing.command,
+    pinned: updates.pinned ?? existing.pinned
   };
   const validation = validateShortcutInput(merged, id);
   if (!validation.valid) {
@@ -42888,7 +42890,8 @@ function updateShortcut(id, updates) {
     name: merged.name.trim(),
     trigger: merged.trigger,
     caseSensitive: merged.caseSensitive,
-    command: merged.command.filter((cmd) => cmd.trim() !== "")
+    command: merged.command.filter((cmd) => cmd.trim() !== ""),
+    pinned: merged.pinned ?? existing.pinned ?? true
   };
   data.shortcuts[index] = updated;
   saveShortcutsData(data);
@@ -55722,6 +55725,7 @@ function ShortcutEdit({
   const [name, setName] = (0, import_react26.useState)(shortcut.name);
   const [trigger, setTrigger] = (0, import_react26.useState)(shortcut.trigger);
   const [caseSensitive, setCaseSensitive] = (0, import_react26.useState)(shortcut.caseSensitive);
+  const [pinned, setPinned] = (0, import_react26.useState)(shortcut.pinned ?? true);
   const [commands2, setCommands] = (0, import_react26.useState)([...shortcut.command]);
   const [selectedIndex, setSelectedIndex] = (0, import_react26.useState)(0);
   const [editingField, setEditingField] = (0, import_react26.useState)(null);
@@ -55730,6 +55734,7 @@ function ShortcutEdit({
     { key: "trigger", label: "Trigger", type: "text" },
     { key: "name", label: "Name", type: "text" },
     { key: "caseSensitive", label: "Case Sensitive", type: "toggle" },
+    { key: "pinned", label: "Pinned", type: "toggle" },
     ...commands2.map((_, i) => ({
       key: `cmd-${i}`,
       label: `Command ${i + 1}`,
@@ -55749,6 +55754,7 @@ function ShortcutEdit({
     if (key === "name") return name;
     if (key === "trigger") return trigger;
     if (key === "caseSensitive") return caseSensitive ? "Yes" : "No";
+    if (key === "pinned") return pinned ? "Yes" : "No";
     if (key.startsWith("cmd-")) {
       const idx = parseInt(key.split("-")[1], 10);
       return commands2[idx] ?? "";
@@ -55769,13 +55775,14 @@ function ShortcutEdit({
   };
   const startEditing = (field) => {
     if (field.type === "toggle") {
-      setCaseSensitive((prev) => !prev);
+      if (field.key === "caseSensitive") setCaseSensitive((prev) => !prev);
+      if (field.key === "pinned") setPinned((prev) => !prev);
       return;
     }
     if (field.type === "action") {
       const newCmdIndex = commands2.length;
       setCommands((prev) => [...prev, ""]);
-      setSelectedIndex(3 + newCmdIndex);
+      setSelectedIndex(4 + newCmdIndex);
       setEditingField(`cmd-${newCmdIndex}`);
       return;
     }
@@ -55792,7 +55799,7 @@ function ShortcutEdit({
     }
     const idx = parseInt(currentField.key.split("-")[1], 10);
     setCommands((prev) => prev.filter((_, i) => i !== idx));
-    if (selectedIndex >= 3 + commands2.length - 1) {
+    if (selectedIndex >= 4 + commands2.length - 1) {
       setSelectedIndex((prev) => prev - 1);
     }
   };
@@ -55816,6 +55823,7 @@ function ShortcutEdit({
         name: name.trim(),
         trigger,
         caseSensitive,
+        pinned,
         command: nonEmptyCommands
       });
       onSave(updated);
@@ -55872,6 +55880,7 @@ function ShortcutEdit({
           name: name.trim(),
           trigger,
           caseSensitive,
+          pinned,
           command: nonEmptyCommands
         });
         onSave(updated);
@@ -55931,9 +55940,24 @@ function ShortcutEdit({
       /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { children: " " }),
       /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: selectedIndex === 2 ? selectedColor : "white", children: caseSensitive ? "Yes" : "No" })
     ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(Box_default, { children: [
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
+        Text,
+        {
+          color: selectedIndex === 3 ? selectedColor : void 0,
+          bold: selectedIndex === 3,
+          children: [
+            selectedIndex === 3 ? "> " : "  ",
+            "Pinned:"
+          ]
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { children: " " }),
+      /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: selectedIndex === 3 ? selectedColor : "white", children: pinned ? "Yes" : "No" })
+    ] }),
     /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Box_default, { children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(Text, { color: "gray", dimColor: true, children: "\u2500\u2500 Commands \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }) }),
     commands2.map((cmd, idx) => {
-      const fieldIdx = 3 + idx;
+      const fieldIdx = 4 + idx;
       const field = fields[fieldIdx];
       const isSelected = selectedIndex === fieldIdx;
       const isEditing = editingField === `cmd-${idx}`;
@@ -56349,7 +56373,7 @@ function App2({ initialSettings, recentEntries: initialRecentEntries, shortcutEn
     const keyMap = /* @__PURE__ */ new Map();
     if (isAtRoot && settings.showShortcuts && shortcutEntries.length > 0) {
       list.push({ type: "header", label: "Shortcuts" });
-      for (const sc of shortcutEntries) {
+      for (const sc of shortcutEntries.filter((s) => s.pinned !== false)) {
         const cdCmd = sc.command.find((c) => c.startsWith("cd "));
         const pathMatch = cdCmd?.match(/^cd\s+"?([^"]+)"?$/);
         const scPath = pathMatch?.[1] || "";

@@ -235,6 +235,7 @@ export function addShortcut(input: ShortcutInput): Shortcut {
     trigger: input.trigger,
     caseSensitive: input.caseSensitive,
     command: input.command.filter((cmd) => cmd.trim() !== ""),
+    pinned: input.pinned ?? true,
     createdAt: Date.now(),
   };
 
@@ -262,6 +263,7 @@ export function updateShortcut(id: string, updates: ShortcutUpdate): Shortcut {
     trigger: updates.trigger ?? existing.trigger,
     caseSensitive: updates.caseSensitive ?? existing.caseSensitive,
     command: updates.command ?? existing.command,
+    pinned: updates.pinned ?? existing.pinned,
   };
 
   const validation = validateShortcutInput(merged, id);
@@ -275,6 +277,7 @@ export function updateShortcut(id: string, updates: ShortcutUpdate): Shortcut {
     trigger: merged.trigger,
     caseSensitive: merged.caseSensitive,
     command: merged.command.filter((cmd) => cmd.trim() !== ""),
+    pinned: merged.pinned ?? existing.pinned ?? true,
   };
 
   data.shortcuts[index] = updated;

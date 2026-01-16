@@ -23,6 +23,7 @@ export interface Shortcut {
   trigger: string;
   caseSensitive: boolean;
   command: string[];
+  pinned?: boolean;  // Default: true (backwards compat)
   createdAt: number;
 }
 

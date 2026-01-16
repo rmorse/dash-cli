@@ -247,9 +247,10 @@ export function App({ initialSettings, recentEntries: initialRecentEntries, shor
     const keyMap = new Map<string, number>();
 
     // Shortcuts section (only at root level, respects showShortcuts setting)
+    // Filter to pinned only (pinned !== false preserves backwards compat: undefined → shown)
     if (isAtRoot && settings.showShortcuts && shortcutEntries.length > 0) {
       list.push({ type: "header", label: "Shortcuts" });
-      for (const sc of shortcutEntries) {
+      for (const sc of shortcutEntries.filter(s => s.pinned !== false)) {
         // Extract path from cd command
         const cdCmd = sc.command.find(c => c.startsWith('cd '));
         const pathMatch = cdCmd?.match(/^cd\s+"?([^"]+)"?$/);

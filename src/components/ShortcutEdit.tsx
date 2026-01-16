@@ -14,7 +14,7 @@ interface ShortcutEditProps {
   tabBar: React.ReactNode;
 }
 
-type FieldKey = "name" | "trigger" | "caseSensitive" | `cmd-${number}` | "add-line";
+type FieldKey = "name" | "trigger" | "caseSensitive" | "pinned" | `cmd-${number}` | "add-line";
 
 interface Field {
   key: FieldKey;
@@ -39,6 +39,7 @@ export function ShortcutEdit({
   const [name, setName] = useState(shortcut.name);
   const [trigger, setTrigger] = useState(shortcut.trigger);
   const [caseSensitive, setCaseSensitive] = useState(shortcut.caseSensitive);
+  const [pinned, setPinned] = useState(shortcut.pinned ?? true);
   const [commands, setCommands] = useState([...shortcut.command]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -50,6 +51,7 @@ export function ShortcutEdit({
     { key: "trigger", label: "Trigger", type: "text" },
     { key: "name", label: "Name", type: "text" },
     { key: "caseSensitive", label: "Case Sensitive", type: "toggle" },
+    { key: "pinned", label: "Pinned", type: "toggle" },
     ...commands.map((_, i) => ({
       key: `cmd-${i}` as FieldKey,
       label: `Command ${i + 1}`,
@@ -73,6 +75,7 @@ export function ShortcutEdit({
     if (key === "name") return name;
     if (key === "trigger") return trigger;
     if (key === "caseSensitive") return caseSensitive ? "Yes" : "No";
+    if (key === "pinned") return pinned ? "Yes" : "No";
     if (key.startsWith("cmd-")) {
       const idx = parseInt(key.split("-")[1], 10);
       return commands[idx] ?? "";
@@ -95,14 +98,15 @@ export function ShortcutEdit({
 
   const startEditing = (field: Field) => {
     if (field.type === "toggle") {
-      setCaseSensitive((prev) => !prev);
+      if (field.key === "caseSensitive") setCaseSensitive((prev) => !prev);
+      if (field.key === "pinned") setPinned((prev) => !prev);
       return;
     }
     if (field.type === "action") {
       // Add new line and immediately enter edit mode for it
       const newCmdIndex = commands.length;
       setCommands((prev) => [...prev, ""]);
-      setSelectedIndex(3 + newCmdIndex); // Select the new command line
+      setSelectedIndex(4 + newCmdIndex); // Select the new command line
       setEditingField(`cmd-${newCmdIndex}`); // Enter edit mode immediately
       return;
     }
@@ -121,7 +125,7 @@ export function ShortcutEdit({
     }
     const idx = parseInt(currentField.key.split("-")[1], 10);
     setCommands((prev) => prev.filter((_, i) => i !== idx));
-    if (selectedIndex >= 3 + commands.length - 1) {
+    if (selectedIndex >= 4 + commands.length - 1) {
       setSelectedIndex((prev) => prev - 1);
     }
   };
@@ -149,6 +153,7 @@ export function ShortcutEdit({
         name: name.trim(),
         trigger,
         caseSensitive,
+        pinned,
         command: nonEmptyCommands,
       });
       onSave(updated);
@@ -218,6 +223,7 @@ export function ShortcutEdit({
           name: name.trim(),
           trigger,
           caseSensitive,
+          pinned,
           command: nonEmptyCommands,
         });
         onSave(updated);
@@ -292,6 +298,21 @@ export function ShortcutEdit({
         </Text>
       </Box>
 
+      {/* Pinned toggle */}
+      <Box>
+        <Text
+          color={selectedIndex === 3 ? selectedColor : undefined}
+          bold={selectedIndex === 3}
+        >
+          {selectedIndex === 3 ? "> " : "  "}
+          Pinned:
+        </Text>
+        <Text> </Text>
+        <Text color={selectedIndex === 3 ? selectedColor : "white"}>
+          {pinned ? "Yes" : "No"}
+        </Text>
+      </Box>
+
       {/* Commands section */}
       <Box>
         <Text color="gray" dimColor>
@@ -300,7 +321,7 @@ export function ShortcutEdit({
       </Box>
 
       {commands.map((cmd, idx) => {
-        const fieldIdx = 3 + idx;
+        const fieldIdx = 4 + idx;
         const field = fields[fieldIdx];
         const isSelected = selectedIndex === fieldIdx;
         const isEditing = editingField === `cmd-${idx}`;
