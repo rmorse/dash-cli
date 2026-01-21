@@ -12,6 +12,7 @@ A speedy little shortcut manager for your terminal.
 - Nested project drill-down navigation
 - Configurable via settings screen
 - Works with Bash and PowerShell
+- CLI and GUI interface for managing shortcuts
 
 ## Quick Start
 
