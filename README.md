@@ -4,10 +4,10 @@ A speedy little shortcut manager for your terminal.
 
 ## Features
 
-- Scans for git repositories (configurable depth)
+- **Shortcuts** - custom triggers, multi-line commands, chainable
+- **Project explorer** - scans for git repositories (configurable depth)
 - **Instant startup** - cached results load immediately, background refresh
 - Type-to-filter search
-- **Shortcuts** - custom triggers, multi-line commands, chainable
 - Recent projects shown at top
 - Nested project drill-down navigation
 - Configurable via settings screen
