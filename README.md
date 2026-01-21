@@ -1,6 +1,6 @@
 # Dash CLI
 
-A speedy little project switcher for your terminal.
+A speedy little shortcut manager for your terminal.
 
 ## Features
 
