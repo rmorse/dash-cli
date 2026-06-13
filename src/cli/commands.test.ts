@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 let home: string | null = null;
 let logs: string[] = [];
+let errors: string[] = [];
 
 async function importCli() {
   home = mkdtempSync(join(tmpdir(), "dash-cli-commands-"));
@@ -18,8 +19,12 @@ async function importCli() {
 
 beforeEach(() => {
   logs = [];
+  errors = [];
   vi.spyOn(console, "log").mockImplementation((message = "") => {
     logs.push(String(message));
+  });
+  vi.spyOn(console, "error").mockImplementation((message = "") => {
+    errors.push(String(message));
   });
 });
 
@@ -81,5 +86,46 @@ describe("CLI shortcut commands", () => {
 
     expect(logs.join("\n")).toContain("Shortcuts:");
     expect(logs.join("\n")).toContain("proj");
+  });
+
+  it("reports command usage and not-found errors", async () => {
+    const { dispatch } = await importCli();
+    const exit = vi.spyOn(process, "exit").mockImplementation((() => {
+      throw new Error("exit");
+    }) as never);
+
+    await expect(dispatch(["unknown"])).rejects.toThrow("exit");
+    expect(errors.at(-1)).toContain("Unknown command: unknown");
+
+    await expect(dispatch(["add"])).rejects.toThrow("exit");
+    expect(errors.at(-1)).toContain("Usage: dash -- add");
+
+    await expect(dispatch(["show", "missing"])).rejects.toThrow("exit");
+    expect(errors.at(-1)).toContain("Shortcut not found: missing");
+
+    await expect(dispatch(["rm", "missing", "--json"])).rejects.toThrow("exit");
+    expect(JSON.parse(logs.at(-1)!)).toEqual({ error: "Shortcut not found: missing" });
+    expect(exit).toHaveBeenCalledWith(1);
+  });
+
+  it("reports edit validation and collision errors", async () => {
+    const { dispatch } = await importCli();
+    const exit = vi.spyOn(process, "exit").mockImplementation((() => {
+      throw new Error("exit");
+    }) as never);
+
+    await dispatch(["add", "proj", "cd /work/proj"]);
+    await dispatch(["add", "api", "cd /work/api"]);
+
+    await expect(dispatch(["add", "PROJ", "echo duplicate"])).rejects.toThrow("exit");
+    expect(errors.at(-1)).toContain("collides");
+
+    await expect(dispatch(["edit", "proj"])).rejects.toThrow("exit");
+    expect(errors.at(-1)).toContain("No updates provided");
+
+    await expect(dispatch(["edit", "proj", "--trigger", "api"])).rejects.toThrow("exit");
+    expect(errors.at(-1)).toContain("collides");
+
+    expect(exit).toHaveBeenCalledWith(1);
   });
 });

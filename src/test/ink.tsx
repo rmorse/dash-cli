@@ -83,3 +83,26 @@ export function renderInk(node: React.ReactNode): InkTestInstance {
 export async function waitForInk(): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 0));
 }
+
+export async function waitForOutput(
+  app: Pick<InkTestInstance, "output">,
+  matcher: string | RegExp,
+  timeoutMs = 1000
+): Promise<void> {
+  const start = Date.now();
+
+  while (Date.now() - start < timeoutMs) {
+    const output = app.output();
+    const matches = typeof matcher === "string"
+      ? output.includes(matcher)
+      : matcher.test(output);
+
+    if (matches) {
+      return;
+    }
+
+    await waitForInk();
+  }
+
+  throw new Error(`Timed out waiting for output: ${String(matcher)}\n${app.output()}`);
+}

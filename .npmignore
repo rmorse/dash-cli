@@ -1,6 +1,7 @@
 .github
 .nvmrc
 .claude
+.agents
 coverage
 docs
 node_modules

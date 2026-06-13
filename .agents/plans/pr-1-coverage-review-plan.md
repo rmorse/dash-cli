@@ -17,12 +17,12 @@ Current PR:
 - Base: `develop`
 - Head: `test-cache-and-components`
 - Main commit: `dae593e Add Vitest coverage for core modules and components`
-- Latest known reported coverage:
-  - Statements: `82.78%`
-  - Lines: `83.9%`
-  - Functions: `89.38%`
-  - Branches: `69.74%`
-- Note: reviewer 2 identified that this report is optimistic because unimported source files are omitted until coverage is configured to include all `src/**/*.{ts,tsx}` files.
+- Latest known all-source coverage:
+  - Statements: `80.34%`
+  - Lines: `81.38%`
+  - Functions: `89.09%`
+  - Branches: `66.88%`
+- Coverage now includes all source files under `src/**/*.{ts,tsx}`, so unimported files such as `App.tsx`, `setup.ts`, and top-level `index.tsx` are represented in the report.
 
 ## Original Plan
 
@@ -83,22 +83,26 @@ The first two reviews found no blocking issues in the shipped behavior, but iden
    - Current risk: `Settings.test.tsx` triggers clear history through `Settings.tsx`, which imports and calls the real `clearHistory()`.
    - That writes to the real `~/.dash-cli/history.json` during `npm test`.
    - Fix by mocking `../history.js` in the component test or injecting the clear-history side effect so the component test cannot mutate local Dash state.
+   - Status: addressed by mocking `../history.js` in `Settings.test.tsx`.
 
 2. Configure coverage to include unimported source files.
    - Current risk: `vitest.config.mjs` excludes files from coverage but does not force all source files into the report.
    - Unimported files such as `src/components/App.tsx`, `src/setup.ts`, and top-level `src/index.tsx` are omitted from the percentage.
    - Add a coverage include/all-source setting for `src/**/*.{ts,tsx}`, while excluding tests and `src/test`.
    - Re-run coverage and either restore the over-80% target with additional tests or report the true lower baseline honestly.
+   - Status: addressed with `coverage.include`; additional App, setup, entrypoint, and CLI tests restore statements and lines above 80%.
 
 3. Update `docs/workflow.md`.
    - Remove or revise the note that says tests still use `--passWithNoTests`.
    - Remove or revise the note that says the repository only has `main`.
    - State that `develop` now exists and should be the default development target.
+   - Status: addressed.
 
 4. Reduce the most brittle settings navigation tests if practical.
    - Hard-coded long arrow counts tied to `SETTING_FIELDS` are fragile.
    - Prefer helper functions that navigate to a visible label, or at least centralize the count in a named helper.
    - Do not overbuild a testing DSL for this PR.
+   - Status: addressed with small navigation helpers in `Settings.test.tsx`.
 
 ### Good Follow-Up Targets
 
