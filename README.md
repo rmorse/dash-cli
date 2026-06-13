@@ -122,7 +122,7 @@ Press `Tab` twice from Projects to reach settings, or edit `~/.dash-cli/settings
 ## Installation
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 24.13.0 for development and CI (see `.nvmrc`)
 
 ### Install
 ```bash
