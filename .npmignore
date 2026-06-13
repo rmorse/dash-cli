@@ -2,8 +2,10 @@
 .nvmrc
 .claude
 .agents
+.dockerignore
 coverage
 docs
+e2e
 node_modules
 vitest.config.*
 **/*.test.js
