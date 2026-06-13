@@ -1,6 +1,7 @@
 .github
 .nvmrc
 .claude
+.agents
 coverage
 docs
 node_modules
@@ -9,3 +10,4 @@ vitest.config.*
 **/*.test.jsx
 **/*.test.ts
 **/*.test.tsx
+src/test

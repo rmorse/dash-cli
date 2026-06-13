@@ -17,8 +17,10 @@ When `develop` is ready to release, open a release pull request from `develop`
 to `main`. Merge release PRs with a merge commit so the release boundary remains
 visible in history.
 
-This repository currently only has `main`. Before enforcing branch rules, create
-`develop` from `main` and make it the default development target.
+This repository now has both `main` and `develop`. Keep `develop` as the
+default development target for feature and fix work. If the GitHub default
+branch still points at `main`, update that repository setting before enforcing
+branch rules.
 
 ## CI
 
@@ -53,10 +55,14 @@ version so npm lockfile behavior does not drift as new Node patch releases ship.
 Vitest is configured in `vitest.config.mjs` for tests under `src/**/*.test.ts`
 and `src/**/*.test.tsx`.
 
-The current test scripts use Vitest's `--passWithNoTests` flag because this
-project is gaining its first tests shortly. Remove that flag from `npm test`,
-`npm run test:coverage`, and `npm run test:watch` once the initial test suite is
-committed.
+The initial test suite has been added, so `npm test`, `npm run test:coverage`,
+and `npm run test:watch` should fail when no tests are found. Do not reintroduce
+Vitest's `--passWithNoTests` flag unless there is a deliberate, documented
+reason.
+
+Coverage should include all source files under `src/**/*.{ts,tsx}`, not only
+files imported by tests. Keep test files and local test helpers such as
+`src/test/**` excluded from coverage.
 
 ## Docs-only changes
 
