@@ -1,0 +1,8 @@
+node_modules
+coverage
+dist
+.git
+.claude
+.agents
+dash-cli-*.tgz
+npm-debug.log*
