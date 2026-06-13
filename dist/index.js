@@ -57047,6 +57047,7 @@ init_shortcuts();
 
 // src/setup.ts
 import { existsSync as existsSync8, readFileSync as readFileSync7, writeFileSync as writeFileSync6, appendFileSync as appendFileSync2, mkdirSync as mkdirSync5, copyFileSync } from "fs";
+import { execFileSync as execFileSync2 } from "child_process";
 import { join as join8, dirname as dirname2, resolve as resolve2 } from "path";
 import { homedir as homedir7 } from "os";
 import { createInterface } from "readline";
@@ -57175,17 +57176,85 @@ function getBashConfigFile() {
   }
   return bashrc;
 }
+function uniquePaths(paths) {
+  const seen = /* @__PURE__ */ new Set();
+  const result = [];
+  for (const path2 of paths) {
+    const key = process.platform === "win32" ? path2.toLowerCase() : path2;
+    if (!seen.has(key)) {
+      seen.add(key);
+      result.push(path2);
+    }
+  }
+  return result;
+}
+function getWindowsDocumentsDir() {
+  try {
+    const output = execFileSync2(
+      "powershell.exe",
+      ["-NoProfile", "-Command", "[Environment]::GetFolderPath('MyDocuments')"],
+      { encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"], windowsHide: true }
+    ).trim();
+    return output || join8(homedir7(), "Documents");
+  } catch {
+    return join8(homedir7(), "Documents");
+  }
+}
+function getPowerShellDocumentsDirs() {
+  if (process.env.DASH_CLI_DOCUMENTS_DIR) {
+    return [resolve2(process.env.DASH_CLI_DOCUMENTS_DIR)];
+  }
+  const docsDir = process.platform === "win32" ? getWindowsDocumentsDir() : join8(homedir7(), "Documents");
+  return uniquePaths([docsDir, join8(homedir7(), "Documents")]);
+}
+function getPowerShellProfileCandidates() {
+  if (process.platform !== "win32") {
+    return [join8(homedir7(), ".config", "powershell", "Microsoft.PowerShell_profile.ps1")];
+  }
+  return uniquePaths(
+    getPowerShellDocumentsDirs().flatMap((docsDir) => [
+      join8(docsDir, "PowerShell", "Microsoft.PowerShell_profile.ps1"),
+      join8(docsDir, "WindowsPowerShell", "Microsoft.PowerShell_profile.ps1")
+    ])
+  );
+}
 function getPowerShellProfile() {
-  const home = homedir7();
-  if (process.platform === "win32") {
-    const psCore = join8(home, "Documents", "PowerShell", "Microsoft.PowerShell_profile.ps1");
-    const psWindows = join8(home, "Documents", "WindowsPowerShell", "Microsoft.PowerShell_profile.ps1");
+  if (process.platform !== "win32") {
+    return getPowerShellProfileCandidates()[0];
+  }
+  const existingDashProfile = getPowerShellProfileCandidates().find((profilePath) => {
+    return existsSync8(profilePath) && readFileSync7(profilePath, "utf-8").includes("# Dash CLI:");
+  });
+  if (existingDashProfile) {
+    return existingDashProfile;
+  }
+  for (const docsDir of getPowerShellDocumentsDirs()) {
+    const psCore = join8(docsDir, "PowerShell", "Microsoft.PowerShell_profile.ps1");
+    const psWindows = join8(docsDir, "WindowsPowerShell", "Microsoft.PowerShell_profile.ps1");
     if (existsSync8(dirname2(psCore))) {
       return psCore;
     }
-    return psWindows;
+    if (existsSync8(dirname2(psWindows))) {
+      return psWindows;
+    }
   }
-  return join8(home, ".config", "powershell", "Microsoft.PowerShell_profile.ps1");
+  return join8(getPowerShellDocumentsDirs()[0], "WindowsPowerShell", "Microsoft.PowerShell_profile.ps1");
+}
+function parseShellArg(shellArg, usage) {
+  if (shellArg === "bash") {
+    return "bash";
+  }
+  if (shellArg === "powershell" || shellArg === "pwsh") {
+    return "powershell";
+  }
+  if (shellArg) {
+    console.error(`Unknown shell: ${shellArg}`);
+    console.error(usage);
+    process.exit(1);
+  }
+  const shell = detectShell();
+  console.log(`Detected shell: ${shell}`);
+  return shell;
 }
 function removeExistingConfig(content) {
   const marker = "# Dash CLI:";
@@ -57277,6 +57346,51 @@ function setupPowerShell(withAlias) {
   console.log("\n  Reload with: . $PROFILE");
   console.log("  Or restart PowerShell.");
 }
+function uninstallBash() {
+  const configFile = getBashConfigFile();
+  const bashConfigFile = toBashPath(configFile);
+  if (!existsSync8(configFile)) {
+    console.log(`No Bash config found at ${bashConfigFile}.`);
+    console.log("Nothing to remove.");
+    return;
+  }
+  const content = readFileSync7(configFile, "utf-8");
+  if (!content.includes("# Dash CLI:")) {
+    console.log(`No Dash CLI shell integration found in ${bashConfigFile}.`);
+    console.log("Nothing to remove.");
+    return;
+  }
+  const backupPath = backupFile(configFile);
+  if (backupPath) {
+    console.log(`  Backup created: ${toBashPath(backupPath)}`);
+  }
+  writeFileSync6(configFile, removeExistingConfig(content));
+  console.log(`\u2713 Removed Dash CLI shell integration from ${bashConfigFile}`);
+  console.log(`
+  Reload with: source ${bashConfigFile}`);
+  console.log("  Or restart your terminal.");
+}
+function uninstallPowerShell() {
+  const profilesWithDash = getPowerShellProfileCandidates().filter((profilePath) => {
+    return existsSync8(profilePath) && readFileSync7(profilePath, "utf-8").includes("# Dash CLI:");
+  });
+  if (profilesWithDash.length === 0) {
+    console.log("No Dash CLI shell integration found in PowerShell profiles.");
+    console.log("Nothing to remove.");
+    return;
+  }
+  for (const profilePath of profilesWithDash) {
+    const content = readFileSync7(profilePath, "utf-8");
+    const backupPath = backupFile(profilePath);
+    if (backupPath) {
+      console.log(`  Backup created: ${backupPath}`);
+    }
+    writeFileSync6(profilePath, removeExistingConfig(content));
+    console.log(`\u2713 Removed Dash CLI shell integration from ${profilePath}`);
+  }
+  console.log("\n  Reload with: . $PROFILE");
+  console.log("  Or restart PowerShell.");
+}
 async function runSetup(shellArg, aliasArg) {
   console.log("Setting up Dash CLI...\n");
   const aliasProvided = shellArg === "--alias" || aliasArg === "--alias";
@@ -57298,19 +57412,7 @@ async function runSetup(shellArg, aliasArg) {
     console.log();
   }
   rl.close();
-  let shell;
-  if (actualShellArg === "bash") {
-    shell = "bash";
-  } else if (actualShellArg === "powershell" || actualShellArg === "pwsh") {
-    shell = "powershell";
-  } else if (actualShellArg) {
-    console.error(`Unknown shell: ${actualShellArg}`);
-    console.error("Usage: dash-cli --setup [bash|powershell] [--alias]");
-    process.exit(1);
-  } else {
-    shell = detectShell();
-    console.log(`Detected shell: ${shell}`);
-  }
+  const shell = parseShellArg(actualShellArg, "Usage: dash-cli --setup [bash|powershell] [--alias]");
   if (shell === "bash") {
     setupBash(withAlias);
   } else {
@@ -57320,6 +57422,19 @@ async function runSetup(shellArg, aliasArg) {
   if (withAlias) {
     console.log("You can also use 'd' as a shortcut.");
   }
+  console.log("\nImportant: To remove the shell function and aliases later, run:");
+  console.log("  dash-cli --uninstall [bash|powershell]");
+  console.log("Run that before uninstalling the npm package so Dash can clean up your shell profile.");
+}
+async function runUninstall(shellArg) {
+  console.log("Removing Dash CLI shell integration...\n");
+  const shell = parseShellArg(shellArg, "Usage: dash-cli --uninstall [bash|powershell]");
+  if (shell === "bash") {
+    uninstallBash();
+  } else {
+    uninstallPowerShell();
+  }
+  console.log("\nDone. You can now uninstall the npm package if needed.");
 }
 
 // src/index.tsx
@@ -57341,6 +57456,11 @@ async function main() {
   if (filteredArgs[0] === "--setup") {
     log("running setup");
     await runSetup(filteredArgs[1], filteredArgs[2]);
+    return;
+  }
+  if (filteredArgs[0] === "--uninstall") {
+    log("running uninstall");
+    await runUninstall(filteredArgs[1]);
     return;
   }
   const triggerArgs = filteredArgs.filter((arg) => !arg.startsWith("--"));

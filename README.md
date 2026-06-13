@@ -141,10 +141,20 @@ dash-cli --setup --alias            # Add 'd' shortcut
 dash-cli --setup bash --alias       # Bash with 'd' shortcut
 ```
 
+To remove the `dash` function and optional `d` alias later, run the uninstall command before removing the npm package:
+
+```bash
+dash-cli --uninstall                # Auto-detect shell
+dash-cli --uninstall bash           # Git Bash
+dash-cli --uninstall powershell     # PowerShell
+npm uninstall -g dash-cli
+```
+
 ## CLI Options
 
 ```bash
 dash-cli --setup [shell] [--alias]  # Configure shell integration
+dash-cli --uninstall [shell]        # Remove shell integration
 dash-cli --debug                     # Enable debug logging
 dash proj                            # Run shortcut "proj"
 dash 1 claude                        # Chain shortcuts together
@@ -153,6 +163,7 @@ dash 1 claude                        # Chain shortcuts together
 | Flag | Description |
 |------|-------------|
 | `--setup` | Configure shell integration (bash/powershell) |
+| `--uninstall` | Remove shell integration from your profile |
 | `--alias` | Add 'd' shortcut during setup |
 | `--debug` | Enable debug logging to `~/.dash-cli/debug.log` |
 | `[triggers...]` | Run one or more shortcuts by trigger |

@@ -4,7 +4,7 @@ import { App } from "./components/App.js";
 import { getRecentAsync, addRecent, writeLastCommand } from "./history.js";
 import { getShortcutsAsync, getShortcutByTriggerAsync, generateCommand } from "./shortcuts.js";
 import { loadSettingsAsync, saveSettings } from "./settings.js";
-import { runSetup } from "./setup.js";
+import { runSetup, runUninstall } from "./setup.js";
 import { initLog, log } from "./logger.js";
 
 async function main() {
@@ -31,6 +31,13 @@ async function main() {
   if (filteredArgs[0] === "--setup") {
     log("running setup");
     await runSetup(filteredArgs[1], filteredArgs[2]);
+    return;
+  }
+
+  // Handle --uninstall command
+  if (filteredArgs[0] === "--uninstall") {
+    log("running uninstall");
+    await runUninstall(filteredArgs[1]);
     return;
   }
 
