@@ -9,3 +9,4 @@ vitest.config.*
 **/*.test.jsx
 **/*.test.ts
 **/*.test.tsx
+src/test
